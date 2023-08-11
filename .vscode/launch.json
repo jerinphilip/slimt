@@ -1,0 +1,72 @@
+{
+    "configurations": [
+        {
+            "name": "(gdb) test",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/bin/slimt_test",
+            "args": [
+                "integration",
+                "ShortlistGen",
+                "AffineIntgemm",
+            ],
+            "stopAtEntry": false,
+            "cwd": "${fileDirname}",
+            "environment": [
+                {"name": "SLIMT_BLOB_PATH", "value": "${workspaceFolder}/blobs"},
+                {"name": "INTGEMM_CPUID", "value": "AVX512VNNI"},
+                // {"name": "INTGEMM_CPUID", "value": "SSSE3"},
+                {"name": "SLIMT_EPS", "value": "1e-3"},
+                {"name": "SLIMT_TRACE", "value": "1"}
+            ],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Set Disassembly Flavor to Intel",
+                    "text": "-gdb-set disassembly-flavor intel",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
+            "name": "(gdb) main",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/bin/slimt",
+            "args": [
+                "/home/jerin/.local/share/bergamot/models/browsermt/ende.student.tiny11/model.intgemm.alphas.bin",
+                "/home/jerin/.local/share/bergamot/models/browsermt/ende.student.tiny11/vocab.deen.spm",
+                "<",
+                "${workspaceFolder}/data/sample.txt"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${fileDirname}",
+            "environment": [
+                {
+                    "name": "SLIMT_DEBUG",
+                    "value": "1"
+                }
+            ],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Set Disassembly Flavor to Intel",
+                    "text": "-gdb-set disassembly-flavor intel",
+                    "ignoreFailures": true
+                }
+            ]
+        }
+    ]
+}

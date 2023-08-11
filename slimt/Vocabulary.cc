@@ -1,0 +1,90 @@
+#include "slimt/Vocabulary.hh"
+
+#include <string_view>
+
+namespace slimt {
+
+Vocabulary::Vocabulary(void *data, size_t size) {
+  absl::string_view serialized(reinterpret_cast<char *>(data), size);
+  processor_.LoadFromSerializedProto(serialized);
+}
+
+Vocabulary::Vocabulary(const std::string &fpath) {
+  // Load vocabulary
+  processor_.Load(fpath);
+}
+
+std::tuple<Vocabulary::Words, Vocabulary::Views> Vocabulary::encode(
+    const std::string_view &line, bool add_eos /* = false*/) {
+  absl::string_view a_line(line.data(), line.size());
+  std::vector<absl::string_view> views;
+  sentencepiece::SentencePieceText sentencepiece_text;
+
+  processor_.Encode(a_line, &sentencepiece_text);
+  const auto &pieces = sentencepiece_text.pieces();
+
+  Words words;
+  words.reserve(pieces.size() + static_cast<uint32_t>(add_eos));
+
+  // Deprecation warning on the other iterator, so accessing via index.
+  // Then it claims use range loop sigh.
+  // NOLINTNEXTLINE
+  size_t piece_count = static_cast<size_t>(pieces.size());
+  for (size_t i = 0; i < piece_count; i++) {
+    const auto &piece = pieces[i];
+    Word word = piece.id();
+    words.push_back(word);
+    std::string_view view =
+        line.substr(piece.begin(), piece.end() - piece.begin());
+    views.emplace_back(view.data(), view.size());
+  }
+
+  if (add_eos) {
+    uint32_t eos_id = processor_.eos_id();
+    words.push_back(eos_id);
+  }
+
+  // Sentencepiece uses absl::string_view all around. Since C++ treats
+  // absl::string_view and std::string_view as different classes despite the
+  // same layout and intent, this conversion is inevitable, unless we want to
+  // edit sentencepiece.
+  std::vector<std::string_view> std_views;
+  std_views.reserve(views.size());
+  for (const auto &view : views) {
+    std_views.emplace_back(view.data(), view.size());
+  }
+
+  return {std::move(words), std::move(std_views)};
+}
+
+std::tuple<std::string, Vocabulary::Views> Vocabulary::decode(
+    const Words &words, bool ignore_eos) {
+  sentencepiece::SentencePieceText sentencepiece_text;
+  std::vector<std::string_view> views;
+
+  // int. -1 could be pad_id()?
+  std::vector<int> sentence;
+  sentence.reserve(words.size());
+  for (auto word : words) {
+    sentence.push_back(word);
+  }
+
+  processor_.Decode(sentence, &sentencepiece_text);
+
+  // Creates copy of string.
+  auto decoded = sentencepiece_text.text();
+  std::string_view decoded_view(decoded);
+  for (const auto &piece : sentencepiece_text.pieces()) {
+    size_t size = piece.end() - piece.begin();
+    std::string_view view = decoded_view.substr(piece.begin(), size);
+    views.push_back(view);
+  }
+
+  if (ignore_eos) {
+    views.pop_back();
+  }
+
+  return {std::move(decoded), std::move(views)};
+}
+
+}  // namespace slimt

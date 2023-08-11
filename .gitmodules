@@ -1,0 +1,6 @@
+[submodule "deps/sentencepiece"]
+	path = 3rd-party/sentencepiece
+	url = https://github.com/browsermt/sentencepiece.git
+[submodule "3rd-party/intgemm"]
+	path = 3rd-party/intgemm
+	url = https://github.com/kpu/intgemm
