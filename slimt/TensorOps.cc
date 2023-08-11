@@ -602,7 +602,6 @@ Tensor intgemm_affine_with_select(Tensor& x, Tensor& W, Tensor& b,
   VERIFY_MATCH(
       A, "var_586-cpu-int8_1x1x2x256_none_shifted-rhs0-float32_1x1x2x256.bin");
 
-
   size_t A_cols = A.dim(-1);          // NOLINT
   size_t B_cols = B.dim(-1);          // NOLINT
   size_t A_rows = A.size() / A_cols;  // NOLINT

@@ -23,9 +23,9 @@ Element* emit(ReadHead& read_head, uint64_t size = 1) {
   return begin;
 }
 
+// clang-format off
 // NOLINTBEGIN
 // Internal to types.h, don't use. Use test functions below.
-// clang-format off
 enum class TypeClass : size_t {
   signed_type   = 0x0100,
   unsigned_type = 0x0200,
@@ -75,8 +75,8 @@ enum class OGType : size_t {
   intgemm16     = TypeClass::signed_type + 2u + TypeClass::intgemm_type // Int16 quantized (not packed) matrices for intgemm
 };
 
-//NOLINTEND
 // clang-format on
+// NOLINTEND
 
 Type intercept(uint64_t value) {
   auto type = static_cast<OGType>(value);

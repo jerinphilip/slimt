@@ -1,8 +1,9 @@
-import sys
-import numpy as np
-from argparse import ArgumentParser
 import os
+import sys
+from argparse import ArgumentParser
 from ast import literal_eval
+
+import numpy as np
 
 
 def Tensor(fpath, shape=None, dtype=None):
