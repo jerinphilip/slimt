@@ -34,7 +34,12 @@ jobs:
 
   build-test:
       name: "build-test"
-      runs-on: ["ubuntu-latest", "macos-latest"]
+      strategy:
+        matrix:
+          os: ["ubuntu-latest", "macos-latest"]
+
+      runs-on: ${{ matrix.os }}
+
       steps:
         - name: Checkout
           uses: actions/checkout@v2
