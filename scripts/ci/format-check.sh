@@ -28,7 +28,7 @@ function slimt-check-python {
 }
 
 function slimt-check-sh {
-  shfmt -d scripts/
+  shfmt -i 2 -ci -bn -sr -d scripts/
 }
 
 function slimt-check-cmake {
