@@ -32,7 +32,7 @@ function slimt-check-sh {
 }
 
 function slimt-check-cmake {
-  cmake-format $(find -name "CMakeLists.txt" -not -path "3rd-party") --check
+  cmake-format $(find -name "CMakeLists.txt" -not -path "./3rd-party/*") --check
 }
 
 slimt-check-clang-format
