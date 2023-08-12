@@ -31,6 +31,7 @@ template <enum i8xi8>
 void PrepareBQuantizedTransposed(const int8_t* input, int8_t* output,
                                  size_t rows, size_t cols);
 
-constexpr i8xi8 kBi8xi8 = i8xi8::kIntgemm;
+// constexpr i8xi8 kBi8xi8 = i8xi8::kIntgemm;
+constexpr i8xi8 kBi8xi8 = i8xi8::kRuy;
 
 }  // namespace slimt::i8
