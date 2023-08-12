@@ -271,7 +271,7 @@ void softmax(float* logits, size_t batch_size, size_t num_classes, float* out) {
   }
 
   if (num_classes % 4 == 0) {
-    vext::softmax<VExt::w8>(logits, batch_size, num_classes, out);
+    vext::softmax<VExt::w4>(logits, batch_size, num_classes, out);
     return;
   }
 
