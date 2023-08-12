@@ -48,15 +48,6 @@ void layer_norm(const float* in, const float* scale, const float* bias,
                 float eps, size_t rows, size_t cols, size_t scale_stride,
                 size_t bias_stride, bool has_bias, float* out);
 
-Tensor intgemm_affine(Tensor& x, Tensor& W, Tensor& b, float a_quant,
-                      float b_quant, const std::string& name = "");
-Tensor intgemm_affine_with_select(Tensor& x, Tensor& W, Tensor& b,
-                                  float a_quant, float b_quant,
-                                  const std::vector<uint32_t>& indices,
-                                  const std::string& name = "");
-Tensor intgemm_dot(Tensor& x, Tensor& W, float a_quant, float b_quant,
-                   const std::string& name = "");
-
 Tensor transpose_3120(Tensor& x);
 float mse(Tensor& x, Tensor& y);
 Tensor relu(Tensor& x);

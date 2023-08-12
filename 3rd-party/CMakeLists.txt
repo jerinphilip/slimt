@@ -15,3 +15,6 @@ add_library(Sentencepiece::Sentencepiece ALIAS spiece_iface)
 
 # intgemm
 add_subdirectory(intgemm EXCLUDE_FROM_ALL)
+
+# ruy
+add_subdirectory(ruy EXCLUDE_FROM_ALL)

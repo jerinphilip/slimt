@@ -6,7 +6,11 @@
 #include <iostream>
 #include <vector>
 
+#ifdef __SSE__
 #include "3rd-party/intgemm/intgemm/intgemm.h"
+#else
+#endif
+
 #include "slimt/Tensor.hh"
 #include "slimt/TensorOps.hh"
 #include "slimt/Utils.hh"

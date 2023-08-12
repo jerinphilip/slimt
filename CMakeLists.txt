@@ -9,11 +9,18 @@ option(WITH_ASAN "Enable AddressSanitizer in builds" OFF)
 option(WITH_TESTS "Enable building tests (requires a few extra libraries)" OFF)
 
 add_subdirectory(3rd-party)
-find_package(BLAS REQUIRED)
+
+find_package(BLAS)
 
 set(SLIMT_EXTRA_COMPILE_OPTIONS -Wall -Wpedantic -Wextra -Wno-unknown-pragmas
-                                -Werror -march=native)
-set(SLIMT_EXTERNAL_LIBS Sentencepiece::Sentencepiece intgemm BLAS::BLAS)
+                                -Werror)
+
+if(FALSE)
+  set(SLIMT_EXTERNAL_LIBS Sentencepiece::Sentencepiece intgemm BLAS::BLAS)
+  set(SLIMT_EXTRA_COMPILE_OPTIONS ${SLIMT_EXTRA_COMPILE_OPTIONS} -march=native)
+else(FALSE)
+  set(SLIMT_EXTERNAL_LIBS Sentencepiece::Sentencepiece ruy)
+endif(FALSE)
 
 # cmake-format: off
 set(CMAKE_CXX_FLAGS_PROFILE           "${CMAKE_CXX_FLAGS_RELEASE} -pg" CACHE STRING "Flags used by the C++ compiler during profile builds." FORCE)
