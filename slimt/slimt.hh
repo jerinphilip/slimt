@@ -5,5 +5,6 @@
 #include "slimt/Shortlist.hh"
 #include "slimt/Tensor.hh"
 #include "slimt/TensorOps.hh"
+#include "slimt/Tensori8Ops.hh"
 #include "slimt/Utils.hh"
 #include "slimt/Vocabulary.hh"

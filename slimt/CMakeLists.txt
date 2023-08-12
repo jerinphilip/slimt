@@ -6,6 +6,7 @@ add_library(
   Tensor.cc
   Model.cc
   TensorOps.cc
+  Tensori8Ops.cc
   Batch.cc
   Utils.cc
   Shortlist.cc)

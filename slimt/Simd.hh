@@ -1,7 +1,9 @@
 
 namespace slimt {
+
 template <class Type>
 struct Ops;
+
 }
 
 #ifdef __AVX__
@@ -11,5 +13,3 @@ struct Ops;
 #ifdef __SSE__
 #include "slimt/simd/sse.h"
 #endif
-
-}  // namespace slimt

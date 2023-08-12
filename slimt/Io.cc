@@ -192,8 +192,8 @@ std::vector<io::Item> loadItems(void* current) {
               sizeof(float);
           Aligned aligned(/*alignment=*/64, prepared_size);
           auto* prepared = reinterpret_cast<int8_t*>(aligned.data());
-          PrepareBTransposed(weights, prepared, quantization_multiplier, cols,
-                             rows);
+          i8::PrepareBTransposed(weights, prepared, quantization_multiplier,
+                                 cols, rows);
 
           // Save quantization multiplier.
           auto* quantization_multiplier_addr =
@@ -212,7 +212,7 @@ std::vector<io::Item> loadItems(void* current) {
         Aligned aligned(/*alignment=*/64, rows * cols + sizeof(float));
 
         auto* output = reinterpret_cast<int8_t*>(aligned.data());
-        ::slimt::PrepareBQuantizedTransposed(input, output, rows, cols);
+        i8::PrepareBQuantizedTransposed(input, output, rows, cols);
 
         // Set b_quant at end.
         auto* output_end = reinterpret_cast<float*>(output + rows * cols);

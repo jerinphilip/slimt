@@ -5,6 +5,7 @@
 #include <iostream>
 
 #include "slimt/TensorOps.hh"
+#include "slimt/Tensori8Ops.hh"
 #include "slimt/Utils.hh"
 
 namespace slimt {
@@ -136,7 +137,7 @@ Tensor join_heads(Tensor &x) {
 }
 
 Tensor affine(Affine &parameters, Tensor &x, const std::string &name = "") {
-  Tensor y = intgemm_affine(                           //
+  Tensor y = i8::affine(                               //
       x,                                               //
       parameters.W, parameters.b,                      //
       parameters.quant.item<float>(),                  //
@@ -149,7 +150,7 @@ Tensor affine(Affine &parameters, Tensor &x, const std::string &name = "") {
 Tensor affine_with_select(Affine &parameters, Tensor &x,
                           const std::vector<uint32_t> &indices,
                           const std::string &name = "") {
-  Tensor y = intgemm_affine_with_select(               //
+  Tensor y = i8::affine_with_select(                   //
       x,                                               //
       parameters.W, parameters.b,                      //
       parameters.quant.item<float>(),                  //
@@ -161,7 +162,7 @@ Tensor affine_with_select(Affine &parameters, Tensor &x,
 }
 
 Tensor linear(Linear &parameters, Tensor &x, const std::string &name = "") {
-  Tensor y = intgemm_dot(                              //
+  Tensor y = i8::dot(                                  //
       x, parameters.W,                                 //
       parameters.quant.item<float>(),                  //
       retrieve_quantization_multiplier(parameters.W),  //

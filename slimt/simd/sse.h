@@ -87,7 +87,7 @@ typedef union xmm_mm_union {
 
 /* natural logarithm computed for 4 simultaneous float
    return NaN for x <= 0
-*/
+   */
 static inline v4sf log_ps(v4sf x) {
 #ifdef USE_SSE2
   v4si emm0;
@@ -127,10 +127,10 @@ static inline v4sf log_ps(v4sf x) {
 
   /* part2:
      if( x < SQRTHF ) {
-       e -= 1;
-       x = x + x - 1.0;
+     e -= 1;
+     x = x + x - 1.0;
      } else { x = x - 1.0; }
-  */
+     */
   v4sf mask = _mm_cmplt_ps(x, *(v4sf*)_ps_cephes_SQRTHF);
   v4sf tmp = _mm_and_ps(x, mask);
   x = _mm_sub_ps(x, one);
@@ -267,6 +267,7 @@ static inline v4sf exp_ps(v4sf x) {
 // NOLINTEND
 
 namespace slimt {
+
 struct F32x4 {
  public:
   using Scalar = float;
@@ -310,37 +311,36 @@ struct Ops<F32x4> {
   using Register = F32x4::Register;
 
   // clang-format off
-  static F32x4 exp(const F32x4& x)                     { return exp_ps(x); }
-  static F32x4 relu(const F32x4& x)                    { return max(0.0F, x); }
+      static F32x4 exp(const F32x4& x)                     { return exp_ps(x); }
+      static F32x4 relu(const F32x4& x)                    { return max(0.0F, x); }
 
-  static F32x4 max(const F32x4& lhs, const F32x4& rhs) { return _mm_max_ps(lhs, rhs); }
-  static F32x4 sub(const F32x4& lhs, const F32x4& rhs) { return _mm_sub_ps(lhs, rhs); }
-  static F32x4 add(const F32x4& lhs, const F32x4& rhs) { return _mm_add_ps(lhs, rhs); }
-  static F32x4 mul(const F32x4& lhs, const F32x4& rhs) { return _mm_mul_ps(lhs, rhs); }
-  static F32x4 div(const F32x4& lhs, const F32x4& rhs) { return _mm_div_ps(lhs, rhs); }
-  //clang-format on
+      static F32x4 max(const F32x4& lhs, const F32x4& rhs) { return _mm_max_ps(lhs, rhs); }
+      static F32x4 sub(const F32x4& lhs, const F32x4& rhs) { return _mm_sub_ps(lhs, rhs); }
+      static F32x4 add(const F32x4& lhs, const F32x4& rhs) { return _mm_add_ps(lhs, rhs); }
+      static F32x4 mul(const F32x4& lhs, const F32x4& rhs) { return _mm_mul_ps(lhs, rhs); }
+      static F32x4 div(const F32x4& lhs, const F32x4& rhs) { return _mm_div_ps(lhs, rhs); }
+      //clang-format on
 
-  static F32x4 sigmoid(const F32x4& x) {
-    F32x4 e = exp(x);
-    return div(e, add(1.0F, e));
-  }
-
-  struct Reduce {
-    static Scalar max(const F32x4& x) {
-      Scalar accumulator = x[0];
-      for (size_t i = 1; i < F32x4::kWidth; ++i) {
-        accumulator = accumulator > x[i]? accumulator : x[i];
+      static F32x4 sigmoid(const F32x4& x) {
+        F32x4 e = exp(x);
+        return div(e, add(1.0F, e));
       }
-      return accumulator;
-    }
-    static Scalar sum(const F32x4& x) {
-      Scalar accumulator = x[0];
-      for (size_t i = 1; i < F32x4::kWidth; ++i) {
-        accumulator += x[i];
-      }
-      return accumulator;
-    }
-  };
-};
 
+      struct Reduce {
+        static Scalar max(const F32x4& x) {
+          Scalar accumulator = x[0];
+          for (size_t i = 1; i < F32x4::kWidth; ++i) {
+            accumulator = accumulator > x[i]? accumulator : x[i];
+          }
+          return accumulator;
+        }
+        static Scalar sum(const F32x4& x) {
+          Scalar accumulator = x[0];
+          for (size_t i = 1; i < F32x4::kWidth; ++i) {
+            accumulator += x[i];
+          }
+          return accumulator;
+        }
+      };
+    };
 }

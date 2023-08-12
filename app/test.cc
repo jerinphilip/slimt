@@ -3,7 +3,6 @@
 #include <iostream>
 #include <unordered_map>
 
-#include "3rd-party/intgemm/intgemm/intgemm.h"
 #include "slimt/slimt.hh"
 
 namespace slimt {
@@ -267,6 +266,11 @@ void LayerNormalizationOp() {
   SLIMT_TRACE(lhs_expected);
   SLIMT_CHECK(lhs == lhs_expected);
 }
+}  // namespace slimt
+
+#ifdef __SSE__
+#include "3rd-party/intgemm/intgemm/intgemm.h"
+namespace slimt {
 
 void AffineIntgemm() {
   // clang-format off
@@ -609,8 +613,8 @@ void AffineIntgemm() {
 
     // Compute from the intgemm_affine function, used in the library.
     // This ensures what we checked in there is consistent with what we expect.
-    Tensor y_whole = intgemm_affine(actual.A, actual.B, actual.bias, quant.a,
-                                    quant.b, "y_whole");
+    Tensor y_whole = i8::affine(actual.A, actual.B, actual.bias, quant.a,
+                                quant.b, "y_whole");
     SLIMT_TRACE(y_whole.shape());
     SLIMT_TRACE(y_expected.shape());
     SLIMT_TRACE(mse(y_whole, y_expected));
@@ -626,7 +630,10 @@ void AffineIntgemm() {
 
   // SLIMT_TRACE2(y_whole, y_expected);
 }
+}  // namespace slimt
+#endif
 
+namespace slimt {
 template <class Field>
 struct Record {
   Field model;
@@ -759,8 +766,10 @@ int main(int argc, char **argv) {
       TEST_ENTRY(DotBatchedNodeOp),      //
       TEST_ENTRY(TransposeNodeOp),       //
       TEST_ENTRY(LayerNormalizationOp),  //
-      TEST_ENTRY(AffineIntgemm),         //
-      TEST_ENTRY(ShortlistGen)           //
+#ifdef __SSE__
+      TEST_ENTRY(AffineIntgemm),  //
+#endif
+      TEST_ENTRY(ShortlistGen)  //
   });
 
   // std::cout << "slimt test\n";
@@ -796,6 +805,5 @@ int main(int argc, char **argv) {
     std::cerr << "Unknown test " << test << "\n";
     std::exit(EXIT_FAILURE);
   }
-
   return 0;
 }

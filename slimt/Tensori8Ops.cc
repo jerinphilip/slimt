@@ -2,20 +2,20 @@
 
 #include <cassert>
 
+#ifdef __SSE__
+#include "3rd-party/intgemm/intgemm/intgemm.h"
+#endif
+
 #include "slimt/Tensor.hh"
 
-namespace slimt {
-Tensor intgemm_affine_with_select(Tensor& x, Tensor& W, Tensor& b,
-                                  float a_quant, float b_quant,
-                                  const std::vector<uint32_t>& indices,
-                                  const std::string& name) {
+namespace slimt::i8 {
+Tensor affine_with_select(Tensor& x, Tensor& W, Tensor& b, float a_quant,
+                          float b_quant, const std::vector<uint32_t>& indices,
+                          const std::string& name) {
   // Naming is to simplify thinking with the intgemm API below.
   Tensor& A = x;  // NOLINT
   Tensor& B = W;  // NOLINT
   Tensor& bias = b;
-
-  VERIFY_MATCH(
-      A, "var_586-cpu-int8_1x1x2x256_none_shifted-rhs0-float32_1x1x2x256.bin");
 
   size_t A_cols = A.dim(-1);          // NOLINT
   size_t B_cols = B.dim(-1);          // NOLINT
@@ -38,12 +38,6 @@ Tensor intgemm_affine_with_select(Tensor& x, Tensor& W, Tensor& b,
 
   // Prepare bias
   Tensor prepared_bias(Type::f32, bias.shape(), "prepared_bias");
-  VERIFY_MATCH(bias,
-               "var_582-cpu-float32_1x32000_decoder_ff_logit_out_b_Prepared-"
-               "rhs0-float32_1x32000_decoder_ff_logit_out_b.bin");
-  VERIFY_MATCH(B,
-               "var_582-cpu-float32_1x32000_decoder_ff_logit_out_b_Prepared-"
-               "rhs1-intgemm8_256x32000_Wemb.bin");
   float a_alpha = 127.0F / a_quant;
   float b_alpha = 127.0F / b_quant;
 
@@ -58,10 +52,6 @@ Tensor intgemm_affine_with_select(Tensor& x, Tensor& W, Tensor& b,
       width, B_cols,                //
       prepare_bias_callback         //
   );
-
-  VERIFY_MATCH(
-      prepared_bias,
-      "var_582-cpu-float32_1x32000_decoder_ff_logit_out_b_Prepared-lhs.bin");
 
   // Select before multiply?
   // NOLINTNEXTLINE
@@ -101,8 +91,8 @@ Tensor intgemm_affine_with_select(Tensor& x, Tensor& W, Tensor& b,
   return y;
 }
 
-Tensor intgemm_affine(Tensor& x, Tensor& W, Tensor& b, float a_quant,
-                      float b_quant, const std::string& name) {
+Tensor affine(Tensor& x, Tensor& W, Tensor& b, float a_quant, float b_quant,
+              const std::string& name) {
   // Naming is to simplify thinking with the intgemm API below.
   Tensor& A = x;  // NOLINT
   Tensor& B = W;  // NOLINT
@@ -165,8 +155,8 @@ Tensor intgemm_affine(Tensor& x, Tensor& W, Tensor& b, float a_quant,
   return y;
 }
 
-Tensor intgemm_dot(Tensor& x, Tensor& W, float a_quant, float b_quant,
-                   const std::string& name) {
+Tensor dot(Tensor& x, Tensor& W, float a_quant, float b_quant,
+           const std::string& name) {
   // Naming is to simplify thinking with the intgemm API below.
   Tensor& A = x;  // NOLINT
   Tensor& B = W;  // NOLINT
@@ -233,4 +223,17 @@ Tensor intgemm_dot(Tensor& x, Tensor& W, float a_quant, float b_quant,
 
   return y;
 }
-}  // namespace slimt
+
+void PrepareBTransposed(const float* weights, int8_t* prepared,
+                        float quantization_multiplier, size_t cols,
+                        size_t rows) {
+  intgemm::Int8::PrepareBTransposed(weights, prepared, quantization_multiplier,
+                                    cols, rows);
+}
+
+void PrepareBQuantizedTransposed(const int8_t* input, int8_t* output,
+                                 size_t rows, size_t cols) {
+  intgemm::Int8::PrepareBQuantizedTransposed(input, output, rows, cols);
+}
+
+}  // namespace slimt::i8
