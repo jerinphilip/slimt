@@ -102,6 +102,8 @@ ShortlistGenerator::ShortlistGenerator(const void* data, const size_t blob_size,
       shared_(shared) {
   LOG(info, "[data] Loading binary shortlist from buffer with check={}", check);
   load(data, blob_size, check);
+
+  (void)source_index_;
 }
 
 Shortlist ShortlistGenerator::generate(const Words& words) const {

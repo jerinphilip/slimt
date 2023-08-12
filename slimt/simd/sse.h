@@ -315,36 +315,36 @@ struct Ops<VExt::w4> {
   using Register = Datum::Register;
 
   // clang-format off
-      static Datum exp(const Datum& x)                     { return exp_ps(x); }
-      static Datum relu(const Datum& x)                    { return max(0.0F, x); }
+  static Datum exp(const Datum& x)                     { return exp_ps(x); }
+  static Datum relu(const Datum& x)                    { return max(0.0F, x); }
 
-      static Datum max(const Datum& lhs, const Datum& rhs) { return _mm_max_ps(lhs, rhs); }
-      static Datum sub(const Datum& lhs, const Datum& rhs) { return _mm_sub_ps(lhs, rhs); }
-      static Datum add(const Datum& lhs, const Datum& rhs) { return _mm_add_ps(lhs, rhs); }
-      static Datum mul(const Datum& lhs, const Datum& rhs) { return _mm_mul_ps(lhs, rhs); }
-      static Datum div(const Datum& lhs, const Datum& rhs) { return _mm_div_ps(lhs, rhs); }
-      //clang-format on
+  static Datum max(const Datum& lhs, const Datum& rhs) { return _mm_max_ps(lhs, rhs); }
+  static Datum sub(const Datum& lhs, const Datum& rhs) { return _mm_sub_ps(lhs, rhs); }
+  static Datum add(const Datum& lhs, const Datum& rhs) { return _mm_add_ps(lhs, rhs); }
+  static Datum mul(const Datum& lhs, const Datum& rhs) { return _mm_mul_ps(lhs, rhs); }
+  static Datum div(const Datum& lhs, const Datum& rhs) { return _mm_div_ps(lhs, rhs); }
+  // clang-format on
 
-      static Datum sigmoid(const Datum& x) {
-        Datum e = exp(x);
-        return div(e, add(1.0F, e));
+  static Datum sigmoid(const Datum& x) {
+    Datum e = exp(x);
+    return div(e, add(1.0F, e));
+  }
+
+  struct Reduce {
+    static Scalar max(const Datum& x) {
+      Scalar accumulator = x[0];
+      for (size_t i = 1; i < Datum::kWidth; ++i) {
+        accumulator = accumulator > x[i] ? accumulator : x[i];
       }
-
-      struct Reduce {
-        static Scalar max(const Datum& x) {
-          Scalar accumulator = x[0];
-          for (size_t i = 1; i < Datum::kWidth; ++i) {
-            accumulator = accumulator > x[i]? accumulator : x[i];
-          }
-          return accumulator;
-        }
-        static Scalar sum(const Datum& x) {
-          Scalar accumulator = x[0];
-          for (size_t i = 1; i < Datum::kWidth; ++i) {
-            accumulator += x[i];
-          }
-          return accumulator;
-        }
-      };
-    };
-}
+      return accumulator;
+    }
+    static Scalar sum(const Datum& x) {
+      Scalar accumulator = x[0];
+      for (size_t i = 1; i < Datum::kWidth; ++i) {
+        accumulator += x[i];
+      }
+      return accumulator;
+    }
+  };
+};
+}  // namespace slimt

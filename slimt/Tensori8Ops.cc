@@ -15,6 +15,7 @@
 
 namespace slimt::i8 {
 
+#ifdef HAS_INTGEMM
 template <>
 Tensor affine_with_select<i8xi8::kIntgemm>(Tensor& x, Tensor& W, Tensor& b,
                                            float a_quant, float b_quant,
@@ -234,6 +235,25 @@ Tensor dot<i8xi8::kIntgemm>(Tensor& x, Tensor& W, float a_quant, float b_quant,
   return y;
 }
 
+template <>
+void PrepareBTransposed<i8xi8::kIntgemm>(const float* weights, int8_t* prepared,
+                                         float quantization_multiplier,
+                                         size_t cols, size_t rows) {
+  intgemm::Int8::PrepareBTransposed(weights, prepared, quantization_multiplier,
+                                    cols, rows);
+}
+
+template <>
+void PrepareBQuantizedTransposed<i8xi8::kIntgemm>(const int8_t* input,
+                                                  int8_t* output, size_t rows,
+                                                  size_t cols) {
+  intgemm::Int8::PrepareBQuantizedTransposed(input, output, rows, cols);
+}
+
+#endif
+
+#ifdef HAS_RUY
+
 namespace detail {
 
 using Index = uint64_t;
@@ -286,21 +306,6 @@ void unquantizeAddBias(const int32_t* input, const float* input_bias_prepared,
 }
 
 }  // namespace detail
-
-template <>
-void PrepareBTransposed<i8xi8::kIntgemm>(const float* weights, int8_t* prepared,
-                                         float quantization_multiplier,
-                                         size_t cols, size_t rows) {
-  intgemm::Int8::PrepareBTransposed(weights, prepared, quantization_multiplier,
-                                    cols, rows);
-}
-
-template <>
-void PrepareBQuantizedTransposed<i8xi8::kIntgemm>(const int8_t* input,
-                                                  int8_t* output, size_t rows,
-                                                  size_t cols) {
-  intgemm::Int8::PrepareBQuantizedTransposed(input, output, rows, cols);
-}
 
 // Ruy.
 template <>
@@ -516,5 +521,6 @@ void PrepareBQuantizedTransposed<i8xi8::kRuy>(const int8_t* input,
   std::memcpy(output, input,
               /*count=*/sizeof(int8_t) * (rows * cols));
 }
+#endif
 
 }  // namespace slimt::i8

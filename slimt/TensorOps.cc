@@ -1,29 +1,17 @@
-
 #include "slimt/TensorOps.hh"
 
+#ifndef __ANDROID__
 #include <cblas.h>
+#else
+#include "3rd-party/ruy/ruy/ruy.h"
+#endif
 
 #include <cassert>
 #include <cmath>
 #include <iostream>
 
-#include "3rd-party/intgemm/intgemm/intgemm.h"
 #include "slimt/Simd.hh"
 #include "slimt/Utils.hh"
-
-#if defined(_MSC_VER)
-#define MARIAN_FFAST_MATH_BEGIN __pragma(float_control(precise, off, push))
-#define MARIAN_FFAST_MATH_END __pragma(float_control(pop))
-#elif defined(__clang__)
-#define MARIAN_FFAST_MATH_BEGIN _Pragma("float_control(precise, off, push)")
-#define MARIAN_FFAST_MATH_END _Pragma("float_control(pop)")
-#elif defined(__GNUC__)
-// Also available as __attribute__((optimize("-ffast-math"))) but done as
-// pragmas for consistency
-#define MARIAN_FFAST_MATH_BEGIN \
-  _Pragma("GCC push_options") _Pragma("GCC optimize(\"-ffast-math\")")
-#define MARIAN_FFAST_MATH_END _Pragma("GCC pop_options")
-#endif
 
 namespace slimt {
 
@@ -124,15 +112,19 @@ void transpose_3120(const float* in, size_t dim3, size_t dim2, size_t dim1,
 }
 
 void add(const float* a, const float* b, size_t size, float* c) {
-  if (size % F32x8::kWidth == 0) {
+#ifdef VEXT_W8_AVAILABLE
+  if (size % VDatum<VExt::w8>::kWidth == 0) {
     vext::add<VExt::w8>(a, b, size, c);
     return;
   }
+#endif
 
+#ifdef VEXT_W4_AVAILABLE
   if (size % F32x4::kWidth == 0) {
     vext::add<VExt::w4>(a, b, size, c);
     return;
   }
+#endif
 
   for (size_t i = 0; i < size; i++) {
     c[i] = a[i] + b[i];
@@ -140,15 +132,19 @@ void add(const float* a, const float* b, size_t size, float* c) {
 }
 
 void sub(const float* a, const float* b, size_t size, float* c) {
-  if (size % F32x8::kWidth == 0) {
+#ifdef VEXT_W8_AVAILABLE
+  if (size % VDatum<VExt::w8>::kWidth == 0) {
     vext::sub<VExt::w8>(a, b, size, c);
     return;
   }
+#endif
 
+#ifdef VEXT_W4_AVAILABLE
   if (size % F32x4::kWidth == 0) {
     vext::sub<VExt::w4>(a, b, size, c);
     return;
   }
+#endif
 
   for (size_t i = 0; i < size; i++) {
     c[i] = a[i] - b[i];
@@ -156,15 +152,19 @@ void sub(const float* a, const float* b, size_t size, float* c) {
 }
 
 void relu(const float* a, size_t size, float* c) {
-  if (size % F32x8::kWidth == 0) {
+#ifdef VEXT_W8_AVAILABLE
+  if (size % VDatum<VExt::w8>::kWidth == 0) {
     vext::relu<VExt::w8>(a, size, c);
     return;
   }
 
+#endif
+#ifdef VEXT_W4_AVAILABLE
   if (size % F32x4::kWidth == 0) {
     vext::relu<VExt::w4>(a, size, c);
     return;
   }
+#endif
 
   for (size_t i = 0; i < size; i++) {
     c[i] = std::max<float>(0.0F, a[i]);
@@ -172,16 +172,19 @@ void relu(const float* a, size_t size, float* c) {
 }
 
 void mul(const float* a, const float* b, size_t size, float* c) {
-  if (size % F32x8::kWidth == 0) {
+#ifdef VEXT_W8_AVAILABLE
+  if (size % VDatum<VExt::w8>::kWidth == 0) {
     vext::mul<VExt::w8>(a, b, size, c);
     return;
   }
+#endif
 
+#ifdef VEXT_W4_AVAILABLE
   if (size % F32x4::kWidth == 0) {
     vext::mul<VExt::w4>(a, b, size, c);
     return;
   }
-
+#endif
   for (size_t i = 0; i < size; i++) {
     c[i] = a[i] * b[i];
   }
@@ -194,15 +197,18 @@ void mul_scalar(const float* a, float scalar, size_t size, float* c) {
 }
 
 void sigmoid(const float* a, size_t size, float* c) {
-  if (size % F32x8::kWidth == 0) {
+#ifdef VEXT_W8_AVAILABLE
+  if (size % VDatum<VExt::w8>::kWidth == 0) {
     vext::sigmoid<VExt::w8>(a, size, c);
     return;
   }
-
+#endif
+#ifdef VEXT_W4_AVAILABLE
   if (size % F32x4::kWidth == 0) {
     vext::sigmoid<VExt::w4>(a, size, c);
     return;
   }
+#endif
 
   for (size_t i = 0; i < size; i++) {
     float x = std::exp(a[i]);
@@ -265,15 +271,18 @@ void add_positional_embedding(const float* word_embedding,
 }
 
 void softmax(float* logits, size_t batch_size, size_t num_classes, float* out) {
+#ifdef VEXT_W8_AVAILABLE
   if (num_classes % 8 == 0) {
     vext::softmax<VExt::w8>(logits, batch_size, num_classes, out);
     return;
   }
-
+#endif
+#ifdef VEXT_W4_AVAILABLE
   if (num_classes % 4 == 0) {
     vext::softmax<VExt::w4>(logits, batch_size, num_classes, out);
     return;
   }
+#endif
 
   for (size_t i = 0; i < batch_size; i++) {
     float* xs = logits + i * num_classes;
@@ -299,6 +308,7 @@ void softmax(float* logits, size_t batch_size, size_t num_classes, float* out) {
 // NOLINTBEGIN
 enum class Provider {
   BLAS,
+  Ruy,
 };
 // NOLINTEND
 
@@ -313,6 +323,7 @@ void matrix_multiply(              //
     float* C, size_t ldc           //
 );
 
+#ifndef __ANDROID__
 template <>
 void matrix_multiply<Provider::BLAS>(  //
     bool trans_a, bool trans_b,        //
@@ -371,6 +382,91 @@ void matrix_multiply<Provider::BLAS>(  //
   );
 }
 
+constexpr Provider kChosenProvider = Provider::BLAS;
+
+#else
+template <>
+inline void matrix_multiply<Provider::Ruy>(  //
+    bool transA, bool transB,                //
+    size_t M, size_t N, size_t K,            //
+    float alpha,                             //
+    const float* A, size_t lda,              //
+    const float* B, size_t ldb,              //
+    float beta,                              //
+    float* C, size_t ldc) {
+  (void)lda;
+  (void)ldb;
+  (void)ldc;
+  ruy::Context context;
+
+  // If we need to transpose, we can swap dimensions in layout claim the matrix
+  // is just column-major. Set ordering so transpose.
+  const auto orderA = (transA ? ruy::Order::kColMajor : ruy::Order::kRowMajor);
+  const auto orderB = (transB ? ruy::Order::kColMajor : ruy::Order::kRowMajor);
+
+  ruy::Matrix<float> lhs;
+  ruy::MakeSimpleLayout(M, K, orderA, lhs.mutable_layout());
+  lhs.set_data(A);
+
+  ruy::Matrix<float> rhs;
+  ruy::MakeSimpleLayout(K, N, orderB, rhs.mutable_layout());
+  rhs.set_data(B);
+
+  ruy::Matrix<float> dst;
+  ruy::MakeSimpleLayout(M, N, ruy::Order::kRowMajor, dst.mutable_layout());
+
+  if (beta == 0) {
+    // For beta = 0, we want to avoid the additional allocation. This is a
+    // large amount of our inference use-cases. sgemm is called with `beta` for
+    // accumulating gradients in backpropogation, which is 0.0 during
+    // inference.
+
+    dst.set_data(C);
+    ruy::MulParams<float, float> mul_params;
+    ruy::Mul(lhs, rhs, mul_params, &context, &dst);
+
+    if (alpha != 1.0) {
+      // Write out C as C = alpha * [op(A) * op(B)] + beta * C
+      // Can we expect the compiler to autovectorize this?
+      // TODO: Come back and explicitly use SIMD.
+      const size_t size = M * N;
+      const float* opA_opB = C;  // Alias.
+#pragma clang loop vectorize(enable) interleave(enable)
+      for (size_t i = 0; i < size; i++) {
+        C[i] = alpha * opA_opB[i];
+      }
+    }
+  } else {
+    // @jerinphilip has not yet been able to find a ruy primitive that does in
+    // place addition to obtain full gemm.
+    //
+    // Safe bet is to make an additional allocation to store the result of
+    // multiply  and use the existing values in C.
+    //
+    // See also: https://github.com/google/ruy/issues/307
+
+    Aligned intermediate(64, M * N * sizeof(float));
+    auto* imd_data = reinterpret_cast<float*>(intermediate.data());
+    dst.set_data(imd_data);
+    ruy::MulParams<float, float> mul_params;
+    ruy::Mul(lhs, rhs, mul_params, &context, &dst);
+
+    // Write out C as C = alpha * [op(A) * op(B)] + beta * C
+    // Can we expect the compiler to autovectorize this?
+    // TODO: Come back and explicitly use SIMD.
+    const size_t size = M * N;
+    const float* opA_opB = imd_data;
+#pragma clang loop vectorize(enable) interleave(enable)
+    for (size_t i = 0; i < size; i++) {
+      C[i] = alpha * opA_opB[i] + beta * C[i];
+    }
+  }
+}
+
+constexpr Provider kChosenProvider = Provider::Ruy;
+
+#endif
+
 void batch_matrix_multiply(const float* A, const float* B, size_t batch_size,
                            size_t rows_a, size_t cols_a, size_t rows_b,
                            size_t cols_b, bool trans_a, bool trans_b,
@@ -412,13 +508,13 @@ void batch_matrix_multiply(const float* A, const float* B, size_t batch_size,
     const float* a = A + i * stride_a;
     const float* b = B + i * stride_b;
     float* c = C + i * stride_c;
-    matrix_multiply<Provider::BLAS>(  //
-        trans_a, trans_b,             //
-        m, n, k,                      //
-        alpha,                        //
-        a, lda, b, ldb,               //
-        beta,                         //
-        c, ldc                        //
+    matrix_multiply<kChosenProvider>(  //
+        trans_a, trans_b,              //
+        m, n, k,                       //
+        alpha,                         //
+        a, lda, b, ldb,                //
+        beta,                          //
+        c, ldc                         //
     );
   }
 }
@@ -434,7 +530,6 @@ void batch_add_vector(const float* A, const float* x, size_t batch_size,
   }
 }
 
-MARIAN_FFAST_MATH_BEGIN
 void layer_norm(const float* in, const float* scale, const float* bias,
                 float eps, size_t rows, size_t cols, size_t scale_stride,
                 size_t bias_stride, bool has_bias, float* out) {
@@ -447,14 +542,12 @@ void layer_norm(const float* in, const float* scale, const float* bias,
   // Implementation lifted from:
   // https://github.com/browsermt/marian-dev/blob/7cf2159bc4e9c0c337aa38270081d941c9e59c26/src/tensors/cpu/tensor_operators.cpp#L1103
 
-#pragma omp parallel for
   for (size_t j = 0; j < rows; ++j) {
     const float* x = in + j * cols;
     float* y = out + j * cols;
 
     // Compute E[x] (mean)
     float sum = 0.0F;
-#pragma omp simd reduction(+ : sum)
     for (size_t i = 0; i < cols; ++i) {
       sum += x[i];
     }
@@ -462,7 +555,6 @@ void layer_norm(const float* in, const float* scale, const float* bias,
 
     // Compute Std[X] = sqrt . Var[X]
     float square_sum_centered = 0.0F;
-#pragma omp simd reduction(+ : square_sum_centered)
     for (size_t i = 0; i < cols; ++i) {
       float v = x[i] - mean;
       square_sum_centered += v * v;
@@ -473,7 +565,6 @@ void layer_norm(const float* in, const float* scale, const float* bias,
     // Normalize from sample estimate (E[X], Var[X}) and parameters learned
     // during the course of learning - scale and bias.
 
-#pragma omp simd
     for (size_t i = 0; i < cols; ++i) {
       size_t s = scale_stride * i;
       float t = scale[s] * ((x[i] - mean) / sigma);
@@ -486,8 +577,6 @@ void layer_norm(const float* in, const float* scale, const float* bias,
     }
   }
 }
-
-MARIAN_FFAST_MATH_END
 
 float mse(Tensor& x, Tensor& y) {
   assert(x.type() == Type::f32);

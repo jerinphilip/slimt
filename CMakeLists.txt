@@ -10,15 +10,19 @@ option(WITH_TESTS "Enable building tests (requires a few extra libraries)" OFF)
 
 add_subdirectory(3rd-party)
 
-find_package(BLAS)
-
 set(SLIMT_COMPILE_OPTIONS -Wall -Wpedantic -Wextra -Wno-unknown-pragmas -Werror)
 set(SLIMT_COMPILE_DEFINITIONS "")
 
 option(WITH_INTGEMM "Use intgemm" ON)
 option(WITH_RUY "Use ruy" ON)
+option(WITH_BLAS "Use ruy" ON)
 
-set(SLIMT_EXTERNAL_LIBS Sentencepiece::Sentencepiece BLAS::BLAS)
+set(SLIMT_EXTERNAL_LIBS Sentencepiece::Sentencepiece)
+
+if(WITH_BLAS)
+  find_package(BLAS)
+  set(SLIMT_EXTERNAL_LIBS ${SLIMT_EXTERNAL_LIBS} BLAS::BLAS)
+endif(WITH_BLAS)
 
 if(WITH_INTGEMM)
   set(SLIMT_EXTERNAL_LIBS ${SLIMT_EXTERNAL_LIBS} intgemm)

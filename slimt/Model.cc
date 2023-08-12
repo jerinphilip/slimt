@@ -392,6 +392,7 @@ Model::Model(Tag tag, std::vector<io::Item> &&items,
   }
 
   load_parameters_from_items();
+  (void)tag_;  // Apparently tag not used. This should fix.
 }
 
 void SSRU::set_start_state(size_t batch_size) {

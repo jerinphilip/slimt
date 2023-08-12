@@ -1,3 +1,5 @@
+#include <cstddef>
+#include <cstdint>
 
 namespace slimt {
 
@@ -22,6 +24,8 @@ struct Ops;
 
 }  // namespace slimt
 
+// Naive implementation
+
 #ifdef __AVX__
 #include "slimt/simd/avx2.h"
 
@@ -37,6 +41,10 @@ using F32x8 = VDatum<VExt::w8>;
 namespace slimt {
 using F32x4 = VDatum<VExt::w4>;
 }
+#endif
+
+#if defined(__ARM_NEON) || defined(__ARM_NEON__)
+#include "slimt/simd/neon.h"
 #endif
 
 namespace slimt::vext {
