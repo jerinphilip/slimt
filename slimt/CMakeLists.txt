@@ -11,7 +11,8 @@ add_library(
   Utils.cc
   Shortlist.cc)
 
-target_compile_options(slimt PRIVATE ${SLIMT_EXTRA_COMPILE_OPTIONS})
+target_compile_options(slimt PRIVATE ${SLIMT_COMPILE_OPTIONS})
+target_compile_definitions(slimt PRIVATE ${SLIMT_COMPILE_DEFINITIONS})
 target_link_libraries(slimt PUBLIC ${SLIMT_EXTERNAL_LIBS})
 
 if(WITH_ASAN)

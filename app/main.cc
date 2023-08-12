@@ -57,7 +57,6 @@ void run(const Options &options) {
   };
 
   // Tokenize into numeric-ids using sentencepiece.
-  size_t max_sequence_length = 0;
   Vocabulary vocab(mmap.vocab.data(), mmap.vocab.size());
   ShortlistGenerator shortlist_generator(            //
       mmap.shortlist.data(), mmap.shortlist.size(),  //
@@ -95,6 +94,7 @@ void run(const Options &options) {
   };
 
   std::string line;
+  size_t max_sequence_length = 0;
   size_t token_count = 0;
   size_t line_no = 0;
   Sentences sentences;
@@ -114,6 +114,7 @@ void run(const Options &options) {
     if (token_count > options.max_tokens_per_batch) {
       batch_and_translate(sentences, max_sequence_length);
       sentences.clear();
+      max_sequence_length = 0;
     }
     sentences.push_back(std::move(words));
     max_sequence_length = candidate_max_sequence_length;

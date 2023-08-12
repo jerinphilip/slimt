@@ -12,16 +12,24 @@ add_subdirectory(3rd-party)
 
 find_package(BLAS)
 
-set(SLIMT_EXTRA_COMPILE_OPTIONS -Wall -Wpedantic -Wextra -Wno-unknown-pragmas
-                                -Werror)
+set(SLIMT_COMPILE_OPTIONS -Wall -Wpedantic -Wextra -Wno-unknown-pragmas -Werror)
+set(SLIMT_COMPILE_DEFINITIONS "")
 
-option(USE_INTGEMM "Use intgemm" ON)
-if(USE_INTGEMM)
-  set(SLIMT_EXTERNAL_LIBS Sentencepiece::Sentencepiece intgemm BLAS::BLAS)
-  set(SLIMT_EXTRA_COMPILE_OPTIONS ${SLIMT_EXTRA_COMPILE_OPTIONS} -march=native)
-else(USE_INTGEMM)
-  set(SLIMT_EXTERNAL_LIBS Sentencepiece::Sentencepiece ruy)
-endif(USE_INTGEMM)
+option(WITH_INTGEMM "Use intgemm" ON)
+option(WITH_RUY "Use ruy" ON)
+
+set(SLIMT_EXTERNAL_LIBS Sentencepiece::Sentencepiece BLAS::BLAS)
+
+if(WITH_INTGEMM)
+  set(SLIMT_EXTERNAL_LIBS ${SLIMT_EXTERNAL_LIBS} intgemm)
+  set(SLIMT_COMPILE_DEFINITIONS ${SLIMT_COMPILE_DEFINITIONS} HAS_INTGEMM)
+  set(SLIMT_COMPILE_OPTIONS ${SLIMT_COMPILE_OPTIONS} -march=native)
+endif(WITH_INTGEMM)
+
+if(WITH_RUY)
+  set(SLIMT_COMPILE_DEFINITIONS ${SLIMT_COMPILE_DEFINITIONS} HAS_RUY)
+  set(SLIMT_EXTERNAL_LIBS ${SLIMT_EXTERNAL_LIBS} ruy)
+endif(WITH_RUY)
 
 # cmake-format: off
 set(CMAKE_CXX_FLAGS_PROFILE           "${CMAKE_CXX_FLAGS_RELEASE} -pg" CACHE STRING "Flags used by the C++ compiler during profile builds." FORCE)
