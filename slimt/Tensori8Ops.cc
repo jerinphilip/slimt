@@ -403,11 +403,13 @@ Tensor affine_with_select<i8xi8::kRuy>(Tensor& x, Tensor& W, Tensor& b,
   auto B_data = B.data<int8_t>();            // NOLINT
   auto sB_data = selected_B.data<int8_t>();  // NOLINT
   for (size_t c = 0; c < indices.size(); ++c) {
-    std::memcpy(&(sB_data[c * width]), &(B_data[indices[c] * width]), width);
+    int8_t* sB_begin = &(sB_data[c * width]);         // NOLINT
+    int8_t* B_begin = &(B_data[indices[c] * width]);  // NOLINT
+    std::memcpy(sB_begin, B_begin, width);
   }
 
   ruy::Matrix<std::int8_t> rhs;
-  ruy::MakeSimpleLayout(width, B_cols, ruy::Order::kColMajor,
+  ruy::MakeSimpleLayout(width, indices.size(), ruy::Order::kColMajor,
                         rhs.mutable_layout());
   rhs.set_data(selected_B.data<int8_t>());
 
