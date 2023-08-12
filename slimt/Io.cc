@@ -156,7 +156,14 @@ std::vector<io::Item> loadItems(void* current) {
     if (item.type == Type::ig8) {
       // since Embedding layer quantized weights need to be dequantised, we
       // have a special case for items containing the name "Wemb"
-      if (item.name.find("Wemb") != std::string::npos) {  // NOLINT
+      if (item.name == "Wemb_QuantMultA") {
+        auto* read_addr = reinterpret_cast<float*>(ptr);
+        Aligned aligned(64, sizeof(float));
+        auto* write_addr = reinterpret_cast<float*>(aligned.data());
+        *write_addr = *read_addr;
+        item.type = Type::f32;
+        set_item(item, std::move(aligned));
+      } else if (item.name == "Wemb") {  // NOLINT
         size_t num_elements = item.shape.elements();
         // At the end of items is the quantization multiplier.So we do some
         // pointer arithmetic to move ahead of the elements to extract the
@@ -178,31 +185,27 @@ std::vector<io::Item> loadItems(void* current) {
 
         size_t rows = item.shape.dim(-2);
         size_t cols = item.shape.dim(-1);
-        if (item.name == "Wemb_QuantMultA") {
-          // Commented out, should not happen.
-          // std::cerr << "[SCREAM] Why is " << item.name
-          //           << " entering this block?\n";
-        }
-        if (rows != 1 && cols != 1) {  // HACK. FIXME(@jerinphilip).
-          embedding_processed.name = "Wemb_intgemm8";
-          embedding_processed.shape = Shape({cols, rows});
-          embedding_processed.type = Type::i8;
-          size_t prepared_size =
-              embedding_processed.shape.elements() * sizeof(int8_t) +
-              sizeof(float);
-          Aligned aligned(/*alignment=*/64, prepared_size);
-          auto* prepared = reinterpret_cast<int8_t*>(aligned.data());
-          i8::PrepareBTransposed<i8::kBi8xi8>(
-              weights, prepared, quantization_multiplier, cols, rows);
+        assert((rows * cols) % 8 == 0);
 
-          // Save quantization multiplier.
-          auto* quantization_multiplier_addr =
-              reinterpret_cast<float*>(prepared + (rows * cols));
-          *quantization_multiplier_addr = quantization_multiplier;
+        // PrepareB and write.
+        embedding_processed.name = "Wemb_intgemm8";
+        embedding_processed.shape = Shape({cols, rows});
+        embedding_processed.type = Type::i8;
+        size_t prepared_size =
+            embedding_processed.shape.elements() * sizeof(int8_t) +
+            sizeof(float);
+        Aligned embedding_aligned(/*alignment=*/64, prepared_size);
+        auto* prepared = reinterpret_cast<int8_t*>(embedding_aligned.data());
+        i8::PrepareBTransposed<i8::kBi8xi8>(
+            weights, prepared, quantization_multiplier, cols, rows);
 
-          // SLIMT_TRACE(embedding_processed.shape);
-          set_item(embedding_processed, std::move(aligned));
-        }
+        // Save quantization multiplier.
+        auto* embedding_quantization_multiplier_addr =
+            reinterpret_cast<float*>(prepared + (rows * cols));
+        *embedding_quantization_multiplier_addr = quantization_multiplier;
+
+        // SLIMT_TRACE(embedding_processed.shape);
+        set_item(embedding_processed, std::move(embedding_aligned));
       } else {
         // The matrix has to be processed to the format expected by intgemm.
         size_t rows = item.shape.dim(-2);
