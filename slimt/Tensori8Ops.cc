@@ -1,5 +1,7 @@
 #include "slimt/Tensori8Ops.hh"
 
+#include <cassert>
+
 #include "slimt/Tensor.hh"
 
 namespace slimt {

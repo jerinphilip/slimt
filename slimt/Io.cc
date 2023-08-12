@@ -6,13 +6,9 @@
 #include <iostream>
 #include <vector>
 
-#ifdef __SSE__
-#include "3rd-party/intgemm/intgemm/intgemm.h"
-#else
-#endif
-
 #include "slimt/Tensor.hh"
 #include "slimt/TensorOps.hh"
+#include "slimt/Tensori8Ops.hh"
 #include "slimt/Utils.hh"
 
 namespace slimt::io {
@@ -196,8 +192,8 @@ std::vector<io::Item> loadItems(void* current) {
               sizeof(float);
           Aligned aligned(/*alignment=*/64, prepared_size);
           auto* prepared = reinterpret_cast<int8_t*>(aligned.data());
-          intgemm::Int8::PrepareBTransposed(
-              weights, prepared, quantization_multiplier, cols, rows);
+          PrepareBTransposed(weights, prepared, quantization_multiplier, cols,
+                             rows);
 
           // Save quantization multiplier.
           auto* quantization_multiplier_addr =
@@ -216,7 +212,7 @@ std::vector<io::Item> loadItems(void* current) {
         Aligned aligned(/*alignment=*/64, rows * cols + sizeof(float));
 
         auto* output = reinterpret_cast<int8_t*>(aligned.data());
-        intgemm::Int8::PrepareBQuantizedTransposed(input, output, rows, cols);
+        ::slimt::PrepareBQuantizedTransposed(input, output, rows, cols);
 
         // Set b_quant at end.
         auto* output_end = reinterpret_cast<float*>(output + rows * cols);

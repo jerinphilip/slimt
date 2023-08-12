@@ -15,12 +15,13 @@ find_package(BLAS)
 set(SLIMT_EXTRA_COMPILE_OPTIONS -Wall -Wpedantic -Wextra -Wno-unknown-pragmas
                                 -Werror)
 
-if(FALSE)
+option(USE_INTGEMM "Use intgemm" ON)
+if(USE_INTGEMM)
   set(SLIMT_EXTERNAL_LIBS Sentencepiece::Sentencepiece intgemm BLAS::BLAS)
   set(SLIMT_EXTRA_COMPILE_OPTIONS ${SLIMT_EXTRA_COMPILE_OPTIONS} -march=native)
-else(FALSE)
+else(USE_INTGEMM)
   set(SLIMT_EXTERNAL_LIBS Sentencepiece::Sentencepiece ruy)
-endif(FALSE)
+endif(USE_INTGEMM)
 
 # cmake-format: off
 set(CMAKE_CXX_FLAGS_PROFILE           "${CMAKE_CXX_FLAGS_RELEASE} -pg" CACHE STRING "Flags used by the C++ compiler during profile builds." FORCE)
