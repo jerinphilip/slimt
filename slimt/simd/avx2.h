@@ -152,25 +152,26 @@ inline v8sf exp256_ps(v8sf x) {
 
 namespace slimt {
 
-struct F32x8 {
+template <>
+struct VDatum<VExt::w8> {
  public:
   using Scalar = float;
   using Register = __m256;
   static constexpr size_t kWidth = 8;
-  F32x8() = default;
+  VDatum() = default;
   // NOLINTBEGIN
   // clang-tidy complains explicit constructure, but this is intended to
-  // interchange comfortably between float, Register and F32x8.
-  F32x8(const Register& value) : register_(value) {}
+  // interchange comfortably between float, Register and VDatum<VExt>.
+  VDatum(const Register& value) : register_(value) {}
 
   // Register _mm_set1_ps(float) copies value into all slots
-  F32x8(const float& value) : register_(_mm256_set1_ps(value)) {}
+  VDatum(const float& value) : register_(_mm256_set1_ps(value)) {}
 
   operator const Register&() const { return register_; }
   operator Register&() { return register_; }
   // NOLINTEND
 
-  F32x8& operator=(const float& value) {
+  VDatum& operator=(const float& value) {
     register_ = _mm256_set1_ps(value);
     return *this;
   }
@@ -186,41 +187,42 @@ struct F32x8 {
   Register register_;
 };
 
-template <class Type>
+template <enum VExt>
 struct Ops;
 
 template <>
-struct Ops<F32x8> {
-  using Scalar = F32x8::Scalar;
-  using Register = F32x8::Register;
+struct Ops<VExt::w8> {
+  using Datum = VDatum<VExt::w8>;
+  using Scalar = Datum::Scalar;
+  using Register = Datum::Register;
 
   // clang-format off
-  static F32x8 exp(const F32x8& x)                     { return exp256_ps(x); }
-  static F32x8 relu(const F32x8& x)                    { return max(0.0F, x); }
+  static Datum exp(const Datum& x)                     { return exp256_ps(x); }
+  static Datum relu(const Datum& x)                    { return max(0.0F, x); }
 
-  static F32x8 max(const F32x8& lhs, const F32x8& rhs) { return _mm256_max_ps(lhs, rhs); }
-  static F32x8 sub(const F32x8& lhs, const F32x8& rhs) { return _mm256_sub_ps(lhs, rhs); }
-  static F32x8 add(const F32x8& lhs, const F32x8& rhs) { return _mm256_add_ps(lhs, rhs); }
-  static F32x8 mul(const F32x8& lhs, const F32x8& rhs) { return _mm256_mul_ps(lhs, rhs); }
-  static F32x8 div(const F32x8& lhs, const F32x8& rhs) { return _mm256_div_ps(lhs, rhs); }
+  static Datum max(const Datum& lhs, const Datum& rhs) { return _mm256_max_ps(lhs, rhs); }
+  static Datum sub(const Datum& lhs, const Datum& rhs) { return _mm256_sub_ps(lhs, rhs); }
+  static Datum add(const Datum& lhs, const Datum& rhs) { return _mm256_add_ps(lhs, rhs); }
+  static Datum mul(const Datum& lhs, const Datum& rhs) { return _mm256_mul_ps(lhs, rhs); }
+  static Datum div(const Datum& lhs, const Datum& rhs) { return _mm256_div_ps(lhs, rhs); }
   // clang-format on
 
-  static F32x8 sigmoid(const F32x8& x) {
-    F32x8 e = exp(x);
+  static Datum sigmoid(const Datum& x) {
+    Datum e = exp(x);
     return div(e, add(1.0F, e));
   }
 
   struct Reduce {
-    static Scalar max(const F32x8& x) {
+    static Scalar max(const Datum& x) {
       Scalar accumulator = x[0];
-      for (size_t i = 1; i < F32x8::kWidth; ++i) {
+      for (size_t i = 1; i < Datum::kWidth; ++i) {
         accumulator = accumulator > x[i] ? accumulator : x[i];
       }
       return accumulator;
     }
-    static Scalar sum(const F32x8& x) {
+    static Scalar sum(const Datum& x) {
       Scalar accumulator = x[0];
-      for (size_t i = 1; i < F32x8::kWidth; ++i) {
+      for (size_t i = 1; i < Datum::kWidth; ++i) {
         accumulator += x[i];
       }
       return accumulator;
