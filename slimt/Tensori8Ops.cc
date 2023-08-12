@@ -399,7 +399,7 @@ Tensor affine_with_select<i8xi8::kRuy>(Tensor& x, Tensor& W, Tensor& b,
   // SelectColumnsB, but inlined?
   // B_prepared is expected to be col-major, for our implementation via ruy. If
   // col-major we can memcpy the respective column entries as they're
-  // sequential. There are width=rows entries.
+  // sequential. There are width = rows entries.
   auto B_data = B.data<int8_t>();            // NOLINT
   auto sB_data = selected_B.data<int8_t>();  // NOLINT
   for (size_t c = 0; c < indices.size(); ++c) {
@@ -424,12 +424,13 @@ Tensor affine_with_select<i8xi8::kRuy>(Tensor& x, Tensor& W, Tensor& b,
 
   // Multiply C = A select(B);
   // When Dst is int32, mul_params is unused.
+  size_t selected_B_cols = selected_B.dim(-1);  // NOLINT
   ruy::Matrix<std::int32_t> dst;
-  ruy::MakeSimpleLayout(A_rows, B_cols, ruy::Order::kRowMajor,
+  ruy::MakeSimpleLayout(A_rows, selected_B_cols, ruy::Order::kRowMajor,
                         dst.mutable_layout());
 
   Shape out_shape = x.shape();
-  out_shape.set_dim(-1, B_cols);
+  out_shape.set_dim(-1, selected_B_cols);
 
   Tensor AB(Type::i32, out_shape, name + "_out");  // NOLINT
   dst.set_data(AB.data<int32_t>());
@@ -441,7 +442,7 @@ Tensor affine_with_select<i8xi8::kRuy>(Tensor& x, Tensor& W, Tensor& b,
   Tensor y(Type::f32, out_shape, name + "_out");  // NOLINT
   float unquant_multiplier = 1.0F / (a_quant * b_quant);
   detail::unquantizeAddBias(AB.data<int32_t>(), prepared_bias.data<float>(),
-                            unquant_multiplier, A_rows, B_cols,
+                            unquant_multiplier, A_rows, selected_B_cols,
                             y.data<float>());
   return y;
 }
