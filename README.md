@@ -41,6 +41,13 @@ relevant) is a work-in-progress. Contributions are welcome and appreciated.
 
 ## Getting started
 
+Clone with submodules.
+
+```
+git clone --recursive https://github.com/jerinphilip/slimt.git
+```
+
+Configure and build.
 
 ```bash
 # Configure
