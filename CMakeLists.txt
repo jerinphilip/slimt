@@ -32,8 +32,9 @@ if(WITH_BLAS)
     target_link_libraries(apple_accelerate INTERFACE "-framework Accelerate")
     # https://stackoverflow.com/a/58304566
     target_include_directories(
-	    apple_accelerate INTERFACE
-      "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks/Accelerate.framework/Frameworks/vecLib.framework/Headers"
+      apple_accelerate
+      INTERFACE
+        "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks/Accelerate.framework/Frameworks/vecLib.framework/Headers"
     )
     add_library(AppleLibs::accelerate ALIAS apple_accelerate)
     set(SLIMT_EXTERNAL_LIBS ${SLIMT_EXTERNAL_LIBS} AppleLibs::accelerate)
