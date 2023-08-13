@@ -38,14 +38,11 @@ jobs:
         fail-fast: false
         matrix:
           include:
-            - name: "linux"
-              tag: "ubuntu"
+            - name: "ubuntu"
               os: "ubuntu-latest"
             - name: "macos"
-              tag: "macos"
               os: "macos-latest"
-            - name: "x-android"
-              tag: "android"
+            - name: "android"
               os: "ubuntu-latest"
 
       runs-on: ${{ matrix.os }}
