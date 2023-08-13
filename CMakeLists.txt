@@ -29,10 +29,10 @@ if(WITH_BLAS)
     # may need to install Xcode command line tools if you don't have them
     # already (https://developer.apple.com/xcode/features/)
     add_library(apple_accelerate INTERFACE)
-    target_link_libraries(apple_accelerate "-framework Accelerate")
+    target_link_libraries(apple_accelerate INTERFACE "-framework Accelerate")
     # https://stackoverflow.com/a/58304566
     target_include_directories(
-      apple_accelerate
+	    apple_accelerate INTERFACE
       "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks/Accelerate.framework/Frameworks/vecLib.framework/Headers"
     )
     add_library(AppleLibs::accelerate ALIAS apple_accelerate)
