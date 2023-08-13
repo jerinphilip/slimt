@@ -1,4 +1,4 @@
-#include "slimt/Tensori8Ops.hh"
+#include "slimt/QMM.hh"
 
 #include <cassert>
 #include <cmath>
