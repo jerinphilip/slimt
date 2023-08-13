@@ -4,8 +4,8 @@
 #include <cmath>
 #include <iostream>
 
+#include "slimt/QMM.hh"
 #include "slimt/TensorOps.hh"
-#include "slimt/Tensori8Ops.hh"
 #include "slimt/Utils.hh"
 
 namespace slimt {

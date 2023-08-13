@@ -1,17 +1,16 @@
 #include "slimt/Io.hh"
 
-#include <inttypes.h>
-
 #include <cassert>
+#include <cinttypes>
 #include <cmath>
 #include <cstdint>
 #include <cstdio>
 #include <iostream>
 #include <vector>
 
+#include "slimt/QMM.hh"
 #include "slimt/Tensor.hh"
 #include "slimt/TensorOps.hh"
-#include "slimt/Tensori8Ops.hh"
 #include "slimt/Utils.hh"
 
 namespace slimt::io {
