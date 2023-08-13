@@ -137,7 +137,7 @@ Tensor join_heads(Tensor &x) {
 }
 
 Tensor affine(Affine &parameters, Tensor &x, const std::string &name = "") {
-  Tensor y = i8::affine<i8::kBi8xi8>(                  //
+  Tensor y = qmm::affine(                              //
       x,                                               //
       parameters.W, parameters.b,                      //
       parameters.quant.item<float>(),                  //
@@ -150,7 +150,7 @@ Tensor affine(Affine &parameters, Tensor &x, const std::string &name = "") {
 Tensor affine_with_select(Affine &parameters, Tensor &x,
                           const std::vector<uint32_t> &indices,
                           const std::string &name = "") {
-  Tensor y = i8::affine_with_select<i8::kBi8xi8>(      //
+  Tensor y = qmm::affine_with_select(                  //
       x,                                               //
       parameters.W, parameters.b,                      //
       parameters.quant.item<float>(),                  //
@@ -162,7 +162,7 @@ Tensor affine_with_select(Affine &parameters, Tensor &x,
 }
 
 Tensor linear(Linear &parameters, Tensor &x, const std::string &name = "") {
-  Tensor y = i8::dot<i8::kBi8xi8>(                     //
+  Tensor y = qmm::dot(                                 //
       x, parameters.W,                                 //
       parameters.quant.item<float>(),                  //
       retrieve_quantization_multiplier(parameters.W),  //

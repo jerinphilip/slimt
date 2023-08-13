@@ -613,8 +613,8 @@ void AffineIntgemm() {
 
     // Compute from the intgemm_affine function, used in the library.
     // This ensures what we checked in there is consistent with what we expect.
-    Tensor y_whole = i8::affine<i8::kBi8xi8>(actual.A, actual.B, actual.bias,
-                                             quant.a, quant.b, "y_whole");
+    Tensor y_whole = qmm::affine(actual.A, actual.B, actual.bias, quant.a,
+                                 quant.b, "y_whole");
     SLIMT_TRACE(y_whole.shape());
     SLIMT_TRACE(y_expected.shape());
     SLIMT_TRACE(mse(y_whole, y_expected));
