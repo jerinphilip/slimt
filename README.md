@@ -12,7 +12,7 @@ library with focus on machine translation, all the bells and whistles that come
 with it are not necessary to run inference on client-machines (e.g: autograd,
 multiple sequence-to-sequence architecture support, beam-search). For some use
 cases like an input-method engine doing translation (see
-[lemonade](https://github.com/jerinphilip/lemonade)). Single-thread operation
+[lemonade](https://github.com/jerinphilip/lemonade)) - single-thread operation
 existing along with other processes on the system suffices. This is the
 motivation for this transplant repository. There's not much novel here except
 easiness to wield. This repository is simply just the _tiny11_ part of marian.
@@ -30,10 +30,9 @@ The large-list of dependencies from bergamot-translator have currently been
 reduced to:
 
 * For `int8_t` matrix-multiply [intgemm](https://github.com/kpu/intgemm) (`x86_64`) or
-  [ruy](https://github.com/google/ruy) (`aarch64`, planned).
+  [ruy](https://github.com/google/ruy) (`aarch64`).
 * For vocabulary - [sentencepiece](https://github.com/browsermt/sentencepiece). 
 * For `sgemm` - Whatever BLAS provider is found via CMake. 
-* OpenMP is used in `layer_norm`, and is pending removal.
 * CLI11 (only a dependency for cmdline) 
 
 Source code is made public where basic functionality (text-translation) works.
