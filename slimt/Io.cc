@@ -1,12 +1,12 @@
 #include "slimt/Io.hh"
 
+#include <inttypes.h>
+
 #include <cassert>
 #include <cmath>
 #include <cstdint>
 #include <cstdio>
 #include <iostream>
-#include <inttypes.h>
-
 #include <vector>
 
 #include "slimt/Tensor.hh"
@@ -109,10 +109,9 @@ void set_item(Item& item, Aligned&& aligned) {
 std::vector<io::Item> loadItems(void* current) {
   uint64_t binary_file_version = *emit<uint64_t>(current);
   if (binary_file_version != kBinaryFileVersion) {
-	  std::cerr << "Binary file versions do not match: " ;
-	  std::cerr << binary_file_version << "(file) != " ;
-	  std::cerr << kBinaryFileVersion <<
-		  " (expected)";
+    std::cerr << "Binary file versions do not match: ";
+    std::cerr << binary_file_version << "(file) != ";
+    std::cerr << kBinaryFileVersion << " (expected)";
 
     std::abort();
   }

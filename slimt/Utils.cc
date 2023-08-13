@@ -75,10 +75,10 @@ std::ostream &print_ndarray(std::ostream &out, const Scalar *data,
 }
 
 // Explicit unrolls.
-#define SLIMT_PRINT_NDARRAY_EXPLICIT(ScalarType)   \
-  template std::ostream &print_ndarray(            \
-      std::ostream &out, const ScalarType *data,   \
-      const std::vector<uint64_t> &dims)
+#define SLIMT_PRINT_NDARRAY_EXPLICIT(ScalarType)               \
+  template std::ostream &print_ndarray(std::ostream &out,      \
+                                       const ScalarType *data, \
+                                       const std::vector<uint64_t> &dims)
 
 SLIMT_PRINT_NDARRAY_EXPLICIT(float);
 SLIMT_PRINT_NDARRAY_EXPLICIT(int);
