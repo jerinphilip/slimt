@@ -36,7 +36,16 @@ jobs:
       name: "build-test"
       strategy:
         matrix:
-          os: ["ubuntu-latest"]
+          include:
+            - name: "linux"
+              tag: "ubuntu"
+              os: "ubuntu-latest"
+            - name: "macos"
+              tag: "macos"
+              os: "macos-latest"
+            - name: "x-android"
+              tag: "android"
+              os: "ubuntu-latest"
 
       runs-on: ${{ matrix.os }}
 
@@ -48,13 +57,12 @@ jobs:
 
         - name: Install dependencies
           run: |
-            sudo apt-get update
-            sudo apt-get install -y build-essential cmake
+            bash scripts/ci/${{ matrix.tag }}/01-setup.sh
 
         - name: Build
           run:
-            bash scripts/ci/build.sh
+            bash scripts/ci/${{ matrix.tag }}/02-build.sh
 
         - name: Test
           run:
-            bash scripts/ci/test.sh
+            bash scripts/ci/${{ matrix.tag }}/03-test.sh
