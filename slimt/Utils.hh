@@ -71,7 +71,7 @@ std::string fmt(Printable &printable) {
 
 template <class Scalar>
 std::ostream &print_ndarray(std::ostream &out, const Scalar *data,
-                            const std::vector<size_t> &dims);
+                            const std::vector<uint64_t> &dims);
 
 template <class Scalar>
 Tensor tensor_from_file(const std::string &fpath, const Shape &shape,

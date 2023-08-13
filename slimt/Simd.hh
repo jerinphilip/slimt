@@ -43,9 +43,9 @@ using F32x4 = VDatum<VExt::w4>;
 }
 #endif
 
-#if defined(__ARM_NEON) || defined(__ARM_NEON__)
-#include "slimt/simd/neon.h"
-#endif
+// #if defined(__ARM_NEON) || defined(__ARM_NEON__)
+// #include "slimt/simd/neon.h"
+// #endif
 
 namespace slimt::vext {
 

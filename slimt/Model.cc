@@ -613,14 +613,14 @@ void Model::register_parameters(const std::string &prefix,
   decoder_.register_parameters(prefix, parameters);
 }
 
-EncoderLayer::EncoderLayer(uint64_t depth, uint64_t ffn_count)
+EncoderLayer::EncoderLayer(size_t depth, size_t ffn_count)
     : depth_(depth), attention_("self") {
   for (size_t i = 0; i < ffn_count; i++) {
     ffn_.emplace_back(i + 1);
   }
 }
 
-DecoderLayer::DecoderLayer(uint64_t depth, size_t ffn_count)
+DecoderLayer::DecoderLayer(size_t depth, size_t ffn_count)
     : depth_(depth), attention_("context") {
   for (size_t i = 0; i < ffn_count; i++) {
     ffn_.emplace_back(i + 1);

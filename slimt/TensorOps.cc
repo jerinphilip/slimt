@@ -1,6 +1,6 @@
 #include "slimt/TensorOps.hh"
 
-#ifndef __ANDROID__
+#ifdef HAS_BLAS
 #include <cblas.h>
 #else
 #include "3rd-party/ruy/ruy/ruy.h"
@@ -323,7 +323,7 @@ void matrix_multiply(              //
     float* C, size_t ldc           //
 );
 
-#ifndef __ANDROID__
+#ifdef HAS_BLAS
 template <>
 void matrix_multiply<Provider::BLAS>(  //
     bool trans_a, bool trans_b,        //

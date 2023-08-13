@@ -3,7 +3,10 @@
 #include <cassert>
 #include <cmath>
 #include <cstdint>
+#include <cstdio>
 #include <iostream>
+#include <inttypes.h>
+
 #include <vector>
 
 #include "slimt/Tensor.hh"
@@ -106,9 +109,11 @@ void set_item(Item& item, Aligned&& aligned) {
 std::vector<io::Item> loadItems(void* current) {
   uint64_t binary_file_version = *emit<uint64_t>(current);
   if (binary_file_version != kBinaryFileVersion) {
-    fprintf(stderr,
-            "Binary file versions do not match: %zu (file) != %zu (expected)",
-            binary_file_version, kBinaryFileVersion);
+	  std::cerr << "Binary file versions do not match: " ;
+	  std::cerr << binary_file_version << "(file) != " ;
+	  std::cerr << kBinaryFileVersion <<
+		  " (expected)";
+
     std::abort();
   }
 
@@ -276,20 +281,20 @@ std::ostream& operator<<(std::ostream& out, const Item& item) {
 MmapFile::MmapFile(const std::string& filepath) {
   fd_ = open(filepath.c_str(), O_RDONLY);
   if (fd_ == -1) {
-    throw std::runtime_error("Failed to open file");
+    throw std::runtime_error("Failed to open file: " + filepath);
   }
 
   struct stat st;
   if (fstat(fd_, &st) == -1) {
     close(fd_);
-    throw std::runtime_error("Failed to get file size");
+    throw std::runtime_error("Failed to get file size: " + filepath);
   }
   size_ = st.st_size;
 
   data_ = mmap(nullptr, size_, PROT_READ, MAP_PRIVATE, fd_, 0);
   if (data_ == MAP_FAILED) {  // NOLINT
     close(fd_);
-    throw std::runtime_error("Failed to mmap file");
+    throw std::runtime_error("Failed to mmap file: " + filepath);
   }
 }
 
