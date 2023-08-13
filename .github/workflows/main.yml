@@ -55,12 +55,12 @@ jobs:
 
         - name: Install dependencies
           run: |
-            bash scripts/ci/${{ matrix.tag }}/01-setup.sh
+            bash scripts/ci/${{ matrix.name }}/01-setup.sh
 
         - name: Build
           run:
-            bash scripts/ci/${{ matrix.tag }}/02-build.sh
+            bash scripts/ci/${{ matrix.name }}/02-build.sh
 
         - name: Test
           run:
-            bash scripts/ci/${{ matrix.tag }}/03-test.sh
+            bash scripts/ci/${{ matrix.name }}/03-test.sh
