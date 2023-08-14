@@ -1,6 +1,4 @@
 #!/bin/bash
-#
-#
 
 function cmake-configure {
   NDK=android-ndk-r23b
@@ -10,15 +8,15 @@ function cmake-configure {
 
   mkdir -p build
   pushd build
+
+  SLIMT_ARGS=(
+    -DWITH_RUY=ON
+    -DWITH_INTGEMM=OFF
+    -DWITH_BLAS=OFF
+  )
+
   OTHER_ANDROID_ARGS=(
     -DANDROID_ARM_NEON=TRUE
-  )
-  OTHER_MARIAN_ARGS=(
-    -DCMAKE_HAVE_THREADS_LIBRARY=1
-    -DCMAKE_USE_WIN32_THREADS_INIT=0
-    -DCMAKE_USE_PTHREADS_INIT=1
-    -DTHREADS_PREFER_PTHREAD_FLAG=ON
-    # -DCOMPILE_WITHOUT_EXCEPTIONS=on # Apparently this can reduce the binary size, let's see.
   )
   # Additionally list variables finally configured.
   set -x
@@ -30,11 +28,10 @@ function cmake-configure {
     -DANDROID_PLATFORM=$ANDROID_PLATFORM \
     -DANDROID_NATIVE_API_LEVEL=$MINSDKVERSION \
     -DANDROID_TOOLCHAIN_NAME=arm-linux-androideabi-4.8 \
-    -DWITH_INTGEMM=OFF \
-    -DWITH_BLAS=OFF \
     -DANDROID_STL=c++_static \
     -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_C_COMPILER_LAUNCHER=ccache \
-    "${OTHER_ANDROID_ARGS[@]}" "${OTHER_MARIAN_ARGS[@]}" \
+    "${SLIMT_ARGS[@]}" \
+    "${OTHER_ANDROID_ARGS[@]}" \
     ..
   set +x
   popd
