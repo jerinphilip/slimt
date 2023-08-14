@@ -377,6 +377,12 @@ Decoder::Sentences Decoder::decode(Tensor &encoder_out, Tensor &mask,
   return sentences;
 }
 
+void Decoder::set_start_state(size_t batch_size) {
+  for (auto &layer : decoder_) {
+    layer.set_start_state(batch_size);
+  }
+}
+
 Model::Model(Tag tag, std::vector<io::Item> &&items,
              ShortlistGenerator &&shortlist_generator)
     : tag_(tag),

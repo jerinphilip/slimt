@@ -102,6 +102,7 @@ class Decoder {
  public:
   using Words = std::vector<uint32_t>;
   using Sentences = std::vector<Words>;
+
   Decoder(size_t decoders, size_t ffn_count, Tensor &embedding,
           ShortlistGenerator &&shortlist_generator);
 
@@ -109,18 +110,15 @@ class Decoder {
 
   Decoder::Sentences decode(Tensor &encoder_out, Tensor &mask,
                             const Words &source);
+
+ private:
   Tensor step(Tensor &encoder_out, Tensor &mask, Words &previous_step);
 
   static Words greedy_sample(Tensor &logits, const Shortlist::Words &words,
                              size_t batch_size);
 
-  void set_start_state(size_t batch_size) {
-    for (auto &layer : decoder_) {
-      layer.set_start_state(batch_size);
-    }
-  }
+  void set_start_state(size_t batch_size);
 
- private:
   Tensor &embedding_;
   std::vector<DecoderLayer> decoder_;
   Affine output_;
