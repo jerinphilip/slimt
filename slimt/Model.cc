@@ -4,6 +4,7 @@
 #include <cmath>
 #include <iostream>
 
+#include "slimt/QMM.hh"
 #include "slimt/TensorOps.hh"
 #include "slimt/Utils.hh"
 
@@ -136,7 +137,7 @@ Tensor join_heads(Tensor &x) {
 }
 
 Tensor affine(Affine &parameters, Tensor &x, const std::string &name = "") {
-  Tensor y = intgemm_affine(                           //
+  Tensor y = qmm::affine(                              //
       x,                                               //
       parameters.W, parameters.b,                      //
       parameters.quant.item<float>(),                  //
@@ -149,7 +150,7 @@ Tensor affine(Affine &parameters, Tensor &x, const std::string &name = "") {
 Tensor affine_with_select(Affine &parameters, Tensor &x,
                           const std::vector<uint32_t> &indices,
                           const std::string &name = "") {
-  Tensor y = intgemm_affine_with_select(               //
+  Tensor y = qmm::affine_with_select(                  //
       x,                                               //
       parameters.W, parameters.b,                      //
       parameters.quant.item<float>(),                  //
@@ -161,7 +162,7 @@ Tensor affine_with_select(Affine &parameters, Tensor &x,
 }
 
 Tensor linear(Linear &parameters, Tensor &x, const std::string &name = "") {
-  Tensor y = intgemm_dot(                              //
+  Tensor y = qmm::dot(                                 //
       x, parameters.W,                                 //
       parameters.quant.item<float>(),                  //
       retrieve_quantization_multiplier(parameters.W),  //
@@ -391,6 +392,7 @@ Model::Model(Tag tag, std::vector<io::Item> &&items,
   }
 
   load_parameters_from_items();
+  (void)tag_;  // Apparently tag not used. This should fix.
 }
 
 void SSRU::set_start_state(size_t batch_size) {
@@ -611,14 +613,14 @@ void Model::register_parameters(const std::string &prefix,
   decoder_.register_parameters(prefix, parameters);
 }
 
-EncoderLayer::EncoderLayer(uint64_t depth, uint64_t ffn_count)
+EncoderLayer::EncoderLayer(size_t depth, size_t ffn_count)
     : depth_(depth), attention_("self") {
   for (size_t i = 0; i < ffn_count; i++) {
     ffn_.emplace_back(i + 1);
   }
 }
 
-DecoderLayer::DecoderLayer(uint64_t depth, size_t ffn_count)
+DecoderLayer::DecoderLayer(size_t depth, size_t ffn_count)
     : depth_(depth), attention_("context") {
   for (size_t i = 0; i < ffn_count; i++) {
     ffn_.emplace_back(i + 1);

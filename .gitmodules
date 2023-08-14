@@ -4,3 +4,6 @@
 [submodule "3rd-party/intgemm"]
 	path = 3rd-party/intgemm
 	url = https://github.com/kpu/intgemm
+[submodule "3rd-party/ruy"]
+	path = 3rd-party/ruy
+	url = https://github.com/google/ruy

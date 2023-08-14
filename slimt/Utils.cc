@@ -19,13 +19,13 @@ template <>             struct Emit <int8_t> { using Type = int; };
 
 template <class Scalar>
 std::ostream &print_ndarray(std::ostream &out, const Scalar *data,
-                            const std::vector<size_t> &dims) {
+                            const std::vector<uint64_t> &dims) {
   // Enable printing by recursing on dimensions.
   using EmitT = typename Emit<Scalar>::Type;
   constexpr size_t kTruncate = 4;
 
-  std::function<size_t(size_t, size_t)> recurse;
-  recurse = [&out, &dims, &recurse, data](size_t d, size_t offset) {
+  std::function<uint64_t(uint64_t, uint64_t)> recurse;
+  recurse = [&out, &dims, &recurse, data](uint64_t d, uint64_t offset) {
     // Base case. Print the vector.
     if (d + 1 == dims.size()) {
       out << "[";
@@ -33,16 +33,16 @@ std::ostream &print_ndarray(std::ostream &out, const Scalar *data,
       bool truncate = dims[d] > 2 * kTruncate;
       if (truncate) {
         out << static_cast<EmitT>(data[offset]);
-        for (size_t j = offset + 1; j < offset + kTruncate; j++) {
+        for (uint64_t j = offset + 1; j < offset + kTruncate; j++) {
           out << ", " << static_cast<EmitT>(data[j]);
         }
         out << ", ... ";
-        for (size_t j = offset + dims[d] - kTruncate; j < offset + dims[d];
+        for (uint64_t j = offset + dims[d] - kTruncate; j < offset + dims[d];
              j++) {
           out << ", " << static_cast<EmitT>(data[j]);
         }
       } else {
-        for (size_t j = offset; j < offset + dims[d]; j++) {
+        for (uint64_t j = offset; j < offset + dims[d]; j++) {
           if (j != offset) {
             out << ", ";
           }
@@ -55,7 +55,7 @@ std::ostream &print_ndarray(std::ostream &out, const Scalar *data,
     }
 
     out << "[";
-    for (size_t j = 0; j < dims[d]; j++) {
+    for (uint64_t j = 0; j < dims[d]; j++) {
       if (j != 0) {
         out << ",";
         if (d + 2 == dims.size()) {
@@ -74,13 +74,11 @@ std::ostream &print_ndarray(std::ostream &out, const Scalar *data,
   return out;
 }
 
-// NOLINTBEGIN
 // Explicit unrolls.
-#define SLIMT_PRINT_NDARRAY_EXPLICIT(ScalarType)    \
-  template std::ostream &print_ndarray<ScalarType>( \
-      std::ostream & out, const ScalarType *data,   \
-      const std::vector<size_t> &dims)
-// NOLINTEND
+#define SLIMT_PRINT_NDARRAY_EXPLICIT(ScalarType)               \
+  template std::ostream &print_ndarray(std::ostream &out,      \
+                                       const ScalarType *data, \
+                                       const std::vector<uint64_t> &dims)
 
 SLIMT_PRINT_NDARRAY_EXPLICIT(float);
 SLIMT_PRINT_NDARRAY_EXPLICIT(int);

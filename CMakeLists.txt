@@ -9,11 +9,48 @@ option(WITH_ASAN "Enable AddressSanitizer in builds" OFF)
 option(WITH_TESTS "Enable building tests (requires a few extra libraries)" OFF)
 
 add_subdirectory(3rd-party)
-find_package(BLAS REQUIRED)
 
-set(SLIMT_EXTRA_COMPILE_OPTIONS -Wall -Wpedantic -Wextra -Wno-unknown-pragmas
-                                -Werror -march=native)
-set(SLIMT_EXTERNAL_LIBS Sentencepiece::Sentencepiece intgemm BLAS::BLAS)
+set(SLIMT_COMPILE_OPTIONS -Wall -Wpedantic -Wextra -Wno-unknown-pragmas -Werror)
+set(SLIMT_COMPILE_DEFINITIONS "")
+
+option(WITH_INTGEMM "Use intgemm" ON)
+option(WITH_RUY "Use ruy" OFF)
+option(WITH_BLAS "Use BLAS. Otherwise moves to ruy" ON)
+
+set(SLIMT_EXTERNAL_LIBS Sentencepiece::Sentencepiece)
+
+if(WITH_BLAS)
+  find_package(BLAS)
+  set(SLIMT_EXTERNAL_LIBS ${SLIMT_EXTERNAL_LIBS} BLAS::BLAS)
+  set(SLIMT_COMPILE_DEFINITIONS ${SLIMT_COMPILE_DEFINITIONS} HAS_BLAS)
+  if(APPLE)
+    set(BLAS_VENDOR "Accelerate")
+    # see https://developer.apple.com/documentation/accelerate for more info you
+    # may need to install Xcode command line tools if you don't have them
+    # already (https://developer.apple.com/xcode/features/)
+    add_library(apple_accelerate INTERFACE)
+    target_link_libraries(apple_accelerate INTERFACE "-framework Accelerate")
+    # https://stackoverflow.com/a/58304566
+    target_include_directories(
+      apple_accelerate
+      INTERFACE
+        "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks/Accelerate.framework/Frameworks/vecLib.framework/Headers"
+    )
+    add_library(AppleLibs::accelerate ALIAS apple_accelerate)
+    set(SLIMT_EXTERNAL_LIBS ${SLIMT_EXTERNAL_LIBS} AppleLibs::accelerate)
+  endif(APPLE)
+endif(WITH_BLAS)
+
+if(WITH_INTGEMM)
+  set(SLIMT_EXTERNAL_LIBS ${SLIMT_EXTERNAL_LIBS} intgemm)
+  set(SLIMT_COMPILE_DEFINITIONS ${SLIMT_COMPILE_DEFINITIONS} HAS_INTGEMM)
+  set(SLIMT_COMPILE_OPTIONS ${SLIMT_COMPILE_OPTIONS} -march=native)
+endif(WITH_INTGEMM)
+
+if(WITH_RUY)
+  set(SLIMT_COMPILE_DEFINITIONS ${SLIMT_COMPILE_DEFINITIONS} HAS_RUY)
+  set(SLIMT_EXTERNAL_LIBS ${SLIMT_EXTERNAL_LIBS} ruy)
+endif(WITH_RUY)
 
 # cmake-format: off
 set(CMAKE_CXX_FLAGS_PROFILE           "${CMAKE_CXX_FLAGS_RELEASE} -pg" CACHE STRING "Flags used by the C++ compiler during profile builds." FORCE)

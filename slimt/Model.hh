@@ -71,7 +71,7 @@ class FFN {
 
 class EncoderLayer {
  public:
-  explicit EncoderLayer(size_t depth, size_t ffn_count);
+  EncoderLayer(size_t depth, size_t ffn_count);
   void register_parameters(const std::string &prefix, ParameterMap &parameters);
   std::tuple<Tensor, Tensor> forward(Tensor &x, Tensor &mask);
 

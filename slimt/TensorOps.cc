@@ -1,29 +1,17 @@
-
 #include "slimt/TensorOps.hh"
 
+#ifdef HAS_BLAS
 #include <cblas.h>
+#else
+#include "3rd-party/ruy/ruy/ruy.h"
+#endif
 
 #include <cassert>
 #include <cmath>
 #include <iostream>
 
-#include "3rd-party/intgemm/intgemm/intgemm.h"
 #include "slimt/Simd.hh"
 #include "slimt/Utils.hh"
-
-#if defined(_MSC_VER)
-#define MARIAN_FFAST_MATH_BEGIN __pragma(float_control(precise, off, push))
-#define MARIAN_FFAST_MATH_END __pragma(float_control(pop))
-#elif defined(__clang__)
-#define MARIAN_FFAST_MATH_BEGIN _Pragma("float_control(precise, off, push)")
-#define MARIAN_FFAST_MATH_END _Pragma("float_control(pop)")
-#elif defined(__GNUC__)
-// Also available as __attribute__((optimize("-ffast-math"))) but done as
-// pragmas for consistency
-#define MARIAN_FFAST_MATH_BEGIN \
-  _Pragma("GCC push_options") _Pragma("GCC optimize(\"-ffast-math\")")
-#define MARIAN_FFAST_MATH_END _Pragma("GCC pop_options")
-#endif
 
 namespace slimt {
 
@@ -123,112 +111,80 @@ void transpose_3120(const float* in, size_t dim3, size_t dim2, size_t dim1,
   }
 }
 
-template <class Element>
-void vectorized_add(const float* a, const float* b, size_t size, float* c) {
-  const auto* va = reinterpret_cast<const Element*>(a);
-  const auto* vb = reinterpret_cast<const Element*>(b);
-  size_t steps = size / Element::kWidth;
-
-  auto* vc = reinterpret_cast<Element*>(c);
-  for (size_t i = 0; i < steps; i++) {
-    vc[i] = Ops<Element>::add(va[i], vb[i]);
-  }
-}
-
 void add(const float* a, const float* b, size_t size, float* c) {
-  if (size % F32x8::kWidth == 0) {
-    vectorized_add<F32x8>(a, b, size, c);
+#ifdef VEXT_W8_AVAILABLE
+  if (size % VDatum<VExt::w8>::kWidth == 0) {
+    vext::add<VExt::w8>(a, b, size, c);
     return;
   }
+#endif
 
+#ifdef VEXT_W4_AVAILABLE
   if (size % F32x4::kWidth == 0) {
-    vectorized_add<F32x4>(a, b, size, c);
+    vext::add<VExt::w4>(a, b, size, c);
     return;
   }
+#endif
 
   for (size_t i = 0; i < size; i++) {
     c[i] = a[i] + b[i];
   }
 }
 
-template <class Element>
-void vectorized_sub(const float* a, const float* b, size_t size, float* c) {
-  const auto* va = reinterpret_cast<const Element*>(a);
-  const auto* vb = reinterpret_cast<const Element*>(b);
-  size_t steps = size / Element::kWidth;
-
-  auto* vc = reinterpret_cast<Element*>(c);
-  for (size_t i = 0; i < steps; i++) {
-    vc[i] = Ops<Element>::sub(va[i], vb[i]);
-  }
-}
-
 void sub(const float* a, const float* b, size_t size, float* c) {
-  if (size % F32x8::kWidth == 0) {
-    vectorized_sub<F32x8>(a, b, size, c);
+#ifdef VEXT_W8_AVAILABLE
+  if (size % VDatum<VExt::w8>::kWidth == 0) {
+    vext::sub<VExt::w8>(a, b, size, c);
     return;
   }
+#endif
 
+#ifdef VEXT_W4_AVAILABLE
   if (size % F32x4::kWidth == 0) {
-    vectorized_sub<F32x4>(a, b, size, c);
+    vext::sub<VExt::w4>(a, b, size, c);
     return;
   }
+#endif
 
   for (size_t i = 0; i < size; i++) {
     c[i] = a[i] - b[i];
   }
 }
 
-template <class Element>
-void vectorized_relu(const float* a, size_t size, float* c) {
-  const auto* va = reinterpret_cast<const Element*>(a);
-  size_t steps = size / Element::kWidth;
-
-  auto* vc = reinterpret_cast<Element*>(c);
-  for (size_t i = 0; i < steps; i++) {
-    vc[i] = Ops<Element>::relu(va[i]);
-  }
-}
-
 void relu(const float* a, size_t size, float* c) {
-  if (size % F32x8::kWidth == 0) {
-    vectorized_relu<F32x8>(a, size, c);
+#ifdef VEXT_W8_AVAILABLE
+  if (size % VDatum<VExt::w8>::kWidth == 0) {
+    vext::relu<VExt::w8>(a, size, c);
     return;
   }
 
+#endif
+#ifdef VEXT_W4_AVAILABLE
   if (size % F32x4::kWidth == 0) {
-    vectorized_relu<F32x4>(a, size, c);
+    vext::relu<VExt::w4>(a, size, c);
     return;
   }
+#endif
 
   for (size_t i = 0; i < size; i++) {
     c[i] = std::max<float>(0.0F, a[i]);
   }
 }
 
-template <class Element>
-void vectorized_mul(const float* a, const float* b, size_t size, float* c) {
-  const auto* va = reinterpret_cast<const Element*>(a);
-  const auto* vb = reinterpret_cast<const Element*>(b);
-  size_t steps = size / Element::kWidth;
-
-  auto* vc = reinterpret_cast<Element*>(c);
-  for (size_t i = 0; i < steps; i++) {
-    vc[i] = Ops<Element>::mul(va[i], vb[i]);
-  }
-}
-
 void mul(const float* a, const float* b, size_t size, float* c) {
-  if (size % F32x8::kWidth == 0) {
-    vectorized_mul<F32x8>(a, b, size, c);
+#ifdef VEXT_W8_AVAILABLE
+  if (size % VDatum<VExt::w8>::kWidth == 0) {
+    vext::mul<VExt::w8>(a, b, size, c);
     return;
   }
+#endif
 
+#ifdef VEXT_W4_AVAILABLE
   if (size % F32x4::kWidth == 0) {
-    vectorized_mul<F32x4>(a, b, size, c);
+    vext::mul<VExt::w4>(a, b, size, c);
     return;
   }
-
+#endif
   for (size_t i = 0; i < size; i++) {
     c[i] = a[i] * b[i];
   }
@@ -240,27 +196,19 @@ void mul_scalar(const float* a, float scalar, size_t size, float* c) {
   }
 }
 
-template <class Element>
-void vectorized_sigmoid(const float* a, size_t size, float* c) {
-  const auto* va = reinterpret_cast<const Element*>(a);
-  size_t steps = size / Element::kWidth;
-
-  auto* vc = reinterpret_cast<Element*>(c);
-  for (size_t i = 0; i < steps; i++) {
-    vc[i] = Ops<Element>::sigmoid(va[i]);
-  }
-}
-
 void sigmoid(const float* a, size_t size, float* c) {
-  if (size % F32x8::kWidth == 0) {
-    vectorized_sigmoid<F32x8>(a, size, c);
+#ifdef VEXT_W8_AVAILABLE
+  if (size % VDatum<VExt::w8>::kWidth == 0) {
+    vext::sigmoid<VExt::w8>(a, size, c);
     return;
   }
-
+#endif
+#ifdef VEXT_W4_AVAILABLE
   if (size % F32x4::kWidth == 0) {
-    vectorized_sigmoid<F32x4>(a, size, c);
+    vext::sigmoid<VExt::w4>(a, size, c);
     return;
   }
+#endif
 
   for (size_t i = 0; i < size; i++) {
     float x = std::exp(a[i]);
@@ -322,60 +270,19 @@ void add_positional_embedding(const float* word_embedding,
   }
 }
 
-template <class Element>
-void vectorized_softmax(const float* _logits, size_t batch_size,
-                        size_t num_classes, float* _out) {
-  const auto* logits = reinterpret_cast<const Element*>(_logits);
-  auto* out = reinterpret_cast<Element*>(_out);
-  int rows = batch_size;
-  int cols = num_classes / Element::kWidth;  // operating with fewer columns.
-
-  for (int j = 0; j < rows; ++j) {
-    // p is probability, which is computed from logits.
-    Element* p = out + j * cols;
-    const Element* logit = logits + j * cols;
-
-    // Compute maximum.
-    Element max_value = logit[0];
-    for (int i = 1; i < cols; ++i) {
-      max_value = Ops<Element>::max(max_value, logit[i]);
-    }
-
-    // if ElementType is a complex type, e.g. float32x8, find the max of
-    // these 8 values
-    typename Ops<Element>::Scalar max_value_scalar =
-        Ops<Element>::Reduce::max(max_value);
-    Element max_value_projected(max_value_scalar);
-
-    // Find numerically stable sumexp, after shifting values by maximum.
-    Element vsum(0.0F);
-    for (int i = 0; i < cols; ++i) {
-      Element shifted = Ops<Element>::sub(logit[i], max_value_projected);
-      Element exp_x = Ops<Element>::exp(shifted);
-      vsum = Ops<Element>::add(vsum, exp_x);
-      p[i] = exp_x;
-    }
-
-    // if Register is a complex type, e.g. float32x8, sum these 8 values
-    typename Ops<Element>::Scalar sums = Ops<Element>::Reduce::sum(vsum);
-    Element sums_value_projected(sums);
-
-    for (int i = 0; i < cols; ++i) {
-      p[i] = Ops<Element>::div(p[i], sums_value_projected);
-    }
-  }
-}
-
 void softmax(float* logits, size_t batch_size, size_t num_classes, float* out) {
+#ifdef VEXT_W8_AVAILABLE
   if (num_classes % 8 == 0) {
-    vectorized_softmax<F32x8>(logits, batch_size, num_classes, out);
+    vext::softmax<VExt::w8>(logits, batch_size, num_classes, out);
     return;
   }
-
+#endif
+#ifdef VEXT_W4_AVAILABLE
   if (num_classes % 4 == 0) {
-    vectorized_softmax<F32x4>(logits, batch_size, num_classes, out);
+    vext::softmax<VExt::w4>(logits, batch_size, num_classes, out);
     return;
   }
+#endif
 
   for (size_t i = 0; i < batch_size; i++) {
     float* xs = logits + i * num_classes;
@@ -401,6 +308,7 @@ void softmax(float* logits, size_t batch_size, size_t num_classes, float* out) {
 // NOLINTBEGIN
 enum class Provider {
   BLAS,
+  Ruy,
 };
 // NOLINTEND
 
@@ -415,6 +323,7 @@ void matrix_multiply(              //
     float* C, size_t ldc           //
 );
 
+#ifdef HAS_BLAS
 template <>
 void matrix_multiply<Provider::BLAS>(  //
     bool trans_a, bool trans_b,        //
@@ -473,6 +382,91 @@ void matrix_multiply<Provider::BLAS>(  //
   );
 }
 
+constexpr Provider kChosenProvider = Provider::BLAS;
+
+#else
+template <>
+inline void matrix_multiply<Provider::Ruy>(  //
+    bool transA, bool transB,                //
+    size_t M, size_t N, size_t K,            //
+    float alpha,                             //
+    const float* A, size_t lda,              //
+    const float* B, size_t ldb,              //
+    float beta,                              //
+    float* C, size_t ldc) {
+  (void)lda;
+  (void)ldb;
+  (void)ldc;
+  ruy::Context context;
+
+  // If we need to transpose, we can swap dimensions in layout claim the matrix
+  // is just column-major. Set ordering so transpose.
+  const auto orderA = (transA ? ruy::Order::kColMajor : ruy::Order::kRowMajor);
+  const auto orderB = (transB ? ruy::Order::kColMajor : ruy::Order::kRowMajor);
+
+  ruy::Matrix<float> lhs;
+  ruy::MakeSimpleLayout(M, K, orderA, lhs.mutable_layout());
+  lhs.set_data(A);
+
+  ruy::Matrix<float> rhs;
+  ruy::MakeSimpleLayout(K, N, orderB, rhs.mutable_layout());
+  rhs.set_data(B);
+
+  ruy::Matrix<float> dst;
+  ruy::MakeSimpleLayout(M, N, ruy::Order::kRowMajor, dst.mutable_layout());
+
+  if (beta == 0) {
+    // For beta = 0, we want to avoid the additional allocation. This is a
+    // large amount of our inference use-cases. sgemm is called with `beta` for
+    // accumulating gradients in backpropogation, which is 0.0 during
+    // inference.
+
+    dst.set_data(C);
+    ruy::MulParams<float, float> mul_params;
+    ruy::Mul(lhs, rhs, mul_params, &context, &dst);
+
+    if (alpha != 1.0) {
+      // Write out C as C = alpha * [op(A) * op(B)] + beta * C
+      // Can we expect the compiler to autovectorize this?
+      // TODO: Come back and explicitly use SIMD.
+      const size_t size = M * N;
+      const float* opA_opB = C;  // Alias.
+#pragma clang loop vectorize(enable) interleave(enable)
+      for (size_t i = 0; i < size; i++) {
+        C[i] = alpha * opA_opB[i];
+      }
+    }
+  } else {
+    // @jerinphilip has not yet been able to find a ruy primitive that does in
+    // place addition to obtain full gemm.
+    //
+    // Safe bet is to make an additional allocation to store the result of
+    // multiply  and use the existing values in C.
+    //
+    // See also: https://github.com/google/ruy/issues/307
+
+    Aligned intermediate(64, M * N * sizeof(float));
+    auto* imd_data = reinterpret_cast<float*>(intermediate.data());
+    dst.set_data(imd_data);
+    ruy::MulParams<float, float> mul_params;
+    ruy::Mul(lhs, rhs, mul_params, &context, &dst);
+
+    // Write out C as C = alpha * [op(A) * op(B)] + beta * C
+    // Can we expect the compiler to autovectorize this?
+    // TODO: Come back and explicitly use SIMD.
+    const size_t size = M * N;
+    const float* opA_opB = imd_data;
+#pragma clang loop vectorize(enable) interleave(enable)
+    for (size_t i = 0; i < size; i++) {
+      C[i] = alpha * opA_opB[i] + beta * C[i];
+    }
+  }
+}
+
+constexpr Provider kChosenProvider = Provider::Ruy;
+
+#endif
+
 void batch_matrix_multiply(const float* A, const float* B, size_t batch_size,
                            size_t rows_a, size_t cols_a, size_t rows_b,
                            size_t cols_b, bool trans_a, bool trans_b,
@@ -514,13 +508,13 @@ void batch_matrix_multiply(const float* A, const float* B, size_t batch_size,
     const float* a = A + i * stride_a;
     const float* b = B + i * stride_b;
     float* c = C + i * stride_c;
-    matrix_multiply<Provider::BLAS>(  //
-        trans_a, trans_b,             //
-        m, n, k,                      //
-        alpha,                        //
-        a, lda, b, ldb,               //
-        beta,                         //
-        c, ldc                        //
+    matrix_multiply<kChosenProvider>(  //
+        trans_a, trans_b,              //
+        m, n, k,                       //
+        alpha,                         //
+        a, lda, b, ldb,                //
+        beta,                          //
+        c, ldc                         //
     );
   }
 }
@@ -536,7 +530,6 @@ void batch_add_vector(const float* A, const float* x, size_t batch_size,
   }
 }
 
-MARIAN_FFAST_MATH_BEGIN
 void layer_norm(const float* in, const float* scale, const float* bias,
                 float eps, size_t rows, size_t cols, size_t scale_stride,
                 size_t bias_stride, bool has_bias, float* out) {
@@ -549,14 +542,12 @@ void layer_norm(const float* in, const float* scale, const float* bias,
   // Implementation lifted from:
   // https://github.com/browsermt/marian-dev/blob/7cf2159bc4e9c0c337aa38270081d941c9e59c26/src/tensors/cpu/tensor_operators.cpp#L1103
 
-#pragma omp parallel for
   for (size_t j = 0; j < rows; ++j) {
     const float* x = in + j * cols;
     float* y = out + j * cols;
 
     // Compute E[x] (mean)
     float sum = 0.0F;
-#pragma omp simd reduction(+ : sum)
     for (size_t i = 0; i < cols; ++i) {
       sum += x[i];
     }
@@ -564,7 +555,6 @@ void layer_norm(const float* in, const float* scale, const float* bias,
 
     // Compute Std[X] = sqrt . Var[X]
     float square_sum_centered = 0.0F;
-#pragma omp simd reduction(+ : square_sum_centered)
     for (size_t i = 0; i < cols; ++i) {
       float v = x[i] - mean;
       square_sum_centered += v * v;
@@ -575,7 +565,6 @@ void layer_norm(const float* in, const float* scale, const float* bias,
     // Normalize from sample estimate (E[X], Var[X}) and parameters learned
     // during the course of learning - scale and bias.
 
-#pragma omp simd
     for (size_t i = 0; i < cols; ++i) {
       size_t s = scale_stride * i;
       float t = scale[s] * ((x[i] - mean) / sigma);
@@ -587,236 +576,6 @@ void layer_norm(const float* in, const float* scale, const float* bias,
       y[i] = t;
     }
   }
-}
-
-MARIAN_FFAST_MATH_END
-Tensor intgemm_affine_with_select(Tensor& x, Tensor& W, Tensor& b,
-                                  float a_quant, float b_quant,
-                                  const std::vector<uint32_t>& indices,
-                                  const std::string& name) {
-  // Naming is to simplify thinking with the intgemm API below.
-  Tensor& A = x;  // NOLINT
-  Tensor& B = W;  // NOLINT
-  Tensor& bias = b;
-
-  VERIFY_MATCH(
-      A, "var_586-cpu-int8_1x1x2x256_none_shifted-rhs0-float32_1x1x2x256.bin");
-
-  size_t A_cols = A.dim(-1);          // NOLINT
-  size_t B_cols = B.dim(-1);          // NOLINT
-  size_t A_rows = A.size() / A_cols;  // NOLINT
-  size_t B_rows = B.size() / B_cols;  // NOLINT
-
-  size_t width = A_cols;
-  // SLIMT_TRACE3(x.shape(), W.shape(), b.shape());
-
-  // Check widths are same, making matrix multiplication viable.
-  assert(A_cols == B_rows);
-
-  // Prepare Activations (A).
-  Tensor prepared_A(Type::i8, A.shape(), "quantized_acts");  // NOLINT
-  intgemm::Int8Shift::PrepareA(                              //
-      A.data<float>(), prepared_A.data<int8_t>(),            //
-      a_quant,                                               //
-      A_rows, width                                          //
-  );
-
-  // Prepare bias
-  Tensor prepared_bias(Type::f32, bias.shape(), "prepared_bias");
-  VERIFY_MATCH(bias,
-               "var_582-cpu-float32_1x32000_decoder_ff_logit_out_b_Prepared-"
-               "rhs0-float32_1x32000_decoder_ff_logit_out_b.bin");
-  VERIFY_MATCH(B,
-               "var_582-cpu-float32_1x32000_decoder_ff_logit_out_b_Prepared-"
-               "rhs1-intgemm8_256x32000_Wemb.bin");
-  float a_alpha = 127.0F / a_quant;
-  float b_alpha = 127.0F / b_quant;
-
-  float bias_unquant_multiplier = (-1.0F * (a_alpha * b_alpha)) / 127.0F;
-  auto prepare_bias_callback = intgemm::callbacks::UnquantizeAndAddBiasAndWrite(
-      bias_unquant_multiplier, bias.data<float>(),  //
-      prepared_bias.data<float>()                   //
-  );
-
-  intgemm::Int8Shift::PrepareBias(  //
-      B.data<int8_t>(),             //
-      width, B_cols,                //
-      prepare_bias_callback         //
-  );
-
-  VERIFY_MATCH(
-      prepared_bias,
-      "var_582-cpu-float32_1x32000_decoder_ff_logit_out_b_Prepared-lhs.bin");
-
-  // Select before multiply?
-  // NOLINTNEXTLINE
-  Tensor selected_B(Type::i8, Shape({256, indices.size()}), "selected_B");
-  const uint32_t* indices_begin = indices.data();
-  const uint32_t* indices_end = indices.data() + indices.size();
-
-  intgemm::Int8::SelectColumnsB(B.data<int8_t>(), selected_B.data<int8_t>(),
-                                B_rows, indices_begin, indices_end);
-
-  // Select bias accordingly.
-  Tensor selected_bias(Type::f32, Shape({indices.size()}), "selected_bias");
-  auto* selected_bias_ptr = selected_bias.data<float>();
-  for (uint32_t index : indices) {
-    *(selected_bias_ptr) = *(prepared_bias.data<float>() + index);
-    ++selected_bias_ptr;
-  }
-
-  // Multiply y = A * B + bias (affine)
-  // Set y's shape replacing last dimension with the feature-dim B is projecting
-  // onto (B_cols).
-  Shape out_shape = x.shape();
-  out_shape.set_dim(-1, indices.size());
-
-  Tensor y(Type::f32, out_shape, (name.empty() ? x.name() : name));
-  size_t selected_B_cols = selected_B.dim(-1);  // NOLINT
-
-  float unquant_multiplier = 1.0F / (a_quant * b_quant);
-  auto multiply_callback = intgemm::callbacks::UnquantizeAndAddBiasAndWrite(
-      unquant_multiplier, selected_bias.data<float>(), y.data<float>());
-  intgemm::Int8Shift::Multiply(                              //
-      prepared_A.data<int8_t>(), selected_B.data<int8_t>(),  //
-      A_rows, width, selected_B_cols,                        //
-      multiply_callback                                      //
-  );
-
-  return y;
-}
-
-Tensor intgemm_affine(Tensor& x, Tensor& W, Tensor& b, float a_quant,
-                      float b_quant, const std::string& name) {
-  // Naming is to simplify thinking with the intgemm API below.
-  Tensor& A = x;  // NOLINT
-  Tensor& B = W;  // NOLINT
-  Tensor& bias = b;
-
-  size_t A_cols = A.dim(-1);          // NOLINT
-  size_t B_cols = B.dim(-1);          // NOLINT
-  size_t A_rows = A.size() / A_cols;  // NOLINT
-  size_t B_rows = B.size() / B_cols;  // NOLINT
-
-  size_t width = A_cols;
-  // SLIMT_TRACE3(x.shape(), W.shape(), b.shape());
-
-  // Check widths are same, making matrix multiplication viable.
-  (void)B_rows;
-  assert(A_cols == B_rows);
-
-  // Prepare Activations (A).
-  Tensor prepared_A(Type::i8, A.shape(), "quantized_acts");  // NOLINT
-  intgemm::Int8Shift::PrepareA(                              //
-      A.data<float>(), prepared_A.data<int8_t>(),            //
-      a_quant,                                               //
-      A_rows, width                                          //
-  );
-
-  // Prepare bias
-  Tensor prepared_bias(Type::f32, bias.shape(), "prepared_bias");
-  float a_alpha = 127.0F / a_quant;
-  float b_alpha = 127.0F / b_quant;
-
-  float bias_unquant_multiplier = (-1.0F * (a_alpha * b_alpha)) / 127.0F;
-  auto prepare_bias_callback = intgemm::callbacks::UnquantizeAndAddBiasAndWrite(
-      bias_unquant_multiplier, bias.data<float>(),  //
-      prepared_bias.data<float>()                   //
-  );
-
-  intgemm::Int8Shift::PrepareBias(  //
-      B.data<int8_t>(),             //
-      width, B_cols,                //
-      prepare_bias_callback         //
-  );
-
-  // Multiply y = A * B + bias (affine)
-  // Set y's shape replacing last dimension with the feature-dim B is projecting
-  // onto (B_cols).
-  Shape out_shape = x.shape();
-  out_shape.set_dim(-1, B_cols);
-
-  Tensor y(Type::f32, out_shape, (name.empty() ? x.name() : name));
-
-  float unquant_multiplier = 1.0F / (a_quant * b_quant);
-  auto multiply_callback = intgemm::callbacks::UnquantizeAndAddBiasAndWrite(
-      unquant_multiplier, prepared_bias.data<float>(), y.data<float>());
-  intgemm::Int8Shift::Multiply(                     //
-      prepared_A.data<int8_t>(), B.data<int8_t>(),  //
-      A_rows, width, B_cols,                        //
-      multiply_callback                             //
-  );
-
-  return y;
-}
-
-Tensor intgemm_dot(Tensor& x, Tensor& W, float a_quant, float b_quant,
-                   const std::string& name) {
-  // Naming is to simplify thinking with the intgemm API below.
-  Tensor& A = x;  // NOLINT
-  Tensor& B = W;  // NOLINT
-
-  size_t A_cols = A.dim(-1);          // NOLINT
-  size_t B_cols = B.dim(-1);          // NOLINT
-  size_t A_rows = A.size() / A_cols;  // NOLINT
-  size_t B_rows = B.size() / B_cols;  // NOLINT
-
-  size_t width = A_cols;
-  // SLIMT_TRACE3(x.shape(), W.shape(), b.shape());
-
-  // Check widths are same, making matrix multiplication viable.
-  (void)B_rows;
-  assert(A_cols == B_rows);
-
-  // Prepare Activations (A).
-  Tensor prepared_A(Type::i8, A.shape(), "quantized_acts");  // NOLINT
-  intgemm::Int8Shift::PrepareA(                              //
-      A.data<float>(), prepared_A.data<int8_t>(),            //
-      a_quant,                                               //
-      A_rows, width                                          //
-  );
-
-  // Prepare bias
-
-  // Fake bias, all elements are zero.
-  Tensor bias(x.type(), Shape({1, B_cols}), "zero_bias");
-  bias.fill_in_place(0.0F);
-
-  Tensor prepared_bias(Type::f32, bias.shape(), "prepared_bias");
-  float a_alpha = 127.0F / a_quant;
-  float b_alpha = 127.0F / b_quant;
-
-  float bias_unquant_multiplier = (-1.0F * (a_alpha * b_alpha)) / 127.0F;
-  auto prepare_bias_callback = intgemm::callbacks::UnquantizeAndAddBiasAndWrite(
-      bias_unquant_multiplier, bias.data<float>(),  //
-      prepared_bias.data<float>()                   //
-  );
-
-  intgemm::Int8Shift::PrepareBias(  //
-      B.data<int8_t>(),             //
-      width, B_cols,                //
-      prepare_bias_callback         //
-  );
-
-  //
-  // Multiply y = A * B  (dot)
-  // Set y's shape replacing last dimension with the feature-dim B is projecting
-  // onto (B_cols).
-  Shape out_shape = x.shape();
-  out_shape.set_dim(-1, B_cols);
-
-  Tensor y(Type::f32, out_shape, (name.empty() ? x.name() : name));
-
-  float unquant_multiplier = 1.0F / (a_quant * b_quant);
-  auto multiply_callback = intgemm::callbacks::UnquantizeAndAddBiasAndWrite(
-      unquant_multiplier, prepared_bias.data<float>(), y.data<float>());
-  intgemm::Int8Shift::Multiply(                     //
-      prepared_A.data<int8_t>(), B.data<int8_t>(),  //
-      A_rows, width, B_cols,                        //
-      multiply_callback                             //
-  );
-
-  return y;
 }
 
 float mse(Tensor& x, Tensor& y) {

@@ -2,6 +2,7 @@
 #include "slimt/Batch.hh"
 #include "slimt/Io.hh"
 #include "slimt/Model.hh"
+#include "slimt/QMM.hh"
 #include "slimt/Shortlist.hh"
 #include "slimt/Tensor.hh"
 #include "slimt/TensorOps.hh"
