@@ -14,8 +14,8 @@ set(SLIMT_COMPILE_OPTIONS -Wall -Wpedantic -Wextra -Wno-unknown-pragmas -Werror)
 set(SLIMT_COMPILE_DEFINITIONS "")
 
 option(WITH_INTGEMM "Use intgemm" ON)
-option(WITH_RUY "Use ruy" ON)
-option(WITH_BLAS "Use ruy" ON)
+option(WITH_RUY "Use ruy" OFF)
+option(WITH_BLAS "Use BLAS. Otherwise moves to ruy" ON)
 
 set(SLIMT_EXTERNAL_LIBS Sentencepiece::Sentencepiece)
 
