@@ -268,7 +268,7 @@ void LayerNormalizationOp() {
 }
 }  // namespace slimt
 
-#ifdef __SSE__
+#ifdef HAS_INTGEMM
 #include "3rd-party/intgemm/intgemm/intgemm.h"
 namespace slimt {
 
@@ -766,7 +766,7 @@ int main(int argc, char **argv) {
       TEST_ENTRY(DotBatchedNodeOp),      //
       TEST_ENTRY(TransposeNodeOp),       //
       TEST_ENTRY(LayerNormalizationOp),  //
-#ifdef __SSE__
+#ifdef HAS_INTGEMM
       TEST_ENTRY(AffineIntgemm),  //
 #endif
       TEST_ENTRY(ShortlistGen)  //
