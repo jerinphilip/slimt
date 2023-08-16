@@ -4,6 +4,7 @@
 #include "slimt/Io.hh"
 #include "slimt/Shortlist.hh"
 #include "slimt/Tensor.hh"
+#include "slimt/Vocabulary.hh"
 
 namespace slimt {
 
@@ -103,8 +104,8 @@ class Decoder {
   using Words = std::vector<uint32_t>;
   using Sentences = std::vector<Words>;
 
-  Decoder(size_t decoders, size_t ffn_count, Tensor &embedding,
-          ShortlistGenerator &&shortlist_generator);
+  Decoder(size_t decoders, size_t ffn_count, Vocabulary &vocabulary,
+          Tensor &embedding, ShortlistGenerator &&shortlist_generator);
 
   void register_parameters(const std::string &prefix, ParameterMap &parameters);
 
@@ -119,9 +120,12 @@ class Decoder {
 
   void set_start_state(size_t batch_size);
 
+  Vocabulary &vocabulary_;
+
   Tensor &embedding_;
   std::vector<DecoderLayer> decoder_;
   Affine output_;
+
   ShortlistGenerator shortlist_generator_;
 };
 
@@ -146,7 +150,7 @@ class Model {
  public:
   using Words = std::vector<uint32_t>;
   using Sentences = std::vector<Words>;
-  explicit Model(Tag tag, std::vector<io::Item> &&items,
+  explicit Model(Tag tag, Vocabulary &vocabulary, std::vector<io::Item> &&items,
                  ShortlistGenerator &&shortlist_generator);
 
   Sentences translate(Batch &batch);

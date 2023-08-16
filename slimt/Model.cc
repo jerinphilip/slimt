@@ -336,13 +336,14 @@ Decoder::Sentences Decoder::decode(Tensor &encoder_out, Tensor &mask,
   Shortlist shortlist = shortlist_generator_.generate(source);
 
   std::vector<bool> complete(batch_size, false);
-  auto record = [&complete](Vocabulary::Words &step,
-                            Decoder::Sentences &sentences) {
+  uint32_t eos = vocabulary_.eos_id();
+  auto record = [eos, &complete](Vocabulary::Words &step,
+                                 Decoder::Sentences &sentences) {
     size_t finished = 0;
     for (size_t i = 0; i < step.size(); i++) {
       if (not complete[i]) {
         sentences[i].push_back(step[i]);
-        complete[i] = (step[i] == 0);
+        complete[i] = (step[i] == eos);
       }
       finished += static_cast<int>(complete[i]);
     }
@@ -383,15 +384,16 @@ void Decoder::set_start_state(size_t batch_size) {
   }
 }
 
-Model::Model(Tag tag, std::vector<io::Item> &&items,
+Model::Model(Tag tag, Vocabulary &vocabulary, std::vector<io::Item> &&items,
              ShortlistGenerator &&shortlist_generator)
     : tag_(tag),
       items_(std::move(items)),
       decoder_(                                //
           Config::tiny11::decoder_layers,      //
           Config::tiny11::feed_forward_depth,  //
-          embedding_,                          //
-          std::move(shortlist_generator)       //
+          vocabulary,
+          embedding_,                     //
+          std::move(shortlist_generator)  //
       ) {
   for (size_t i = 0; i < Config::tiny11::encoder_layers; i++) {
     encoder_.emplace_back(i + 1, Config::tiny11::feed_forward_depth);
@@ -487,9 +489,10 @@ std::tuple<Tensor, Tensor> DecoderLayer::forward(Tensor &encoder_out,
   return std::make_tuple(std::move(normalized_ffn_out), std::move(attn));
 }
 
-Decoder::Decoder(size_t decoders, size_t ffn_count, Tensor &embedding,
-                 ShortlistGenerator &&shortlist_generator)
-    : embedding_(embedding),
+Decoder::Decoder(size_t decoders, size_t ffn_count, Vocabulary &vocabulary,
+                 Tensor &embedding, ShortlistGenerator &&shortlist_generator)
+    : vocabulary_(vocabulary),
+      embedding_(embedding),
       shortlist_generator_(std::move(shortlist_generator)) {
   for (size_t i = 0; i < decoders; i++) {
     decoder_.emplace_back(i + 1, ffn_count);

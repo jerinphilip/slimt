@@ -696,6 +696,7 @@ void integration() {
 
   Model model(                        //
       Tag::tiny11,                    //
+      vocab,                          //
       std::move(items),               //
       std::move(shortlist_generator)  //
   );
