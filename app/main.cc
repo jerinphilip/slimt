@@ -110,11 +110,13 @@ void run(const Options &options) {
         std::max(words.size(), max_sequence_length);
     ++line_no;
 
-    token_count = candidate_max_sequence_length * (line_no);
+    token_count = candidate_max_sequence_length * (sentences.size());
     if (token_count > options.max_tokens_per_batch) {
       batch_and_translate(sentences, max_sequence_length);
       sentences.clear();
       max_sequence_length = 0;
+      token_count = 0;
+      fprintf(stdout, "wps: %f\n", wps.value());
     }
     sentences.push_back(std::move(words));
     max_sequence_length = candidate_max_sequence_length;
