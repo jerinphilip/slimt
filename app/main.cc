@@ -83,10 +83,12 @@ void run(const Options &options) {
   using Sentences = std::vector<Vocabulary::Words>;
 
   AverageMeter<float> wps;
+  AverageMeter<float> occupancy;
 
-  auto batch_and_translate = [&vocab, &model, &wps](         //
-                                 Sentences &sentences,       //
-                                 size_t max_sequence_length  //
+  auto batch_and_translate = [&vocab, &model, &wps, &occupancy](  //
+                                 size_t line_no,                  //
+                                 Sentences &sentences,            //
+                                 size_t max_sequence_length       //
                              ) {
     Timer timer;
     uint64_t batch_size = sentences.size();
@@ -103,8 +105,11 @@ void run(const Options &options) {
     size_t words_processed = max_sequence_length * sentences.size();
     float batch_wps = words_processed / timer.elapsed();
     wps.record(batch_wps);
-    fprintf(sio.err, "wps: %f | occupancy: %f\n", wps.value(),
-            batch.occupancy());
+    occupancy.record(batch.occupancy());
+    fprintf(sio.err,
+            "line %zu | wps: %f | occupancy: %f | avg-wps: %f | avg-occ: %f\n",
+            line_no, batch_wps, batch.occupancy(), wps.value(),
+            occupancy.value());
   };
 
   std::string line;
@@ -114,7 +119,6 @@ void run(const Options &options) {
   Sentences sentences;
   while (getline(std::cin, line)) {
     auto [words, views] = vocab.encode(line, /*add_eos =*/true);
-
     ++line_no;
     size_t candidate_max_sequence_length =
         std::max(words.size(), max_sequence_length);
@@ -123,9 +127,7 @@ void run(const Options &options) {
 
     if (candidate_token_count > options.max_tokens_per_batch) {
       // Cleave off a batch.
-      fprintf(sio.err, "seq_len x bsz = %zu x %zu\n", max_sequence_length,
-              sentences.size());
-      batch_and_translate(sentences, max_sequence_length);
+      batch_and_translate(line_no, sentences, max_sequence_length);
       sentences.clear();
       // New stuff based on words.
       max_sequence_length = words.size();
@@ -140,7 +142,7 @@ void run(const Options &options) {
 
   // Overhang.
   if (!sentences.empty()) {
-    batch_and_translate(sentences, max_sequence_length);
+    batch_and_translate(line_no, sentences, max_sequence_length);
     sentences.clear();
   }
 
