@@ -37,6 +37,15 @@ void Batch::add(std::vector<uint32_t> &words) {
   float *mask_end = mask + (index_ + 1) * sequence_length;
   std::fill(mask_begin, mask_end, 0.0F);
   ++index_;
+  used_ += words.size();
+}
+
+float Batch::occupancy() {
+  size_t sequence_length = batch_.dim(-1);
+  size_t batch_size = batch_.dim(-2);
+  fprintf(stderr, "seq_len x bsz = %zu x %zu\n", sequence_length, batch_size);
+  fprintf(stderr, "used = %zu \n", used_);
+  return used_ / static_cast<float>(batch_size * sequence_length);
 }
 
 }  // namespace slimt

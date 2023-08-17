@@ -15,6 +15,7 @@ class Batch {
   Tensor &mask() { return mask_; }
   std::vector<uint32_t> &words() { return words_; }
   size_t index() const { return index_; }
+  float occupancy();
 
  private:
   std::vector<uint32_t> words_;
@@ -22,5 +23,6 @@ class Batch {
   Tensor mask_;
   size_t index_ = 0;
   uint32_t pad_id_ = 0;
+  size_t used_ = 0;
 };
 }  // namespace slimt

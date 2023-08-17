@@ -33,12 +33,24 @@ std::string prefix(const std::string &root, const std::string &basename) {
   return root + "/" + basename;
 }
 
+struct SlimtIO {
+  FILE *in;
+  FILE *out;
+  FILE *err;
+};
+
+static SlimtIO sio{
+    .in = stdin,    //
+    .out = stdout,  //
+    .err = stderr   //
+};
+
 void run(const Options &options) {
   std::string indent = "  ";
   // clang-format off
-  fprintf(stdout, "%s model: %s\n", indent.c_str(), options.translator.model.c_str());
-  fprintf(stdout, "%s vocab: %s\n", indent.c_str(), options.translator.vocab.c_str());
-  fprintf(stdout, "%s shortlist: %s\n", indent.c_str(), options.translator.shortlist.c_str());
+  fprintf(sio.err, "%s model: %s\n", indent.c_str(), options.translator.model.c_str());
+  fprintf(sio.err, "%s vocab: %s\n", indent.c_str(), options.translator.vocab.c_str());
+  fprintf(sio.err, "%s shortlist: %s\n", indent.c_str(), options.translator.shortlist.c_str());
   // clang-format on
   //
   using namespace slimt;  // NOLINT
@@ -67,7 +79,7 @@ void run(const Options &options) {
   auto items = io::loadItems(mmap.model.data());
   Model model(Tag::tiny11, std::move(items), std::move(shortlist_generator));
 
-  fprintf(stdout, "%s eos_id: %u\n", indent.c_str(), vocab.eos_id());
+  fprintf(sio.err, "%s eos_id: %u\n", indent.c_str(), vocab.eos_id());
   using Sentences = std::vector<Vocabulary::Words>;
 
   AverageMeter<float> wps;
@@ -86,11 +98,13 @@ void run(const Options &options) {
     auto translated = model.translate(batch);
     for (auto &sentence : translated) {
       auto [result, views] = vocab.decode(sentence);
-      std::cout << result << "\n";
+      fprintf(sio.out, "%s\n", result.c_str());
     }
     size_t words_processed = max_sequence_length * sentences.size();
     float batch_wps = words_processed / timer.elapsed();
     wps.record(batch_wps);
+    fprintf(sio.err, "wps: %f | occupancy: %f\n", wps.value(),
+            batch.occupancy());
   };
 
   std::string line;
@@ -100,26 +114,28 @@ void run(const Options &options) {
   Sentences sentences;
   while (getline(std::cin, line)) {
     auto [words, views] = vocab.encode(line, /*add_eos =*/true);
-    // std::cout << "Adding ";
-    // for (const auto &view : views) {
-    //   std::cout << "[" << view << "]";
-    // }
-    // std::cout << "\n";
 
+    ++line_no;
     size_t candidate_max_sequence_length =
         std::max(words.size(), max_sequence_length);
-    ++line_no;
+    size_t candidate_token_count =
+        candidate_max_sequence_length * (sentences.size() + 1);
 
-    token_count = candidate_max_sequence_length * (sentences.size());
-    if (token_count > options.max_tokens_per_batch) {
+    if (candidate_token_count > options.max_tokens_per_batch) {
+      // Cleave off a batch.
+      fprintf(sio.err, "seq_len x bsz = %zu x %zu\n", max_sequence_length,
+              sentences.size());
       batch_and_translate(sentences, max_sequence_length);
       sentences.clear();
-      max_sequence_length = 0;
-      token_count = 0;
-      fprintf(stdout, "wps: %f\n", wps.value());
+      // New stuff based on words.
+      max_sequence_length = words.size();
+      token_count = words.size();
+      sentences.push_back(std::move(words));
+    } else {
+      max_sequence_length = candidate_max_sequence_length;
+      token_count = candidate_token_count;
+      sentences.push_back(std::move(words));
     }
-    sentences.push_back(std::move(words));
-    max_sequence_length = candidate_max_sequence_length;
   }
 
   // Overhang.
@@ -128,7 +144,7 @@ void run(const Options &options) {
     sentences.clear();
   }
 
-  fprintf(stdout, "wps: %f\n", wps.value());
+  fprintf(sio.err, "wps: %f\n", wps.value());
 }
 
 int main(int argc, char *argv[]) {
