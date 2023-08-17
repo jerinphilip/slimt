@@ -36,11 +36,11 @@ template <enum Provider>
 void PrepareBQuantizedTransposed(const int8_t* input, int8_t* output,
                                  size_t rows, size_t cols);
 
-#ifdef HAS_INTGEMM
+#ifdef SLIMT_HAS_INTGEMM
 constexpr Provider kAutoProvider = Provider::kIntgemm;
 #endif
 
-#ifdef HAS_RUY
+#ifdef SLIMT_HAS_RUY
 constexpr Provider kAutoProvider = Provider::kRuy;
 #endif
 }  // namespace detail

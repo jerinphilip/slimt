@@ -767,7 +767,7 @@ int main(int argc, char **argv) {
       TEST_ENTRY(DotBatchedNodeOp),      //
       TEST_ENTRY(TransposeNodeOp),       //
       TEST_ENTRY(LayerNormalizationOp),  //
-#ifdef HAS_INTGEMM
+#ifdef SLIMT_HAS_INTGEMM
       TEST_ENTRY(AffineIntgemm),  //
 #endif
       TEST_ENTRY(ShortlistGen)  //

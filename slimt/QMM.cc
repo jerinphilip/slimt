@@ -3,11 +3,11 @@
 #include <cassert>
 #include <cmath>
 
-#ifdef HAS_INTGEMM
+#ifdef SLIMT_HAS_INTGEMM
 #include "3rd-party/intgemm/intgemm/intgemm.h"
 #endif
 
-#ifdef HAS_RUY
+#ifdef SLIMT_HAS_RUY
 #include "3rd-party/ruy/ruy/ruy.h"
 #endif
 
@@ -16,7 +16,7 @@
 namespace slimt::qmm {
 namespace detail {
 
-#ifdef HAS_INTGEMM
+#ifdef SLIMT_HAS_INTGEMM
 template <>
 Tensor affine_with_select<Provider::kIntgemm>(
     Tensor& x, Tensor& W, Tensor& b, float a_quant, float b_quant,
@@ -254,8 +254,7 @@ void PrepareBQuantizedTransposed<Provider::kIntgemm>(const int8_t* input,
 
 #endif
 
-#ifdef HAS_RUY
-
+#ifdef SLIMT_HAS_RUY
 namespace detail {
 
 using Index = uint64_t;
