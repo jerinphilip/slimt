@@ -42,7 +42,7 @@ class Attention {
   std::string name_;
   Affine Q_, K_, V_, O_;
   LayerNorm ln_;
-  size_t num_heads_ = 8;
+  size_t num_heads_ = 8;  // FIXME(-1): HARDCODE
 };
 
 class SSRU {
