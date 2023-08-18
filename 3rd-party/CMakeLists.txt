@@ -14,6 +14,7 @@ target_compile_options(spiece_iface INTERFACE -D_USE_BUILTIN_STRING_VIEW)
 add_library(Sentencepiece::Sentencepiece ALIAS spiece_iface)
 
 # intgemm
+set(INTGEMM_DONT_BUILD_TESTS ON)
 add_subdirectory(intgemm EXCLUDE_FROM_ALL)
 
 # ruy
