@@ -1,6 +1,6 @@
+import difflib
 import struct
 from argparse import ArgumentParser
-import difflib
 
 
 class Bijective:
