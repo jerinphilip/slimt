@@ -26,6 +26,18 @@ follow the [transformer architecture](https://arxiv.org/abs/1706.03762), with
 the decoder. The same models are used in Mozilla Firefox's [offline translation
 addon](https://addons.mozilla.org/en-US/firefox/addon/firefox-translations/).
 
+More information on the models are described in the following papers:
+
+* [From Research to Production and Back: Ludicrously Fast Neural Machine Translation](https://aclanthology.org/D19-5632)
+* [Edinburgh’s Submissions to the 2020 Machine Translation Efficiency Task](https://aclanthology.org/2020.ngt-1.26/)
+
+The following table summarizes some architectural differences:
+
+| Variant | emb | ffn  | Enc/Dec | vocab | params | f32/i8   | 
+| ------- | --- | ---  | ------- | ----- | ------ | -------- | 
+| Base    | 512 | 2048 | 6/2     | 32K   | 39.0M  | 149/38MB |
+| Tiny    | 256 | 1536 | 6/2     | 32K   | 15.7M  |  61/17MB |
+
 The large-list of dependencies from bergamot-translator have currently been
 reduced to:
 
