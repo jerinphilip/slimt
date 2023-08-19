@@ -54,7 +54,34 @@ class MmapFile {
   MmapFile(const MmapFile&) = delete;
   MmapFile& operator=(const MmapFile&) = delete;
 
+  MmapFile(MmapFile&& from) noexcept
+      : fd_(from.fd_), data_(from.data_), size_(from.size_) {
+    reset();
+  };
+
+  MmapFile& operator=(MmapFile&& from) noexcept {
+    if (this == &from) {
+      return *this;
+    }
+    reset();
+    consume(from);
+    return *this;
+  }
+
  private:
+  void consume(MmapFile& from) {
+    fd_ = (from.fd_);
+    data_ = (from.data_);
+    size_ = (from.size_);
+    from.reset();
+  }
+
+  void reset() {
+    fd_ = -1;
+    data_ = nullptr;
+    size_ = 0;
+  }
+
   int fd_ = -1;
   void* data_ = nullptr;
   size_t size_ = 0;
