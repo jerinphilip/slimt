@@ -64,7 +64,7 @@ Tensor affine_with_select<Provider::kIntgemm>(
 
   // Select before multiply?
   // NOLINTNEXTLINE
-  Tensor selected_B(Type::i8, Shape({256, indices.size()}), "selected_B");
+  Tensor selected_B(Type::i8, Shape({width, indices.size()}), "selected_B");
   const uint32_t* indices_begin = indices.data();
   const uint32_t* indices_end = indices.data() + indices.size();
 
@@ -399,7 +399,7 @@ Tensor affine_with_select<Provider::kRuy>(Tensor& x, Tensor& W, Tensor& b,
   lhs.set_data(prepared_A.data<int8_t>());
 
   // PrepareB: Select
-  Tensor selected_B(Type::i8, Shape({256, indices.size()}),  // NOLINT
+  Tensor selected_B(Type::i8, Shape({width, indices.size()}),  // NOLINT
                     "selected_B");
 
   // SelectColumnsB, but inlined?
