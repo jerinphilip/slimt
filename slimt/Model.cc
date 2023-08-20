@@ -339,7 +339,6 @@ Decoder::Sentences Decoder::decode(Tensor &encoder_out, Tensor &mask,
   // The following can be used to check if shortlist is going wrong.
   // std::vector<uint32_t> indices(vocabulary_.size());
   // std::iota(indices.begin(), indices.end(), 0);
-  
 
   std::vector<bool> complete(batch_size, false);
   uint32_t eos = vocabulary_.eos_id();
@@ -348,8 +347,8 @@ Decoder::Sentences Decoder::decode(Tensor &encoder_out, Tensor &mask,
     size_t finished = 0;
     for (size_t i = 0; i < step.size(); i++) {
       if (not complete[i]) {
-        sentences[i].push_back(step[i]);
         complete[i] = (step[i] == eos);
+        sentences[i].push_back(step[i]);
       }
       finished += static_cast<int>(complete[i]);
     }
@@ -363,8 +362,7 @@ Decoder::Sentences Decoder::decode(Tensor &encoder_out, Tensor &mask,
   set_start_state(batch_size);
   Tensor decoder_out = step(encoder_out, mask, previous_slice);
 
-  Tensor logits =
-      affine_with_select(output_, decoder_out, indices, "logits");
+  Tensor logits = affine_with_select(output_, decoder_out, indices, "logits");
 
   previous_slice = greedy_sample(logits, indices, batch_size);
   record(previous_slice, sentences);

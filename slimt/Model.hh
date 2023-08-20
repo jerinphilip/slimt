@@ -128,7 +128,7 @@ class Decoder {
 
   ShortlistGenerator shortlist_generator_;
 
-  float max_target_length_factor_ = 1.5; // FIXME(-1): HARDCODE
+  float max_target_length_factor_ = 1.5;  // FIXME(-1): HARDCODE
 };
 
 // Restrict the models that can be created by a few kinds.
