@@ -35,54 +35,13 @@
             ]
         },
         {
-            "name": "(gdb) main (tiny11)",
+            "name": "(gdb) main",
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/bin/slimt",
             "args": [
-                //"--root", "/home/jerin/.local/share/bergamot/models/browsermt/ende.student.tiny11",
-                // "--vocabulary", "vocab.deen.spm",
-                "--root", "/home/jerin/.local/share/bergamot/models/browsermt/enfr.student.tiny11",
-                "--vocabulary", "vocab.fren.spm",
-                "--model", "model.intgemm.alphas.bin",
-                "--shortlist", "lex.s2t.bin",
-                "<",
-                "${workspaceFolder}/data/numbers2x3.txt"
-            ],
-            "stopAtEntry": false,
-            "cwd": "${fileDirname}",
-            "environment": [
-                {
-                    "name": "SLIMT_DEBUG",
-                    "value": "1"
-                }
-            ],
-            "externalConsole": false,
-            "MIMode": "gdb",
-            "setupCommands": [
-                {
-                    "description": "Enable pretty-printing for gdb",
-                    "text": "-enable-pretty-printing",
-                    "ignoreFailures": true
-                },
-                {
-                    "description": "Set Disassembly Flavor to Intel",
-                    "text": "-gdb-set disassembly-flavor intel",
-                    "ignoreFailures": true
-                }
-            ]
-        }
-
-        {
-            "name": "(gdb) main (base)",
-            "type": "cppdbg",
-            "request": "launch",
-            "program": "${workspaceFolder}/build/bin/slimt",
-            "args": [
-                "--root", "/home/jerin/.local/share/bergamot/models/browsermt/en-cs-base",
-                "--model", "model.intgemm.alphas.bin",
-                "--vocabulary", "vocab.csen.spm",
-                "--shortlist", "lex.s2t.bin",
+                "/home/jerin/.local/share/bergamot/models/browsermt/ende.student.tiny11/model.intgemm.alphas.bin",
+                "/home/jerin/.local/share/bergamot/models/browsermt/ende.student.tiny11/vocab.deen.spm",
                 "<",
                 "${workspaceFolder}/data/sample.txt"
             ],
