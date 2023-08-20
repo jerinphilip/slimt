@@ -332,7 +332,7 @@ Decoder::Sentences Decoder::decode(Tensor &encoder_out, Tensor &mask,
   size_t source_sequence_length = encoder_out.dim(-2);
 
   Shortlist shortlist = shortlist_generator_.generate(source);
-  auto indices = shortlist.words();
+  const auto &indices = shortlist.words();
   // The following can be used to check if shortlist is going wrong.
   // std::vector<uint32_t> indices(vocabulary_.size());
   // std::iota(indices.begin(), indices.end(), 0);
