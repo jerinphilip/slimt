@@ -1,6 +1,7 @@
 #include "slimt/Model.hh"
 
 #include <cassert>
+#include <numeric>
 #include <cmath>
 #include <iostream>
 
@@ -334,6 +335,11 @@ Decoder::Sentences Decoder::decode(Tensor &encoder_out, Tensor &mask,
   size_t source_sequence_length = encoder_out.dim(-2);
 
   Shortlist shortlist = shortlist_generator_.generate(source);
+  auto indices = shortlist.words();
+  // The following can be used to check if shortlist is going wrong.
+  // std::vector<uint32_t> indices(vocabulary_.size());
+  // std::iota(indices.begin(), indices.end(), 0);
+  
 
   std::vector<bool> complete(batch_size, false);
   uint32_t eos = vocabulary_.eos_id();
@@ -358,20 +364,20 @@ Decoder::Sentences Decoder::decode(Tensor &encoder_out, Tensor &mask,
   Tensor decoder_out = step(encoder_out, mask, previous_slice);
 
   Tensor logits =
-      affine_with_select(output_, decoder_out, shortlist.words(), "logits");
+      affine_with_select(output_, decoder_out, indices, "logits");
 
-  previous_slice = greedy_sample(logits, shortlist.words(), batch_size);
+  previous_slice = greedy_sample(logits, indices, batch_size);
   record(previous_slice, sentences);
 
   size_t remaining = sentences.size();
-  size_t max_seq_length = 1.5 * source_sequence_length;
+  size_t max_seq_length = max_target_length_factor_ * source_sequence_length;
   for (size_t i = 1; i < max_seq_length && remaining > 0; i++) {
     Tensor decoder_out = step(encoder_out, mask, previous_slice);
 
     Tensor logits =
-        affine_with_select(output_, decoder_out, shortlist.words(), "logits");
+        affine_with_select(output_, decoder_out, indices, "logits");
 
-    previous_slice = greedy_sample(logits, shortlist.words(), batch_size);
+    previous_slice = greedy_sample(logits, indices, batch_size);
     remaining = record(previous_slice, sentences);
   }
 
