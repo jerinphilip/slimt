@@ -304,4 +304,32 @@ MmapFile::~MmapFile() {
     close(fd_);
   }
 }
+
+MmapFile::MmapFile(MmapFile&& from) noexcept
+    : fd_(from.fd_), data_(from.data_), size_(from.size_) {
+  reset();
+};
+
+MmapFile& MmapFile::operator=(MmapFile&& from) noexcept {
+  if (this == &from) {
+    return *this;
+  }
+  reset();
+  consume(from);
+  return *this;
+}
+
+void MmapFile::consume(MmapFile& from) {
+  fd_ = (from.fd_);
+  data_ = (from.data_);
+  size_ = (from.size_);
+  from.reset();
+}
+
+void MmapFile::reset() {
+  fd_ = -1;
+  data_ = nullptr;
+  size_ = 0;
+}
+
 }  // namespace slimt::io

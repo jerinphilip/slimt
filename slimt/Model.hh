@@ -4,6 +4,7 @@
 #include "slimt/Io.hh"
 #include "slimt/Shortlist.hh"
 #include "slimt/Tensor.hh"
+#include "slimt/Vocabulary.hh"
 
 namespace slimt {
 
@@ -41,7 +42,7 @@ class Attention {
   std::string name_;
   Affine Q_, K_, V_, O_;
   LayerNorm ln_;
-  size_t num_heads_ = 8;
+  size_t num_heads_ = 8;  // FIXME(-1): HARDCODE
 };
 
 class SSRU {
@@ -102,29 +103,32 @@ class Decoder {
  public:
   using Words = std::vector<uint32_t>;
   using Sentences = std::vector<Words>;
-  Decoder(size_t decoders, size_t ffn_count, Tensor &embedding,
-          ShortlistGenerator &&shortlist_generator);
+
+  Decoder(size_t decoders, size_t ffn_count, Vocabulary &vocabulary,
+          Tensor &embedding, ShortlistGenerator &&shortlist_generator);
 
   void register_parameters(const std::string &prefix, ParameterMap &parameters);
 
   Decoder::Sentences decode(Tensor &encoder_out, Tensor &mask,
                             const Words &source);
+
+ private:
   Tensor step(Tensor &encoder_out, Tensor &mask, Words &previous_step);
 
   static Words greedy_sample(Tensor &logits, const Shortlist::Words &words,
                              size_t batch_size);
 
-  void set_start_state(size_t batch_size) {
-    for (auto &layer : decoder_) {
-      layer.set_start_state(batch_size);
-    }
-  }
+  void set_start_state(size_t batch_size);
 
- private:
+  Vocabulary &vocabulary_;
+
   Tensor &embedding_;
   std::vector<DecoderLayer> decoder_;
   Affine output_;
+
   ShortlistGenerator shortlist_generator_;
+
+  float max_target_length_factor_ = 1.5;  // FIXME(-1): HARDCODE
 };
 
 // Restrict the models that can be created by a few kinds.
@@ -148,7 +152,7 @@ class Model {
  public:
   using Words = std::vector<uint32_t>;
   using Sentences = std::vector<Words>;
-  explicit Model(Tag tag, std::vector<io::Item> &&items,
+  explicit Model(Tag tag, Vocabulary &vocabulary, std::vector<io::Item> &&items,
                  ShortlistGenerator &&shortlist_generator);
 
   Sentences translate(Batch &batch);
