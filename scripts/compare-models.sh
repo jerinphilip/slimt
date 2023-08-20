@@ -7,5 +7,7 @@ MODELS=(
 )
 
 for model in ${MODELS[@]}; do
-  python3 scripts/marian-file-inspect.py --model-path $HOME/.local/share/bergamot/models/browsermt/$model/model.intgemm.alphas.bin > traces/$model.model.txt
+  python3 scripts/marian-file-inspect.py \
+    --model-path $HOME/.local/share/bergamot/models/browsermt/$model/model.intgemm.alphas.bin \
+    > traces/$model.model.txt
 done
