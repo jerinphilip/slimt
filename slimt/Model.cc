@@ -559,6 +559,8 @@ Tensor Decoder::step(Tensor &encoder_out, Tensor &mask,
                                           decoder_mask.size());
 
   transform_embedding(decoder_embed);
+  SLIMT_VERIFY_MATCH(encoder_out,
+                     "var_394-LayerNormalizationOp-float32_1x2x4x256-lhs.bin");
 
   auto [x, attn] = decoder_[0].forward(encoder_out, mask, decoder_embed);
   for (size_t i = 1; i < decoder_.size(); i++) {
