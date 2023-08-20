@@ -46,10 +46,10 @@ existing pairs a vocabulary size of 32000 (with tied embeddings). The following
 table briefly summarizes some architectural differences between `tiny` and
 `base` models:
 
-| Variant | emb | ffn  | params | f32/i8   | 
-| ------- | --- | ---  | ------ | -------- | 
-| `base`  | 512 | 2048 | 39.0M  | 149/38MB |
-| `tiny`  | 256 | 1536 | 15.7M  |  61/17MB |
+| Variant | emb | ffn  | params | f32   | i8   |
+| ------- | --- | ---  | ------ | ----- | ---- |
+| `base`  | 512 | 2048 | 39.0M  | 149MB | 38MB |
+| `tiny`  | 256 | 1536 | 15.7M  | 61MB  | 17MB |
 
 More information on the models are described in the following papers:
 
