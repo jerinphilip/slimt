@@ -498,9 +498,12 @@ Decoder::Decoder(size_t decoders, size_t ffn_count, Vocabulary &vocabulary,
 
 void Decoder::register_parameters(const std::string &prefix,
                                   ParameterMap &parameters) {
+  // Somehow we have historically ended up with `none_QuantMultA` being used for
+  // Wemb_QuantMultA.
   parameters.emplace("Wemb_intgemm8", &output_.W);
   parameters.emplace("none_QuantMultA", &output_.quant);
   parameters.emplace("decoder_ff_logit_out_b", &output_.b);
+
   for (DecoderLayer &layer : decoder_) {
     layer.register_parameters(prefix, parameters);
   }
