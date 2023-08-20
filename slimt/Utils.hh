@@ -54,7 +54,7 @@ class Verifier {
   std::string blob_path_;
 };
 
-#define VERIFY_MATCH(value, name)                  \
+#define SLIMT_VERIFY_MATCH(value, name)            \
   do {                                             \
     const char *flag = std::getenv("SLIMT_TRACE"); \
     if (flag) {                                    \

@@ -3,6 +3,8 @@
 #include <cassert>
 #include <cmath>
 
+#include "slimt/Utils.hh"
+
 #ifdef SLIMT_HAS_INTGEMM
 #include "3rd-party/intgemm/intgemm/intgemm.h"
 #endif
@@ -47,10 +49,11 @@ Tensor affine_with_select<Provider::kIntgemm>(
 
   // Prepare bias
   Tensor prepared_bias(Type::f32, bias.shape(), "prepared_bias");
-  float a_alpha = 127.0F / a_quant;
-  float b_alpha = 127.0F / b_quant;
+  constexpr float kMax8bit = 127.0F;
+  float a_alpha = kMax8bit / a_quant;
+  float b_alpha = kMax8bit / b_quant;
 
-  float bias_unquant_multiplier = (-1.0F * (a_alpha * b_alpha)) / 127.0F;
+  float bias_unquant_multiplier = (-1.0F * (a_alpha * b_alpha)) / kMax8bit;
   auto prepare_bias_callback = intgemm::callbacks::UnquantizeAndAddBiasAndWrite(
       bias_unquant_multiplier, bias.data<float>(),  //
       prepared_bias.data<float>()                   //
