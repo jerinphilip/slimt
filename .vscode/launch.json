@@ -47,7 +47,7 @@
                 "--model", "model.intgemm.alphas.bin",
                 "--shortlist", "lex.s2t.bin",
                 "<",
-                "${workspaceFolder}/data/sample.txt"
+                "${workspaceFolder}/data/numbers2x3.txt"
             ],
             "stopAtEntry": false,
             "cwd": "${fileDirname}",

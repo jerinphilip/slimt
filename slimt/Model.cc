@@ -358,8 +358,11 @@ Decoder::Sentences Decoder::decode(Tensor &encoder_out, Tensor &mask,
   Vocabulary::Words previous_slice = {};
   set_start_state(batch_size);
   Tensor decoder_out = step(encoder_out, mask, previous_slice);
+  SLIMT_VERIFY_MATCH(decoder_out,
+                     "var_576-LayerNormalizationOp-float32_1x2x1x256-lhs.bin");
 
   Tensor logits = affine_with_select(output_, decoder_out, indices, "logits");
+  SLIMT_VERIFY_MATCH(logits, "var_587-cpu-float32_1x1x2x320-lhs.bin");
 
   previous_slice = greedy_sample(logits, indices, batch_size);
   record(previous_slice, sentences);
@@ -470,6 +473,9 @@ std::tuple<Tensor, Tensor> DecoderLayer::forward(Tensor &encoder_out,
                                                  Tensor &mask, Tensor &x) {
   Tensor decoder_out = rnn_.forward(x);
 
+  SLIMT_VERIFY_MATCH(decoder_out,
+                     "var_425-LayerNormalizationOp-float32_1x2x1x256-lhs.bin");
+
   // Assign query, key, value for cross-attention.
   Tensor &q = decoder_out;
   Tensor &k = encoder_out;
@@ -485,7 +491,6 @@ std::tuple<Tensor, Tensor> DecoderLayer::forward(Tensor &encoder_out,
 
   // Post Norm
   Tensor normalized_ffn_out = ffn_ffn_.forward(y);
-
   return std::make_tuple(std::move(normalized_ffn_out), std::move(attn));
 }
 
@@ -552,8 +557,13 @@ Tensor Decoder::step(Tensor &encoder_out, Tensor &mask,
   transform_embedding(decoder_embed);
   SLIMT_VERIFY_MATCH(encoder_out,
                      "var_394-LayerNormalizationOp-float32_1x2x4x256-lhs.bin");
+  SLIMT_VERIFY_MATCH(
+      decoder_embed,
+      "var_410-cpu-int8_1x1x2x256_none_shifted-rhs0-float32_1x1x2x256.bin");
 
   auto [x, attn] = decoder_[0].forward(encoder_out, mask, decoder_embed);
+  SLIMT_VERIFY_MATCH(x,
+                     "var_488-LayerNormalizationOp-float32_1x2x1x256-lhs.bin");
   for (size_t i = 1; i < decoder_.size(); i++) {
     auto [y, _attn] = decoder_[i].forward(encoder_out, mask, x);
     x = std::move(y);
