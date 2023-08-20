@@ -16,6 +16,6 @@ for tag in ${TAGS[@]}; do
   rm -r $DEBUG_VARIABLES_SAVE_PATH
   mkdir -p $DEBUG_VARIABLES_SAVE_PATH
   $BERGAMOT/app/bergamot --model-config-paths $BROWSERMT/$tag.student.tiny11/config.bergamot.yml --log-level off \
-    < data/numbers3x2.txt \
+    < data/numbers2x3.txt \
     &> traces/$tag.txt
 done
