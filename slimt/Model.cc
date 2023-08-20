@@ -532,11 +532,7 @@ Tensor Decoder::step(Tensor &encoder_out, Tensor &mask,
       Shape shape({batch_size, sequence_length, embed_dim});
       Tensor empty_embed(Type::f32, std::move(shape), name);
       empty_embed.fill_in_place(0.0F);
-
-      Tensor mask(Type::f32, Shape({batch_size, sequence_length}),
-                  "decoder_start_mask");
-      mask.fill_in_place(0.0F);
-      return std::make_tuple(std::move(empty_embed), std::move(mask));
+      return empty_embed;
     }
 
     size_t sequence_length = 1;
@@ -549,17 +545,10 @@ Tensor Decoder::step(Tensor &encoder_out, Tensor &mask,
     }
 
     Tensor embedding = index_select(embedding_, indices);
-    Tensor mask(Type::f32, Shape({batch_size, sequence_length}),
-                "decoder_mask");
-    return std::make_tuple(std::move(embedding), std::move(mask));
+    return embedding;
   };
 
-  auto [decoder_embed, decoder_mask] =
-      from_sentences(previous_step, batch_size);
-
-  modify_mask_for_pad_tokens_in_attention(decoder_mask.data<float>(),
-                                          decoder_mask.size());
-
+  Tensor decoder_embed = from_sentences(previous_step, batch_size);
   transform_embedding(decoder_embed);
   SLIMT_VERIFY_MATCH(encoder_out,
                      "var_394-LayerNormalizationOp-float32_1x2x4x256-lhs.bin");
