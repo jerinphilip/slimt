@@ -293,16 +293,11 @@ Model::Sentences Model::translate(Batch &batch) {
     EncoderLayer &layer = encoder_[i];
     auto [y, attn_y] = layer.forward(x, mask);
 
-    // VERIFY_MATCH(y,
-    // "var_142-LayerNormalizationOp-float32_1x2x4x256-lhs.bin");
-
     // Overwriting x so that x is destroyed and we need lesser working memory.
     x = std::move(y);
   }
 
   Tensor &encoder_out = x;
-  VERIFY_MATCH(encoder_out,
-               "var_394-LayerNormalizationOp-float32_1x2x4x256-lhs.bin");
   return decoder_.decode(encoder_out, mask, batch.words());
 }
 
@@ -564,9 +559,6 @@ Tensor Decoder::step(Tensor &encoder_out, Tensor &mask,
                                           decoder_mask.size());
 
   transform_embedding(decoder_embed);
-
-  VERIFY_MATCH(encoder_out,
-               "var_394-LayerNormalizationOp-float32_1x2x4x256-lhs.bin");
 
   auto [x, attn] = decoder_[0].forward(encoder_out, mask, decoder_embed);
   for (size_t i = 1; i < decoder_.size(); i++) {
