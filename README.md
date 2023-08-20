@@ -26,6 +26,25 @@ follow the [transformer architecture](https://arxiv.org/abs/1706.03762), with
 the decoder. The same models are used in Mozilla Firefox's [offline translation
 addon](https://addons.mozilla.org/en-US/firefox/addon/firefox-translations/).
 
+Both `tiny` and `base` models have 6 encoder-layers and 2 decoder-layers, and
+for most existing pairs a vocabulary size of 32000 (with tied embeddings). The
+following table briefly summarizes some architectural differences between
+`tiny` and `base` models:
+
+| Variant | emb | ffn  | params | f32   | i8   |
+| ------- | --- | ---  | ------ | ----- | ---- |
+| `base`  | 512 | 2048 | 39.0M  | 149MB | 38MB |
+| `tiny`  | 256 | 1536 | 15.7M  | 61MB  | 17MB |
+
+The `i8` models, quantized to 8-bit and as small as 17MB is used to provide
+translation for Mozilla Firefox's offline translation addon, among other
+things.
+
+More information on the models are described in the following papers:
+
+* [From Research to Production and Back: Ludicrously Fast Neural Machine Translation](https://aclanthology.org/D19-5632)
+* [Edinburgh’s Submissions to the 2020 Machine Translation Efficiency Task](https://aclanthology.org/2020.ngt-1.26/)
+
 
 The large-list of dependencies from bergamot-translator have currently been
 reduced to:
@@ -41,20 +60,6 @@ for English-German tiny models. Parity in features and speed with marian and
 bergamot-translator (where relevant) is a work-in-progress. Eventual support for
 `base` models are planned. Contributions are welcome and appreciated.
 
-Both `tiny` and `base` models have 6 encoders and 2 decoders, and for most
-existing pairs a vocabulary size of 32000 (with tied embeddings). The following
-table briefly summarizes some architectural differences between `tiny` and
-`base` models:
-
-| Variant | emb | ffn  | params | f32   | i8   |
-| ------- | --- | ---  | ------ | ----- | ---- |
-| `base`  | 512 | 2048 | 39.0M  | 149MB | 38MB |
-| `tiny`  | 256 | 1536 | 15.7M  | 61MB  | 17MB |
-
-More information on the models are described in the following papers:
-
-* [From Research to Production and Back: Ludicrously Fast Neural Machine Translation](https://aclanthology.org/D19-5632)
-* [Edinburgh’s Submissions to the 2020 Machine Translation Efficiency Task](https://aclanthology.org/2020.ngt-1.26/)
 
 
 ## Getting started
