@@ -160,13 +160,15 @@ std::vector<io::Item> loadItems(void* current) {
       // since Embedding layer quantized weights need to be dequantised, we
       // have a special case for items containing the name "Wemb"
       if (item.name == "Wemb_QuantMultA") {
-        // Going to refer to this part, Wemb_QuantMultA hints at this being the
-        // quantization multiplier for when we have to process at linear
-        // multiply on embedding.
+        // Wemb_QuantMultA hints at this being the quantization multiplier for
+        // when we have to process at linear multiply on embedding.  However,
+        // this value does not hold anything useful.
 
-        // However, this value does not hold anything useful.
         // It is `none_QuantMultA` of type `float32` that holds the useful
         // quantization multiplier.
+
+        // Pointing to this, that's all, mostly a no-op and prevents falling
+        // into the other branch.
         item.view = View{
             .data = ptr,  //
             .size = size  //
