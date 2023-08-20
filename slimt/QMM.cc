@@ -39,10 +39,6 @@ Tensor affine_with_select<Provider::kIntgemm>(
   // Check widths are same, making matrix multiplication viable.
   assert(A_cols == B_rows);
 
-  SLIMT_VERIFY_MATCH(
-      A, "var_586-cpu-int8_1x1x2x256_none_shifted-rhs0-float32_1x1x2x256.bin");
-  SLIMT_VERIFY_MATCH(B, "var_580-cpu-intgemm8_256x32000_Wemb-lhs.bin");
-
   // Prepare Activations (A).
   Tensor prepared_A(Type::i8, A.shape(), "quantized_acts");  // NOLINT
   intgemm::Int8Shift::PrepareA(                              //
@@ -50,15 +46,6 @@ Tensor affine_with_select<Provider::kIntgemm>(
       a_quant,                                               //
       A_rows, width                                          //
   );
-
-  Tensor qA(Type::f32, Shape({1}), "a_quant");
-  qA.fill_in_place<float>(a_quant);
-  SLIMT_VERIFY_MATCH(qA,
-                     "var_586-cpu-int8_1x1x2x256_none_shifted-rhs1-float32_1_"
-                     "Wemb_QuantMultA.bin");
-
-  SLIMT_VERIFY_MATCH(prepared_A,
-                     "var_586-cpu-int8_1x1x2x256_none_shifted-lhs.bin");
 
   // Prepare bias
   Tensor prepared_bias(Type::f32, bias.shape(), "prepared_bias");
@@ -78,10 +65,6 @@ Tensor affine_with_select<Provider::kIntgemm>(
       prepare_bias_callback         //
   );
 
-  SLIMT_VERIFY_MATCH(
-      prepared_bias,
-      "var_582-cpu-float32_1x32000_decoder_ff_logit_out_b_Prepared-lhs.bin");
-
   // Select before multiply?
   // NOLINTNEXTLINE
   Tensor selected_B(Type::i8, Shape({width, indices.size()}), "selected_B");
@@ -91,9 +74,6 @@ Tensor affine_with_select<Provider::kIntgemm>(
   intgemm::Int8::SelectColumnsB(B.data<int8_t>(), selected_B.data<int8_t>(),
                                 B_rows, indices_begin, indices_end);
 
-  SLIMT_VERIFY_MATCH(
-      selected_B,
-      "var_587-cpu-float32_1x1x2x320-rhs1-intgemm8_256x320_Wemb.bin");
   // Select bias accordingly.
   Tensor selected_bias(Type::f32, Shape({indices.size()}), "selected_bias");
   auto* selected_bias_ptr = selected_bias.data<float>();
@@ -101,9 +81,6 @@ Tensor affine_with_select<Provider::kIntgemm>(
     *(selected_bias_ptr) = *(prepared_bias.data<float>() + index);
     ++selected_bias_ptr;
   }
-
-  SLIMT_VERIFY_MATCH(selected_bias,
-                     "var_587-cpu-float32_1x1x2x320-rhs2-float32_1x320.bin");
 
   // Multiply y = A * B + bias (affine)
   // Set y's shape replacing last dimension with the feature-dim B is projecting
