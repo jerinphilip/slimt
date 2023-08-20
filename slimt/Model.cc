@@ -288,6 +288,8 @@ Model::Sentences Model::translate(Batch &batch) {
   modify_mask_for_pad_tokens_in_attention(mask.data<float>(), mask.size());
 
   auto [x, attn] = encoder_[0].forward(word_embedding, mask);
+  SLIMT_VERIFY_MATCH(x,
+                     "var_79-LayerNormalizationOp-float32_1x2x4x256-lhs.bin");
 
   for (size_t i = 1; i < encoder_.size(); i++) {
     EncoderLayer &layer = encoder_[i];
@@ -389,9 +391,9 @@ Model::Model(Tag tag, Vocabulary &vocabulary, std::vector<io::Item> &&items,
       decoder_(                                //
           Config::tiny11::decoder_layers,      //
           Config::tiny11::feed_forward_depth,  //
-          vocabulary,
-          embedding_,                     //
-          std::move(shortlist_generator)  //
+          vocabulary,                          //
+          embedding_,                          //
+          std::move(shortlist_generator)       //
       ) {
   for (size_t i = 0; i < Config::tiny11::encoder_layers; i++) {
     encoder_.emplace_back(i + 1, Config::tiny11::feed_forward_depth);
