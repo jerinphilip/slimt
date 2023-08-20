@@ -1,9 +1,9 @@
 #include "slimt/Model.hh"
 
 #include <cassert>
-#include <numeric>
 #include <cmath>
 #include <iostream>
+#include <numeric>
 
 #include "slimt/QMM.hh"
 #include "slimt/TensorOps.hh"
@@ -372,8 +372,7 @@ Decoder::Sentences Decoder::decode(Tensor &encoder_out, Tensor &mask,
   for (size_t i = 1; i < max_seq_length && remaining > 0; i++) {
     Tensor decoder_out = step(encoder_out, mask, previous_slice);
 
-    Tensor logits =
-        affine_with_select(output_, decoder_out, indices, "logits");
+    Tensor logits = affine_with_select(output_, decoder_out, indices, "logits");
 
     previous_slice = greedy_sample(logits, indices, batch_size);
     remaining = record(previous_slice, sentences);
@@ -604,16 +603,19 @@ void Model::load_parameters_from_items() {
   for (io::Item &item : items_) {
     Tensor *target = lookup(item.name);
     if (target) {
-      // std::cerr << "Loading " << item << "\n";
       target->load(item.view, item.type, item.shape, item.name);
+      parameters.erase(item.name);
     } else {
       missed.push_back(item.name);
     }
   }
 
   for (std::string &entry : missed) {
-    (void)entry;
-    // std::cerr << "Missed " << entry << "\n";
+    std::cerr << "Failed to ingest expected load of " << entry << "\n";
+  }
+  for (auto &parameter : parameters) {
+    std::cerr << "Failed to complete expected load of ";
+    std::cerr << parameter.first << "\n";
   }
 }
 
