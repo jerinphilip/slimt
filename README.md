@@ -48,8 +48,8 @@ table briefly summarizes some architectural differences between `tiny` and
 
 | Variant | emb | ffn  | params | f32/i8   | 
 | ------- | --- | ---  | ------ | -------- | 
-| Base    | 512 | 2048 | 39.0M  | 149/38MB |
-| Tiny    | 256 | 1536 | 15.7M  |  61/17MB |
+| `base`  | 512 | 2048 | 39.0M  | 149/38MB |
+| `tiny`  | 256 | 1536 | 15.7M  |  61/17MB |
 
 More information on the models are described in the following papers:
 
