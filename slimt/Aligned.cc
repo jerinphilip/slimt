@@ -1,6 +1,7 @@
 #include "slimt/Aligned.hh"
 
 #include <cassert>
+#include <cstring>
 
 namespace slimt {
 
@@ -42,7 +43,9 @@ void* Aligned::allocate(size_t alignment, size_t size) {
     aligned_size += alignment;
   }
   assert(aligned_size >= size);
-  return aligned_alloc(alignment, aligned_size);
+  void* allocation = aligned_alloc(alignment, aligned_size);
+  std::memset(allocation, 0, aligned_size);
+  return allocation;
 }
 
 void Aligned::release() {
