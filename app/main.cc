@@ -8,7 +8,7 @@
 template <class Field>
 struct Record {
   Field model;
-  Field vocab;
+  Field vocabulary;
   Field shortlist;
 };
 
@@ -22,7 +22,7 @@ struct Options {
     // clang-format off
     app.add_option("--root", root, "Path to prefix other filenames to");
     app.add_option("--model", translator.model, "Path to model");
-    app.add_option("--vocab", translator.vocab, "Path to vocab");
+    app.add_option("--vocabulary", translator.vocabulary, "Path to vocabulary");
     app.add_option("--shortlist", translator.shortlist, "Path to shortlist");
     app.add_option("--max-tokens-per-batch", max_tokens_per_batch, "Path to shortlist");
     // clang-format on
@@ -37,7 +37,7 @@ void run(const Options &options) {
   std::string indent = "  ";
   // clang-format off
   fprintf(stdout, "%s model: %s\n", indent.c_str(), options.translator.model.c_str());
-  fprintf(stdout, "%s vocab: %s\n", indent.c_str(), options.translator.vocab.c_str());
+  fprintf(stdout, "%s vocabulary: %s\n", indent.c_str(), options.translator.vocabulary.c_str());
   fprintf(stdout, "%s shortlist: %s\n", indent.c_str(), options.translator.shortlist.c_str());
   // clang-format on
   //
@@ -45,47 +45,47 @@ void run(const Options &options) {
 
   // Adjust paths.
   Record<std::string> adjusted{
-      .model = prefix(options.root, options.translator.model),         //
-      .vocab = prefix(options.root, options.translator.vocab),         //
-      .shortlist = prefix(options.root, options.translator.shortlist)  //
+      .model = prefix(options.root, options.translator.model),            //
+      .vocabulary = prefix(options.root, options.translator.vocabulary),  //
+      .shortlist = prefix(options.root, options.translator.shortlist)     //
   };
 
   Record<io::MmapFile> mmap{
-      .model = io::MmapFile(adjusted.model),          //
-      .vocab = io::MmapFile(adjusted.vocab),          //
-      .shortlist = io::MmapFile(adjusted.shortlist),  //
+      .model = io::MmapFile(adjusted.model),            //
+      .vocabulary = io::MmapFile(adjusted.vocabulary),  //
+      .shortlist = io::MmapFile(adjusted.shortlist),    //
   };
 
   // Tokenize into numeric-ids using sentencepiece.
-  Vocabulary vocab(mmap.vocab.data(), mmap.vocab.size());
+  Vocabulary vocabulary(mmap.vocabulary.data(), mmap.vocabulary.size());
   ShortlistGenerator shortlist_generator(            //
       mmap.shortlist.data(), mmap.shortlist.size(),  //
-      vocab, vocab                                   //
+      vocabulary, vocabulary                         //
   );
 
   // Load model
   auto items = io::loadItems(mmap.model.data());
-  Model model(Tag::tiny11, std::move(items), std::move(shortlist_generator));
+  Model model(Tag::tiny11, vocabulary, std::move(items),
+              std::move(shortlist_generator));
 
-  fprintf(stdout, "%s eos_id: %u\n", indent.c_str(), vocab.eos_id());
   using Sentences = std::vector<Vocabulary::Words>;
 
   AverageMeter<float> wps;
 
-  auto batch_and_translate = [&vocab, &model, &wps](         //
+  auto batch_and_translate = [&vocabulary, &model, &wps](    //
                                  Sentences &sentences,       //
                                  size_t max_sequence_length  //
                              ) {
     Timer timer;
     uint64_t batch_size = sentences.size();
-    Batch batch(batch_size, max_sequence_length, vocab.pad_id());
+    Batch batch(batch_size, max_sequence_length, vocabulary.pad_id());
     for (auto &sentence : sentences) {
       batch.add(sentence);
     }
 
     auto translated = model.translate(batch);
     for (auto &sentence : translated) {
-      auto [result, views] = vocab.decode(sentence);
+      auto [result, views] = vocabulary.decode(sentence);
       std::cout << result << "\n";
     }
     size_t words_processed = max_sequence_length * sentences.size();
@@ -99,7 +99,7 @@ void run(const Options &options) {
   size_t line_no = 0;
   Sentences sentences;
   while (getline(std::cin, line)) {
-    auto [words, views] = vocab.encode(line, /*add_eos =*/true);
+    auto [words, views] = vocabulary.encode(line, /*add_eos =*/true);
     // std::cout << "Adding ";
     // for (const auto &view : views) {
     //   std::cout << "[" << view << "]";

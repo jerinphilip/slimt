@@ -3,11 +3,13 @@
 #include <cassert>
 #include <cmath>
 
-#ifdef HAS_INTGEMM
+#include "slimt/Utils.hh"
+
+#ifdef SLIMT_HAS_INTGEMM
 #include "3rd-party/intgemm/intgemm/intgemm.h"
 #endif
 
-#ifdef HAS_RUY
+#ifdef SLIMT_HAS_RUY
 #include "3rd-party/ruy/ruy/ruy.h"
 #endif
 
@@ -16,7 +18,7 @@
 namespace slimt::qmm {
 namespace detail {
 
-#ifdef HAS_INTGEMM
+#ifdef SLIMT_HAS_INTGEMM
 template <>
 Tensor affine_with_select<Provider::kIntgemm>(
     Tensor& x, Tensor& W, Tensor& b, float a_quant, float b_quant,
@@ -47,10 +49,11 @@ Tensor affine_with_select<Provider::kIntgemm>(
 
   // Prepare bias
   Tensor prepared_bias(Type::f32, bias.shape(), "prepared_bias");
-  float a_alpha = 127.0F / a_quant;
-  float b_alpha = 127.0F / b_quant;
+  constexpr float kMax8bit = 127.0F;
+  float a_alpha = kMax8bit / a_quant;
+  float b_alpha = kMax8bit / b_quant;
 
-  float bias_unquant_multiplier = (-1.0F * (a_alpha * b_alpha)) / 127.0F;
+  float bias_unquant_multiplier = (-1.0F * (a_alpha * b_alpha)) / kMax8bit;
   auto prepare_bias_callback = intgemm::callbacks::UnquantizeAndAddBiasAndWrite(
       bias_unquant_multiplier, bias.data<float>(),  //
       prepared_bias.data<float>()                   //
@@ -64,7 +67,7 @@ Tensor affine_with_select<Provider::kIntgemm>(
 
   // Select before multiply?
   // NOLINTNEXTLINE
-  Tensor selected_B(Type::i8, Shape({256, indices.size()}), "selected_B");
+  Tensor selected_B(Type::i8, Shape({width, indices.size()}), "selected_B");
   const uint32_t* indices_begin = indices.data();
   const uint32_t* indices_end = indices.data() + indices.size();
 
@@ -254,8 +257,7 @@ void PrepareBQuantizedTransposed<Provider::kIntgemm>(const int8_t* input,
 
 #endif
 
-#ifdef HAS_RUY
-
+#ifdef SLIMT_HAS_RUY
 namespace detail {
 
 using Index = uint64_t;
@@ -400,7 +402,7 @@ Tensor affine_with_select<Provider::kRuy>(Tensor& x, Tensor& W, Tensor& b,
   lhs.set_data(prepared_A.data<int8_t>());
 
   // PrepareB: Select
-  Tensor selected_B(Type::i8, Shape({256, indices.size()}),  // NOLINT
+  Tensor selected_B(Type::i8, Shape({width, indices.size()}),  // NOLINT
                     "selected_B");
 
   // SelectColumnsB, but inlined?

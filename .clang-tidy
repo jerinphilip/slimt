@@ -69,7 +69,6 @@ Checks: >
   -performance-move-const-arg,
   -readability-braces-around-statements,
   -readability-identifier-length,
-  -readability-magic-numbers,
   -readability-named-parameter,
   -readability-redundant-declaration,
   -readability-function-cognitive-complexity,

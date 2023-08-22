@@ -3,6 +3,7 @@
 #include <cassert>
 #include <cmath>
 #include <iostream>
+#include <numeric>
 
 #include "slimt/QMM.hh"
 #include "slimt/TensorOps.hh"
@@ -292,16 +293,11 @@ Model::Sentences Model::translate(Batch &batch) {
     EncoderLayer &layer = encoder_[i];
     auto [y, attn_y] = layer.forward(x, mask);
 
-    // VERIFY_MATCH(y,
-    // "var_142-LayerNormalizationOp-float32_1x2x4x256-lhs.bin");
-
     // Overwriting x so that x is destroyed and we need lesser working memory.
     x = std::move(y);
   }
 
   Tensor &encoder_out = x;
-  VERIFY_MATCH(encoder_out,
-               "var_394-LayerNormalizationOp-float32_1x2x4x256-lhs.bin");
   return decoder_.decode(encoder_out, mask, batch.words());
 }
 
@@ -334,15 +330,20 @@ Decoder::Sentences Decoder::decode(Tensor &encoder_out, Tensor &mask,
   size_t source_sequence_length = encoder_out.dim(-2);
 
   Shortlist shortlist = shortlist_generator_.generate(source);
+  const auto &indices = shortlist.words();
+  // The following can be used to check if shortlist is going wrong.
+  // std::vector<uint32_t> indices(vocabulary_.size());
+  // std::iota(indices.begin(), indices.end(), 0);
 
   std::vector<bool> complete(batch_size, false);
-  auto record = [&complete](Vocabulary::Words &step,
-                            Decoder::Sentences &sentences) {
+  uint32_t eos = vocabulary_.eos_id();
+  auto record = [eos, &complete](Vocabulary::Words &step,
+                                 Decoder::Sentences &sentences) {
     size_t finished = 0;
     for (size_t i = 0; i < step.size(); i++) {
       if (not complete[i]) {
+        complete[i] = (step[i] == eos);
         sentences[i].push_back(step[i]);
-        complete[i] = (step[i] == 0);
       }
       finished += static_cast<int>(complete[i]);
     }
@@ -356,34 +357,39 @@ Decoder::Sentences Decoder::decode(Tensor &encoder_out, Tensor &mask,
   set_start_state(batch_size);
   Tensor decoder_out = step(encoder_out, mask, previous_slice);
 
-  Tensor logits =
-      affine_with_select(output_, decoder_out, shortlist.words(), "logits");
+  Tensor logits = affine_with_select(output_, decoder_out, indices, "logits");
 
-  previous_slice = greedy_sample(logits, shortlist.words(), batch_size);
+  previous_slice = greedy_sample(logits, indices, batch_size);
   record(previous_slice, sentences);
 
   size_t remaining = sentences.size();
-  size_t max_seq_length = 1.5 * source_sequence_length;
+  size_t max_seq_length = max_target_length_factor_ * source_sequence_length;
   for (size_t i = 1; i < max_seq_length && remaining > 0; i++) {
     Tensor decoder_out = step(encoder_out, mask, previous_slice);
 
-    Tensor logits =
-        affine_with_select(output_, decoder_out, shortlist.words(), "logits");
+    Tensor logits = affine_with_select(output_, decoder_out, indices, "logits");
 
-    previous_slice = greedy_sample(logits, shortlist.words(), batch_size);
+    previous_slice = greedy_sample(logits, indices, batch_size);
     remaining = record(previous_slice, sentences);
   }
 
   return sentences;
 }
 
-Model::Model(Tag tag, std::vector<io::Item> &&items,
+void Decoder::set_start_state(size_t batch_size) {
+  for (auto &layer : decoder_) {
+    layer.set_start_state(batch_size);
+  }
+}
+
+Model::Model(Tag tag, Vocabulary &vocabulary, std::vector<io::Item> &&items,
              ShortlistGenerator &&shortlist_generator)
     : tag_(tag),
       items_(std::move(items)),
       decoder_(                                //
           Config::tiny11::decoder_layers,      //
           Config::tiny11::feed_forward_depth,  //
+          vocabulary,                          //
           embedding_,                          //
           std::move(shortlist_generator)       //
       ) {
@@ -477,13 +483,13 @@ std::tuple<Tensor, Tensor> DecoderLayer::forward(Tensor &encoder_out,
 
   // Post Norm
   Tensor normalized_ffn_out = ffn_ffn_.forward(y);
-
   return std::make_tuple(std::move(normalized_ffn_out), std::move(attn));
 }
 
-Decoder::Decoder(size_t decoders, size_t ffn_count, Tensor &embedding,
-                 ShortlistGenerator &&shortlist_generator)
-    : embedding_(embedding),
+Decoder::Decoder(size_t decoders, size_t ffn_count, Vocabulary &vocabulary,
+                 Tensor &embedding, ShortlistGenerator &&shortlist_generator)
+    : vocabulary_(vocabulary),
+      embedding_(embedding),
       shortlist_generator_(std::move(shortlist_generator)) {
   for (size_t i = 0; i < decoders; i++) {
     decoder_.emplace_back(i + 1, ffn_count);
@@ -492,9 +498,12 @@ Decoder::Decoder(size_t decoders, size_t ffn_count, Tensor &embedding,
 
 void Decoder::register_parameters(const std::string &prefix,
                                   ParameterMap &parameters) {
+  // Somehow we have historically ended up with `none_QuantMultA` being used for
+  // Wemb_QuantMultA.
   parameters.emplace("Wemb_intgemm8", &output_.W);
-  parameters.emplace("Wemb_QuantMultA", &output_.quant);
+  parameters.emplace("none_QuantMultA", &output_.quant);
   parameters.emplace("decoder_ff_logit_out_b", &output_.b);
+
   for (DecoderLayer &layer : decoder_) {
     layer.register_parameters(prefix, parameters);
   }
@@ -523,11 +532,7 @@ Tensor Decoder::step(Tensor &encoder_out, Tensor &mask,
       Shape shape({batch_size, sequence_length, embed_dim});
       Tensor empty_embed(Type::f32, std::move(shape), name);
       empty_embed.fill_in_place(0.0F);
-
-      Tensor mask(Type::f32, Shape({batch_size, sequence_length}),
-                  "decoder_start_mask");
-      mask.fill_in_place(0.0F);
-      return std::make_tuple(std::move(empty_embed), std::move(mask));
+      return empty_embed;
     }
 
     size_t sequence_length = 1;
@@ -540,21 +545,11 @@ Tensor Decoder::step(Tensor &encoder_out, Tensor &mask,
     }
 
     Tensor embedding = index_select(embedding_, indices);
-    Tensor mask(Type::f32, Shape({batch_size, sequence_length}),
-                "decoder_mask");
-    return std::make_tuple(std::move(embedding), std::move(mask));
+    return embedding;
   };
 
-  auto [decoder_embed, decoder_mask] =
-      from_sentences(previous_step, batch_size);
-
-  modify_mask_for_pad_tokens_in_attention(decoder_mask.data<float>(),
-                                          decoder_mask.size());
-
+  Tensor decoder_embed = from_sentences(previous_step, batch_size);
   transform_embedding(decoder_embed);
-
-  VERIFY_MATCH(encoder_out,
-               "var_394-LayerNormalizationOp-float32_1x2x4x256-lhs.bin");
 
   auto [x, attn] = decoder_[0].forward(encoder_out, mask, decoder_embed);
   for (size_t i = 1; i < decoder_.size(); i++) {
@@ -591,16 +586,19 @@ void Model::load_parameters_from_items() {
   for (io::Item &item : items_) {
     Tensor *target = lookup(item.name);
     if (target) {
-      // std::cerr << "Loading " << item << "\n";
       target->load(item.view, item.type, item.shape, item.name);
+      parameters.erase(item.name);
     } else {
       missed.push_back(item.name);
     }
   }
 
   for (std::string &entry : missed) {
-    (void)entry;
-    // std::cerr << "Missed " << entry << "\n";
+    std::cerr << "Failed to ingest expected load of " << entry << "\n";
+  }
+  for (auto &parameter : parameters) {
+    std::cerr << "Failed to complete expected load of ";
+    std::cerr << parameter.first << "\n";
   }
 }
 
