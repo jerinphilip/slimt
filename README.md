@@ -87,7 +87,7 @@ command-line usage and testing respectively.
 build/bin/slimt                               \
     --root <path/to/folder>                   \
     --model </relative/path/to/model>         \
-    --vocab </relative/path/to/vocab>         \
+    --vocabulary </relative/path/to/vocab>         \
     --shortlist </relative/path/to/shortlist>
 
 build/slimt_test <test-name>
