@@ -33,9 +33,10 @@ using Segments = std::vector<Segment>;
     }                            \
   } while (0)
 
-#define ABORT(condition, ...) \
-  do {                        \
-    std::abort();             \
+#define ABORT(message)      \
+  do {                      \
+    std::cerr << (message); \
+    std::abort();           \
   } while (0)
 
 #define LOG(...) (void)0
