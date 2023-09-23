@@ -116,6 +116,7 @@ class HTML {
   /// Represents a tag, or markup that is being applied to a string of text.
   /// We treat all elements except `ELEMENT` as void elements or empty elements.
   struct Tag {
+    // NOLINTBEGIN
     enum NodeType {
       ELEMENT,                 // <b>...</b>
       VOID_ELEMENT,            // <img>
@@ -123,6 +124,7 @@ class HTML {
       PROCESSING_INSTRUCTION,  // <?...?>
       WHITESPACE,              // A \n\n we inserted to break a sentence.
     };
+    // NOLINTEND
 
     NodeType type;           // Type of the node
     std::string name;        // Tag name (if type is ELEMENT or VOID_ELEMENT)
