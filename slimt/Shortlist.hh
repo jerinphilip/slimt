@@ -55,8 +55,8 @@ class ShortlistGenerator {
   size_t source_index_;
   bool shared_{false};
 
-  uint64_t first_num_{kFrequent};  // baked into binary header
-  uint64_t best_num_{kBest};       // baked into binary header
+  uint64_t frequent_{kFrequent};  // baked into binary header
+  uint64_t best_{kBest};          // baked into binary header
 
   // shortlist is stored in a skip list
   // [&shortLists_[word_to_offset_[word]],
@@ -72,9 +72,9 @@ class ShortlistGenerator {
 
   struct Header {
     uint64_t magic;                // BINARY_SHORTLIST_MAGIC
-    uint64_t checksum;             // hash([&first_num, eof]).
-    uint64_t first_num;            // Limits used to create the shortlist.
-    uint64_t best_num;             //
+    uint64_t checksum;             // hash([&frequent, eof]).
+    uint64_t frequent;             // Limits used to create the shortlist.
+    uint64_t best;                 //
     uint64_t word_to_offset_size;  // Length of word_to_offset_ array.
     uint64_t shortlist_size;       // Length of short_lists_ array.
   };

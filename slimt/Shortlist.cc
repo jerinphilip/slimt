@@ -56,16 +56,16 @@ void ShortlistGenerator::load(const void* data, size_t blob_size,
         - sizeof(uint64_t)  // header.checksum
     );
     auto checksum_actual = hash_bytes<uint64_t, uint64_t>(
-        &header.first_num, (length) / sizeof(uint64_t));
+        &header.frequent, (length) / sizeof(uint64_t));
 
     SLIMT_ABORT_IF(checksum_actual != header.checksum,
                    "checksum check failed: this binary shortlist is corrupted");
   }
 
-  first_num_ = header.first_num;
-  best_num_ = header.best_num;
-  LOG(info, "[data] Lexical short list first_num {} and best_num {}",
-      first_num_, best_num_);
+  frequent_ = header.frequent;
+  best_ = header.best;
+  LOG(info, "[data] Lexical short list frequent {} and best {}", frequent_,
+      best_);
 
   word_to_offset_size_ = header.word_to_offset_size;
   shortlist_size_ = header.shortlist_size;
@@ -107,8 +107,8 @@ Shortlist ShortlistGenerator::generate(const Words& words) const {
   std::vector<bool> source_table(source_size, false);
   std::vector<bool> target_table(target_size, false);
 
-  // Add first_num most frequent words
-  for (Word i = 0; i < first_num_ && i < target_size; ++i) {
+  // Add frequent most frequent words
+  for (Word i = 0; i < frequent_ && i < target_size; ++i) {
     target_table[i] = true;
   }
 
@@ -141,7 +141,7 @@ Shortlist ShortlistGenerator::generate(const Words& words) const {
   // Ensure that the generated vocabulary items from a shortlist are a
   // multiple-of-eight This is necessary until intgemm supports
   // non-multiple-of-eight matrices.
-  for (size_t i = first_num_; i < target_size && target_table_ones % 8 != 0;
+  for (size_t i = frequent_; i < target_size && target_table_ones % 8 != 0;
        i++) {
     if (!target_table[i]) {
       target_table[i] = true;
