@@ -12,7 +12,7 @@ add_subdirectory(3rd-party)
 
 set(SLIMT_COMPILE_OPTIONS -Wall -Wpedantic -Wextra -Wno-unknown-pragmas -Werror)
 set(SLIMT_COMPILE_OPTIONS ${SLIMT_COMPILE_OPTIONS}
-                          -Wno-missing-field-initializers)
+                          -Wno-missing-field-initializers -Wno-unused-function)
 set(SLIMT_COMPILE_DEFINITIONS "")
 
 option(WITH_INTGEMM "Use intgemm" ON)
