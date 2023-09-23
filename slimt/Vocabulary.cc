@@ -15,7 +15,7 @@ Vocabulary::Vocabulary(const std::string &fpath) {
 }
 
 std::tuple<Words, Views> Vocabulary::encode(const std::string_view &line,
-                                            bool add_eos /* = false*/) {
+                                            bool add_eos /* = false*/) const {
   absl::string_view a_line(line.data(), line.size());
   std::vector<absl::string_view> views;
   sentencepiece::SentencePieceText sentencepiece_text;
@@ -58,7 +58,7 @@ std::tuple<Words, Views> Vocabulary::encode(const std::string_view &line,
 }
 
 std::tuple<std::string, Views> Vocabulary::decode(const Words &words,
-                                                  bool ignore_eos) {
+                                                  bool ignore_eos) const {
   sentencepiece::SentencePieceText sentencepiece_text;
   std::vector<std::string_view> views;
 

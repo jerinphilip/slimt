@@ -13,6 +13,9 @@ class Aligned {
   void* data() const;
   size_t size() const;
 
+  char* begin() const;
+  char* end() const;
+
   Aligned(const Aligned&) = delete;
   Aligned& operator=(const Aligned&) = delete;
 

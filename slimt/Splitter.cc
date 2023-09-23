@@ -6,33 +6,33 @@
 #include "slimt/Annotation.hh"
 #include "slimt/Types.hh"
 
-namespace marian {
-namespace bergamot {
+namespace slimt {
 
 namespace {
 ug::ssplit::SentenceStream::splitmode string2splitmode(const std::string &m) {
   typedef ug::ssplit::SentenceStream::splitmode splitmode;
   if (m == "sentence") {
     return splitmode::one_sentence_per_line;
-  } else if (m == "paragraph") {
-    return splitmode::one_paragraph_per_line;
-  } else if (m == "wrapped_text") {
-    return splitmode::wrapped_text;
-  } else {
-    ABORT(
-        "Unknown ssplitmode {}, Please choose one of "
-        "{sentence,paragraph,wrapped_text}");
   }
+  if (m == "paragraph") {
+    return splitmode::one_paragraph_per_line;
+  }
+  if (m == "wrapped_text") {
+    return splitmode::wrapped_text;
+  }
+  ABORT(
+      "Unknown ssplitmode {}, Please choose one of "
+      "{sentence,paragraph,wrapped_text}");
 }
 
-ug::ssplit::SentenceSplitter loadSplitter(const std::string &ssplitPrefixFile) {
+ug::ssplit::SentenceSplitter loadSplitter(const std::string &prefix_path) {
   // Temporarily supports empty, will be removed when mozilla passes
-  // ssplitPrefixFile
+  // prefix_path
   ug::ssplit::SentenceSplitter splitter;
-  if (ssplitPrefixFile.size()) {
+  if (!prefix_path.empty()) {
     LOG(info, "Loading protected prefixes for sentence splitting from {}",
-        ssplitPrefixFile);
-    splitter.load(ssplitPrefixFile);
+        prefix_path);
+    splitter.load(prefix_path);
   } else {
     LOG(warn,
         "Missing list of protected prefixes for sentence splitting. "
@@ -54,142 +54,142 @@ ug::ssplit::SentenceSplitter loadSplitter(const Aligned &memory) {
 }  // namespace
 
 Segment TextProcessor::tokenize(
-    const string_view &segment,
-    std::vector<std::string_view> &wordRanges) const {
-  return vocabulary_->encodeWithByteRanges(segment, wordRanges,
-                                           /*addEOS=*/false,
-                                           /*inference=*/true);
+    const std::string_view &segment,
+    std::vector<std::string_view> &word_ranges) const {
+  auto [words, views] = vocabulary_.encode(segment, /*add_eos=*/false);
+  word_ranges.reserve(word_ranges.size() +
+                      distance(views.begin(), views.end()));
+  word_ranges.insert(word_ranges.end(), views.begin(), views.end());
+  return words;
 }
 
-TextProcessor::TextProcessor(Ptr<Options> options, const Vocabs &vocabs,
-                             const std::string &ssplit_prefix_file)
-    : vocabs_(vocabs), ssplit_(loadSplitter(ssplit_prefix_file)) {
-  parseCommonOptions(options);
-}
+TextProcessor::TextProcessor(size_t wrap_length, const std::string &mode,
+                             const Vocabulary &vocabulary,
+                             const std::string &prefix_path)
+    : wrap_length_(wrap_length),
+      ssplit_mode_(string2splitmode(mode)),
+      vocabulary_(vocabulary),
+      ssplit_(loadSplitter(prefix_path)) {}
 
-TextProcessor::TextProcessor(Ptr<Options> options, const Vocabs &vocabs,
-                             const AlignedMemory &memory)
-    : vocabs_(vocabs) {
-  // This is not the best of the solutions at the moment, but is consistent with
-  // what happens among other structures like model, vocabulary or shortlist.
-  // First, we check if the bytearray is empty. If not, we load from ByteArray.
-  // In case empty, the string based loader which reads from file is called.
-  // However, ssplit allows for not supplying ssplit-prefix-file where-in the
-  // purely regular expression based splitter is activated.
+TextProcessor::TextProcessor(size_t wrap_length, const std::string &mode,
+                             const Vocabulary &vocabulary,
+                             const Aligned &memory)
+    : wrap_length_(wrap_length),
+      ssplit_mode_(string2splitmode(mode)),
+      vocabulary_(vocabulary) {
+  // This is not the best of the solutions at the moment, but is consistent
+  // with // what happens among other structures like model, vocabulary or
+  // shortlist.  First, we check if the bytearray is empty. If not, we load
+  // from ByteArray.  In case empty, the string based loader which reads from
+  // file is called.  However, ssplit allows for not supplying
+  // ssplit-prefix-file where-in the purely regular expression based splitter
+  // is activated.
   //
   // For now, we allow not supplying an ssplit-prefix-file.
 
-  if (memory.begin() == nullptr && memory.size()) {
-    ssplit_ = loadSplitter(memory);
-  } else {
-    ssplit_ = loadSplitter(options->get<std::string>("ssplit-prefix-file", ""));
-  }
-  parseCommonOptions(options);
-}
-
-void TextProcessor::parseCommonOptions(Ptr<Options> options) {
-  maxLengthBreak_ = options->get<size_t>("max-length-break");
-  ssplitMode_ = string2splitmode(options->get<std::string>("ssplit-mode"));
+  ABORT_IF(memory.begin() == nullptr && memory.size());
+  ssplit_ = loadSplitter(memory);
 }
 
 void TextProcessor::process(std::string &&input, AnnotatedText &source,
                             Segments &segments) const {
-  source = std::move(AnnotatedText(std::move(input)));
+  source = AnnotatedText(std::move(input));
   std::string_view input_converted(source.text.data(), source.text.size());
-  auto sentenceStream =
-      ug::ssplit::SentenceStream(input_converted, ssplit_, ssplitMode_);
+  auto sentence_stream =
+      ug::ssplit::SentenceStream(input_converted, ssplit_, ssplit_mode_);
 
-  std::string_view sentenceStringPiece;
+  std::string_view sentence_string_piece;
 
-  while (sentenceStream >> sentenceStringPiece) {
-    marian::string_view sentence(sentenceStringPiece.data(),
-                                 sentenceStringPiece.size());
+  while (sentence_stream >> sentence_string_piece) {
+    std::string_view sentence(sentence_string_piece.data(),
+                              sentence_string_piece.size());
 
-    std::vector<string_view> wordRanges;
-    Segment segment = tokenize(sentence, wordRanges);
+    std::vector<std::string_view> word_ranges;
+    Segment segment = tokenize(sentence, word_ranges);
 
     // There are some cases where SentencePiece or vocab returns no words
     // after normalization. 0 prevents any empty entries from being added.
-    if (segment.size() > 0) {
-      // Wrap segment into sentences of at most maxLengthBreak_ tokens and
+    if (!segment.empty()) {
+      // Wrap segment into sentences of at most wrap_length_ tokens and
       // tell source about them.
-      wrap(segment, wordRanges, segments, source);
+      wrap(segment, word_ranges, segments, source);
     }
   }
 }
 
-void TextProcessor::wrap(Segment &segment, std::vector<string_view> &wordRanges,
+void TextProcessor::wrap(Segment &segment,
+                         std::vector<std::string_view> &word_ranges,
                          Segments &segments, AnnotatedText &source) const {
   // There's an EOS token added to the words, manually.
   // SentencePiece/marian-vocab is set to not append EOS. Marian requires EOS to
   // be at the end as a marker to start translating. So while we're supplied
-  // maxLengthBreak_ from outside, we need to ensure there's space for EOS in
+  // wrap_length_ from outside, we need to ensure there's space for EOS in
   // each wrapped segment.
-  Word sourceEosId = vocabs_.sources().front()->getEosId();
-  size_t wrapStep = maxLengthBreak_ - 1;
+  Word eos_id = vocabulary_.eos_id();
+  size_t wrap_step_size = wrap_length_ - 1;
 
-  for (size_t offset = 0; offset < segment.size(); offset += wrapStep) {
+  for (size_t offset = 0; offset < segment.size(); offset += wrap_step_size) {
     auto start = segment.begin() + offset;
 
     // Restrict the range within bounds.
     size_t left = segment.size() - offset;
-    size_t diff = std::min(wrapStep, left);
+    size_t diff = std::min(wrap_step_size, left);
 
     segments.emplace_back(start, start + diff);
-    segments.back().push_back(sourceEosId);
+    segments.back().push_back(eos_id);
 
-    auto astart = wordRanges.begin() + offset;
+    auto astart = word_ranges.begin() + offset;
 
-    // Construct a part vector of string_view representing wrapped segment, use
-    // the last string_view to create an EOS string_view manually.
-    std::vector<string_view> partWordRanges(astart, astart + diff);
-    string_view &last = partWordRanges.back();
+    // Construct a part vector of std::string_view representing wrapped segment,
+    // use the last std::string_view to create an EOS std::string_view manually.
+    std::vector<std::string_view> partial_word_ranges(astart, astart + diff);
+    std::string_view &last = partial_word_ranges.back();
     const char *end = last.data() + last.size();
-    partWordRanges.emplace_back(end, 0);
+    partial_word_ranges.emplace_back(end, 0);
     // diff > 0
-    source.recordExistingSentence(partWordRanges.begin(), partWordRanges.end(),
-                                  astart->data());
+    source.recordExistingSentence(partial_word_ranges.begin(),
+                                  partial_word_ranges.end(), astart->data());
   }
 }
 
 void TextProcessor::processFromAnnotation(AnnotatedText &source,
                                           Segments &segments) const {
-  std::string copySource = source.text;
-  AnnotatedText replacement(std::move(copySource));
+  std::string text = source.text;
+  AnnotatedText replacement(std::move(text));
 
   for (size_t s = 0; s < source.numSentences(); s++) {
-    // This is our sentenceStream
-    ByteRange sentenceByteRange = source.sentenceAsByteRange(s);
+    // This is our sentence_stream
+    ByteRange sentence_byte_range = source.sentenceAsByteRange(s);
 
     // Fool tokenization using ByteRanges into looking at replacement. They're
     // same, so okay.
-    marian::string_view sentence{&replacement.text[sentenceByteRange.begin],
-                                 sentenceByteRange.size()};
+    std::string_view sentence{&replacement.text[sentence_byte_range.begin],
+                              sentence_byte_range.size()};
 
-    std::vector<string_view> wordRanges;
-    Segment segment = tokenize(sentence, wordRanges);
+    std::vector<std::string_view> word_ranges;
+    Segment segment = tokenize(sentence, word_ranges);
 
     // Manually add EoS
-    Word sourceEosId = vocabs_.sources().front()->getEosId();
-    segment.push_back(sourceEosId);
+    Word eos_id = vocabulary_.eos_id();
+    segment.push_back(eos_id);
 
-    if (!wordRanges.empty()) {
-      string_view &last = wordRanges.back();  // this is a possible segfault if
-                                              // wordRanges is empty. So guard.
+    if (!word_ranges.empty()) {
+      std::string_view &last =
+          word_ranges.back();  // this is a possible segfault if
+                               // word_ranges is empty. So guard.
       const char *end = last.data() + last.size();
-      wordRanges.emplace_back(end, 0);
+      word_ranges.emplace_back(end, 0);
     } else {
       const char *end = sentence.data() + sentence.size();
-      wordRanges.emplace_back(end, 0);
+      word_ranges.emplace_back(end, 0);
     }
 
     segments.push_back(std::move(segment));
-    replacement.recordExistingSentence(wordRanges.begin(), wordRanges.end(),
-                                       wordRanges.begin()->data());
+    replacement.recordExistingSentence(word_ranges.begin(), word_ranges.end(),
+                                       word_ranges.begin()->data());
   }
 
   source = replacement;
 }
 
-}  // namespace bergamot
-}  // namespace marian
+}  // namespace slimt

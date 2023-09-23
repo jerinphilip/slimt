@@ -30,8 +30,8 @@ class TextProcessor {
   /// marian::Words and corresponding ByteRange information in AnnotatedText.
   /// @param [in] ssplit_prefix_file: Path to ssplit-prefix file compatible with
   /// moses-tokenizer.
-  TextProcessor(size_t wrap_length, std::string mode, const Vocabulary &vocabs,
-                const std::string &prefix_path);
+  TextProcessor(size_t wrap_length, const std::string &mode,
+                const Vocabulary &vocabulary, const std::string &prefix_path);
 
   /// Construct TextProcessor from options, vocabs and prefix-file supplied as a
   /// bytearray. For other parameters, see the path based constructor. Note:
@@ -40,8 +40,8 @@ class TextProcessor {
   ///
   /// @param [in] memory: ssplit-prefix-file contents in memory, passed as a
   /// bytearray.
-  TextProcessor(size_t wrap_length, std::string mode, const Vocabulary &vocabs,
-                Aligned &memory);
+  TextProcessor(size_t wrap_length, const std::string &mode,
+                const Vocabulary &vocabulary, const Aligned &memory);
 
   /// Wrap into sentences of at most maxLengthBreak_ tokens and add to source.
   /// @param [in] blob: Input blob, will be bound to source and annotations on
@@ -52,33 +52,30 @@ class TextProcessor {
   /// and stored in AnnotatedText for consumption of marian translation
   /// pipeline.
 
-  void process(std::string &&blob, AnnotatedText &source,
+  void process(std::string &&input, AnnotatedText &source,
                Segments &segments) const;
 
   void processFromAnnotation(AnnotatedText &source, Segments &segments) const;
 
  private:
-  void parseCommonOptions(Ptr<Options> options);
-
   /// Tokenizes an input string, returns Words corresponding. Loads the
-  /// corresponding byte-ranges into tokenRanges.
-  Segment tokenize(const std::string_view &input,
-                   std::vector<std::string_view> &tokenRanges) const;
+  /// corresponding byte-ranges into word_ranges.
+  Segment tokenize(const std::string_view &segment,
+                   std::vector<std::string_view> &word_ranges) const;
 
   /// Wrap into sentences of at most maxLengthBreak_ tokens and add to source.
-  void wrap(Segment &sentence, std::vector<std::string_view> &tokenRanges,
+  void wrap(Segment &segment, std::vector<std::string_view> &word_ranges,
             Segments &segments, AnnotatedText &source) const;
 
-  const Vocabulary &vocabulary_;  ///< Vocabularies used to tokenize a sentence
-  size_t maxLengthBreak_;  ///< Parameter used to wrap sentences to a maximum
-                           ///< number of tokens
-
-  /// SentenceSplitter compatible with moses sentence-splitter
-  ug::ssplit::SentenceSplitter ssplit_;
-
+  size_t wrap_length_;  ///< Parameter used to wrap sentences to a maximum
+                        ///< number of tokens
   /// Mode of splitting, can be line ('\n') based, paragraph based, also
   /// supports a wrapped mode.
-  ug::ssplit::SentenceStream::splitmode ssplitMode_;
+  ug::ssplit::SentenceStream::splitmode ssplit_mode_;
+
+  const Vocabulary &vocabulary_;  ///< Vocabularies used to tokenize a sentence
+  /// SentenceSplitter compatible with moses sentence-splitter
+  ug::ssplit::SentenceSplitter ssplit_;
 };
 
 }  // namespace slimt

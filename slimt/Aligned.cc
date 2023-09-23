@@ -13,6 +13,9 @@ void* Aligned::data() const { return data_; }
 
 size_t Aligned::size() const { return size_; }
 
+char* Aligned::begin() const { return reinterpret_cast<char*>(data_); }
+char* Aligned::end() const { return reinterpret_cast<char*>(data_) + size_; }
+
 Aligned::Aligned(Aligned&& from) noexcept {
   if (this != &from) {
     release();
