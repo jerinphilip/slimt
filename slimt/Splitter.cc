@@ -44,7 +44,7 @@ ug::ssplit::SentenceSplitter loadSplitter(const std::string &prefix_path) {
 ug::ssplit::SentenceSplitter loadSplitter(const Aligned &memory) {
   // Temporarily supports empty, will be removed when mozilla passes memory
   ug::ssplit::SentenceSplitter splitter;
-  if (memory.size()) {
+  if (!memory.empty()) {
     std::string_view serialized(memory.begin(), memory.size());
     splitter.loadFromSerialized(serialized);
   }
@@ -87,7 +87,7 @@ TextProcessor::TextProcessor(size_t wrap_length, const std::string &mode,
   //
   // For now, we allow not supplying an ssplit-prefix-file.
 
-  ABORT_IF(memory.begin() == nullptr && memory.size());
+  ABORT_IF(memory.empty(), "ssplit: Empty blob supplied for initialization.");
   ssplit_ = loadSplitter(memory);
 }
 

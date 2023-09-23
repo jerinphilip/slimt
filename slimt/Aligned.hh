@@ -16,6 +16,8 @@ class Aligned {
   char* begin() const;
   char* end() const;
 
+  bool empty() const;
+
   Aligned(const Aligned&) = delete;
   Aligned& operator=(const Aligned&) = delete;
 
