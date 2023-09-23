@@ -115,7 +115,7 @@ class Decoder {
  private:
   Tensor step(Tensor &encoder_out, Tensor &mask, Words &previous_step);
 
-  static Words greedy_sample(Tensor &logits, const Shortlist::Words &words,
+  static Words greedy_sample(Tensor &logits, const Words &words,
                              size_t batch_size);
 
   void set_start_state(size_t batch_size);

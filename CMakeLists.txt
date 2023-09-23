@@ -17,7 +17,7 @@ option(WITH_INTGEMM "Use intgemm" ON)
 option(WITH_RUY "Use ruy" OFF)
 option(WITH_BLAS "Use BLAS. Otherwise moves to ruy" ON)
 
-set(SLIMT_EXTERNAL_LIBS Sentencepiece::Sentencepiece)
+set(SLIMT_EXTERNAL_LIBS Sentencepiece::Sentencepiece ssplit)
 
 if(WITH_BLAS)
   find_package(BLAS)

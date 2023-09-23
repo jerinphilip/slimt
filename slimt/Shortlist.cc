@@ -2,16 +2,6 @@
 
 #include "slimt/Utils.hh"
 
-#define ABORT_IF(condition, ...) \
-  do {                           \
-    if (condition) {             \
-      std::cerr << #condition;   \
-      std::abort();              \
-    }                            \
-  } while (0)
-
-#define LOG(...) (void)0
-
 namespace slimt {
 
 bool ShortlistGenerator::content_check() {
@@ -52,7 +42,7 @@ void ShortlistGenerator::load(const void* data, size_t blob_size,
 
   uint64_t expected_size = sizeof(Header) +
                            header.word_to_offset_size * sizeof(uint64_t) +
-                           header.shortlist_size * sizeof(Vocabulary::Word);
+                           header.shortlist_size * sizeof(Word);
   ABORT_IF(expected_size != blob_size,
            "Shortlist header claims file size should be {} but file is {}",
            expected_size, blob_size);
@@ -82,7 +72,7 @@ void ShortlistGenerator::load(const void* data, size_t blob_size,
   word_to_offset_ = reinterpret_cast<const uint64_t*>(ptr);
   ptr += word_to_offset_size_ * sizeof(uint64_t);
 
-  shortlist_ = reinterpret_cast<const Vocabulary::Word*>(ptr);
+  shortlist_ = reinterpret_cast<const Word*>(ptr);
 
   // Verify offsets and vocab ids are within bounds if requested by user.
   if (check) {

@@ -301,10 +301,9 @@ Model::Sentences Model::translate(Batch &batch) {
   return decoder_.decode(encoder_out, mask, batch.words());
 }
 
-Vocabulary::Words Decoder::greedy_sample(Tensor &logits,
-                                         const Shortlist::Words &words,
-                                         size_t batch_size) {
-  Vocabulary::Words sampled_words;
+Words Decoder::greedy_sample(Tensor &logits, const Words &words,
+                             size_t batch_size) {
+  Words sampled_words;
   for (size_t i = 0; i < batch_size; i++) {
     auto *data = logits.data<float>();
     size_t max_index = 0;
@@ -337,8 +336,7 @@ Decoder::Sentences Decoder::decode(Tensor &encoder_out, Tensor &mask,
 
   std::vector<bool> complete(batch_size, false);
   uint32_t eos = vocabulary_.eos_id();
-  auto record = [eos, &complete](Vocabulary::Words &step,
-                                 Decoder::Sentences &sentences) {
+  auto record = [eos, &complete](Words &step, Decoder::Sentences &sentences) {
     size_t finished = 0;
     for (size_t i = 0; i < step.size(); i++) {
       if (not complete[i]) {
@@ -353,7 +351,7 @@ Decoder::Sentences Decoder::decode(Tensor &encoder_out, Tensor &mask,
   // Initialize a first step.
   Decoder::Sentences sentences(batch_size);
 
-  Vocabulary::Words previous_slice = {};
+  Words previous_slice = {};
   set_start_state(batch_size);
   Tensor decoder_out = step(encoder_out, mask, previous_slice);
 

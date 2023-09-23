@@ -2,6 +2,8 @@
 
 #include <string_view>
 
+#include "slimt/Types.hh"
+
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #pragma GCC diagnostic ignored "-Wunused-parameter"
@@ -14,10 +16,6 @@ namespace slimt {
 
 class Vocabulary {
  public:
-  using Word = uint32_t;
-  using Words = std::vector<Word>;
-  using Views = std::vector<std::string_view>;
-
   explicit Vocabulary(const std::string &fpath);
   Vocabulary(void *data, size_t size);
   std::tuple<Words, Views> encode(const std::string_view &line,
