@@ -20,3 +20,5 @@ add_subdirectory(intgemm EXCLUDE_FROM_ALL)
 
 # ruy
 add_subdirectory(ruy EXCLUDE_FROM_ALL)
+
+add_subdirectory(ssplit EXCLUDE_FROM_ALL)
