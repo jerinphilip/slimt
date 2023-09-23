@@ -1,6 +1,7 @@
 #pragma once
 #include <cstddef>
 #include <cstdint>
+#include <iostream>
 #include <string_view>
 #include <vector>
 
@@ -24,21 +25,5 @@ using Views = std::vector<std::string_view>;
 
 using Segment = Words;
 using Segments = std::vector<Segment>;
-
-#define ABORT_IF(condition, ...) \
-  do {                           \
-    if (condition) {             \
-      std::cerr << #condition;   \
-      std::abort();              \
-    }                            \
-  } while (0)
-
-#define ABORT(message)      \
-  do {                      \
-    std::cerr << (message); \
-    std::abort();           \
-  } while (0)
-
-#define LOG(...) (void)0
 
 }  // namespace slimt

@@ -4,7 +4,7 @@
 #include <vector>
 
 #include "slimt/Annotation.hh"
-#include "slimt/Types.hh"
+#include "slimt/Macros.hh"
 
 namespace slimt {
 
@@ -20,7 +20,7 @@ ug::ssplit::SentenceStream::splitmode string2splitmode(const std::string &m) {
   if (m == "wrapped_text") {
     return splitmode::wrapped_text;
   }
-  ABORT(
+  SLIMT_ABORT(
       "Unknown ssplitmode {}, Please choose one of "
       "{sentence,paragraph,wrapped_text}");
 }
@@ -87,7 +87,8 @@ TextProcessor::TextProcessor(size_t wrap_length, const std::string &mode,
   //
   // For now, we allow not supplying an ssplit-prefix-file.
 
-  ABORT_IF(memory.empty(), "ssplit: Empty blob supplied for initialization.");
+  SLIMT_ABORT_IF(memory.empty(),
+                 "ssplit: Empty blob supplied for initialization.");
   ssplit_ = loadSplitter(memory);
 }
 

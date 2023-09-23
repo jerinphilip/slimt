@@ -1,5 +1,6 @@
 #include "slimt/Shortlist.hh"
 
+#include "slimt/Macros.hh"
 #include "slimt/Utils.hh"
 
 namespace slimt {
@@ -19,7 +20,7 @@ bool ShortlistGenerator::content_check() {
   for (size_t j = 0; j < shortlist_size_; j++) {
     fail_flag |= shortlist_[j] >= v_size;
   }
-  ABORT_IF(fail_flag, "Error: shortlist indices are out of bounds");
+  SLIMT_ABORT_IF(fail_flag, "Error: shortlist indices are out of bounds");
   return fail_flag;
 }
 
@@ -32,20 +33,21 @@ void ShortlistGenerator::load(const void* data, size_t blob_size,
    * short_lists array
    */
   (void)blob_size;
-  ABORT_IF(blob_size < sizeof(Header),
-           "Shortlist length {} too short to have a header", blob_size);
+  SLIMT_ABORT_IF(blob_size < sizeof(Header),
+                 "Shortlist length {} too short to have a header", blob_size);
 
   const char* ptr = static_cast<const char*>(data);
   const Header& header = *reinterpret_cast<const Header*>(ptr);
   ptr += sizeof(Header);
-  ABORT_IF(header.magic != kMagic, "Incorrect magic in binary shortlist");
+  SLIMT_ABORT_IF(header.magic != kMagic, "Incorrect magic in binary shortlist");
 
   uint64_t expected_size = sizeof(Header) +
                            header.word_to_offset_size * sizeof(uint64_t) +
                            header.shortlist_size * sizeof(Word);
-  ABORT_IF(expected_size != blob_size,
-           "Shortlist header claims file size should be {} but file is {}",
-           expected_size, blob_size);
+  SLIMT_ABORT_IF(
+      expected_size != blob_size,
+      "Shortlist header claims file size should be {} but file is {}",
+      expected_size, blob_size);
 
   if (check) {
     size_t length = (       //
@@ -56,8 +58,8 @@ void ShortlistGenerator::load(const void* data, size_t blob_size,
     auto checksum_actual = hash_bytes<uint64_t, uint64_t>(
         &header.first_num, (length) / sizeof(uint64_t));
 
-    ABORT_IF(checksum_actual != header.checksum,
-             "checksum check failed: this binary shortlist is corrupted");
+    SLIMT_ABORT_IF(checksum_actual != header.checksum,
+                   "checksum check failed: this binary shortlist is corrupted");
   }
 
   first_num_ = header.first_num;
