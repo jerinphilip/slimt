@@ -272,7 +272,7 @@ void transform_embedding(Tensor &word_embedding, size_t start = 0) {
                            word_embedding_ptr);
 }
 
-Model::Sentences Model::translate(Batch &batch) {
+Sentences Model::translate(Batch &batch) {
   Tensor &indices = batch.indices();
   Tensor &mask = batch.mask();
 
@@ -322,8 +322,8 @@ Words Decoder::greedy_sample(Tensor &logits, const Words &words,
   return sampled_words;
 }
 
-Decoder::Sentences Decoder::decode(Tensor &encoder_out, Tensor &mask,
-                                   const Words &source) {
+Sentences Decoder::decode(Tensor &encoder_out, Tensor &mask,
+                          const Words &source) {
   // Prepare a shortlist for the entire batch.
   size_t batch_size = encoder_out.dim(-3);
   size_t source_sequence_length = encoder_out.dim(-2);
@@ -336,7 +336,7 @@ Decoder::Sentences Decoder::decode(Tensor &encoder_out, Tensor &mask,
 
   std::vector<bool> complete(batch_size, false);
   uint32_t eos = vocabulary_.eos_id();
-  auto record = [eos, &complete](Words &step, Decoder::Sentences &sentences) {
+  auto record = [eos, &complete](Words &step, Sentences &sentences) {
     size_t finished = 0;
     for (size_t i = 0; i < step.size(); i++) {
       if (not complete[i]) {
@@ -349,7 +349,7 @@ Decoder::Sentences Decoder::decode(Tensor &encoder_out, Tensor &mask,
   };
 
   // Initialize a first step.
-  Decoder::Sentences sentences(batch_size);
+  Sentences sentences(batch_size);
 
   Words previous_slice = {};
   set_start_state(batch_size);
@@ -507,8 +507,7 @@ void Decoder::register_parameters(const std::string &prefix,
   }
 }
 
-Tensor Decoder::step(Tensor &encoder_out, Tensor &mask,
-                     Decoder::Words &previous_step) {
+Tensor Decoder::step(Tensor &encoder_out, Tensor &mask, Words &previous_step) {
   // Infer batch-size from encoder_out.
   size_t encoder_feature_dim = encoder_out.dim(-1);
   size_t source_sequence_length = encoder_out.dim(-2);
@@ -519,8 +518,7 @@ Tensor Decoder::step(Tensor &encoder_out, Tensor &mask,
 
   // Trying to re-imagine:
   // https://github.com/browsermt/marian-dev/blob/f436b2b7528927333da1629a74fde3779c0a96dd/src/models/decoder.h#L67
-  auto from_sentences = [this](Decoder::Words &previous_step,
-                               size_t batch_size) {
+  auto from_sentences = [this](Words &previous_step, size_t batch_size) {
     const std::string name = "target_embed";
     size_t embed_dim = embedding_.dim(-1);
 

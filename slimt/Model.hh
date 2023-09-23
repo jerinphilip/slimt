@@ -101,16 +101,12 @@ class DecoderLayer {
 
 class Decoder {
  public:
-  using Words = std::vector<uint32_t>;
-  using Sentences = std::vector<Words>;
-
   Decoder(size_t decoders, size_t ffn_count, Vocabulary &vocabulary,
           Tensor &embedding, ShortlistGenerator &&shortlist_generator);
 
   void register_parameters(const std::string &prefix, ParameterMap &parameters);
 
-  Decoder::Sentences decode(Tensor &encoder_out, Tensor &mask,
-                            const Words &source);
+  Sentences decode(Tensor &encoder_out, Tensor &mask, const Words &source);
 
  private:
   Tensor step(Tensor &encoder_out, Tensor &mask, Words &previous_step);
@@ -150,8 +146,6 @@ struct Config {
 
 class Model {
  public:
-  using Words = std::vector<uint32_t>;
-  using Sentences = std::vector<Words>;
   explicit Model(Tag tag, Vocabulary &vocabulary, std::vector<io::Item> &&items,
                  ShortlistGenerator &&shortlist_generator);
 

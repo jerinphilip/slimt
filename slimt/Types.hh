@@ -2,6 +2,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <iostream>
+#include <memory>
 #include <string_view>
 #include <vector>
 
@@ -25,5 +26,18 @@ using Views = std::vector<std::string_view>;
 
 using Segment = Words;
 using Segments = std::vector<Segment>;
+using Sentences = std::vector<Words>;
+
+struct Hypothesis {
+  std::string source;
+  std::string target;
+  std::string alignments;
+};
+
+template <class T>
+using Ptr = std::shared_ptr<T>;
+
+using History = Ptr<Hypothesis>;
+using Histories = std::vector<History>;
 
 }  // namespace slimt
