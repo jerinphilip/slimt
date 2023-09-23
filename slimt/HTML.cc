@@ -1,19 +1,21 @@
-#include "html.h"
+#include "slimt/HTML.hh"
 
 #include <algorithm>
+#include <sstream>
 
-#include "response.h"
-#include "translator/definitions.h"
-#include "xh_scanner.h"
+#include "slimt/Response.hh"
+#include "slimt/Types.hh"
+#include "slimt/XHScanner.hh"
 
 namespace {
-using marian::bergamot::AnnotatedText;
-using marian::bergamot::ByteRange;
-using marian::bergamot::HTML;
-using marian::bergamot::Response;
+
+using slimt::AnnotatedText;
+using slimt::ByteRange;
+using slimt::HTML;
+using slimt::Response;
 
 /// Encodes the minimum of HTML entities.
-void encodeEntities(marian::string_view const &input, std::string &output) {
+void encodeEntities(std::string_view const &input, std::string &output) {
   output.clear();
   output.reserve(input.size());  // assumes there are no entities in most cases
 
@@ -46,7 +48,7 @@ void encodeEntities(marian::string_view const &input, std::string &output) {
 
 /// Counts number of whitespace characters at the start of the input. Used
 /// for determining where to insert an open or close tag.
-size_t countPrefixWhitespaces(marian::string_view const &input) {
+size_t countPrefixWhitespaces(std::string_view const &input) {
   size_t size = 0;
   while (size < input.size() &&
          std::isspace(static_cast<unsigned char>(input[size])))
@@ -176,7 +178,7 @@ bool hasAlignments(Response const &response) {
 /// encoded as valid HTML.
 class TokenFormatter {
  public:
-  explicit TokenFormatter(marian::string_view token)
+  explicit TokenFormatter(std::string_view token)
       : offset_(0),
         whitespaceOffset_(0),
         whitespaceSize_(countPrefixWhitespaces(token)),
@@ -792,12 +794,6 @@ bool HTML::isContinuation(std::string_view prev, std::string_view str) const {
   if (prev.empty() || str.empty()) return false;
   return options_.continuationDelimiters.find(str[0]) == std::string::npos &&
          options_.continuationDelimiters.find(prev.back()) == std::string::npos;
-}
-
-bool HTML::isContinuation(marian::string_view prev,
-                          marian::string_view str) const {
-  return isContinuation(std::string_view(prev.data(), prev.size()),
-                        std::string_view(str.data(), str.size()));
 }
 
 /// Selects for each token in `response.target` a best source token from

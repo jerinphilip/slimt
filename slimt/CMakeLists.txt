@@ -13,7 +13,9 @@ add_library(
   Annotation.cc
   Splitter.cc
   Response.cc
-  ResponseBuilder.cc)
+  ResponseBuilder.cc
+  HTML.cc
+  XHScanner.cc)
 
 target_compile_options(slimt PRIVATE ${SLIMT_COMPILE_OPTIONS})
 target_compile_definitions(slimt PRIVATE ${SLIMT_COMPILE_DEFINITIONS})
