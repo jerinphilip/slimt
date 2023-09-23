@@ -27,17 +27,17 @@
   SLIMT_TRACE(z);
 
 #define SLIMT_ABORT_IF(condition, ...) \
-  do {                           \
-    if (condition) {             \
-      std::cerr << #condition;   \
-      std::abort();              \
-    }                            \
+  do {                                 \
+    if (condition) {                   \
+      std::cerr << #condition;         \
+      std::abort();                    \
+    }                                  \
   } while (0)
 
-#define SLIMT_ABORT(message)      \
-  do {                      \
-    std::cerr << (message); \
-    std::abort();           \
+#define SLIMT_ABORT(message) \
+  do {                       \
+    std::cerr << (message);  \
+    std::abort();            \
   } while (0)
 
 #define LOG(...) (void)0
