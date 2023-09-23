@@ -64,11 +64,11 @@ class Request {
 
   /// For notions of priority among requests, used to enable std::set in
   /// BatchingPool.
-  bool operator<(const Request &request) const;
+  friend bool operator<(const Request &a, const Request &b);
 
   /// Processes a history obtained after translating in a heterogenous batch
   /// compiled from requests.
-  void processHistory(size_t index, Ptr<History> history);
+  void processHistory(size_t index, History history);
 
   bool cacheHitPrefilled(size_t index) const {
     return histories_[index] != nullptr;
@@ -91,7 +91,7 @@ class Request {
 
   /// histories_ is a buffer which eventually stores the translations of each
   /// segment in the corresponding index.
-  std::vector<Ptr<History>> histories_;
+  Histories histories_;
 
   /// Constructing Response requires the vocabs_ used to generate Request.
   /// std::vector<Ptr<Vocab const>> *vocabs_;
@@ -118,7 +118,7 @@ class RequestSentence {
 
   /// Forwards history to Request to set history corresponding to this
   /// RequestSentence.
-  void completeSentence(Ptr<History> history);
+  void completeSentence(History history);
 
   friend bool operator<(const RequestSentence &a, const RequestSentence &b);
 

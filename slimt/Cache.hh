@@ -89,6 +89,6 @@ class AtomicCache {
   Equals equals_;
 };
 
-using TranslationCache = AtomicCache<size_t, Ptr<History>>;
+using TranslationCache = AtomicCache<size_t, History>;
 
 }  // namespace slimt

@@ -41,7 +41,7 @@ class ResponseBuilder {
   /// histories after translating.
   /// @param [in] histories: Histories obtained after translating the Request
   /// from which this functor is called.
-  void operator()(Histories &&histories);
+  void operator()(Histories &&histories) const;
 
  private:
   /// Builds alignments from histories and writes onto response.
@@ -52,7 +52,7 @@ class ResponseBuilder {
   /// Builds translated text and subword annotations and writes onto response.
   /// @param histories [in]
   /// @param response [out]
-  void buildTranslatedText(Histories &histories, Response &response);
+  void buildTranslatedText(Histories &histories, Response &response) const;
 
   // Data members are context/curried args for the functor.
 

@@ -9,7 +9,7 @@
 namespace slimt {
 
 size_t hashForCache(const Model &model, const Words &words) {
-  size_t seed = model.modelId();
+  auto seed = reinterpret_cast<size_t>(&model);
   for (size_t word : words) {
     hash_combine<size_t>(seed, word);
   }
@@ -17,7 +17,7 @@ size_t hashForCache(const Model &model, const Words &words) {
 }
 
 // -----------------------------------------------------------------
-Request::Request(size_t Id, const TranslationModel &model, Segments &&segments,
+Request::Request(size_t Id, const Model &model, Segments &&segments,
                  ResponseBuilder &&responseBuilder,
                  std::optional<TranslationCache> &cache)
     : Id_(Id),
@@ -70,7 +70,7 @@ size_t Request::segmentTokens(size_t index) const {
 
 Segment Request::getSegment(size_t index) const { return segments_[index]; }
 
-void Request::processHistory(size_t index, Ptr<History> history) {
+void Request::processHistory(size_t index, History history) {
   // Concurrently called by multiple workers as a history from translation is
   // ready. The container storing histories is set with the value obtained.
 
@@ -90,11 +90,6 @@ void Request::processHistory(size_t index, Ptr<History> history) {
   }
 }
 
-bool Request::operator<(const Request &b) const {
-  // Among Requests, only sequence id is used for obtaining priority.
-  return Id_ < b.Id_;
-}
-
 // ------------------------------------------------------------------
 
 RequestSentence::RequestSentence(size_t index, Ptr<Request> request)
@@ -104,7 +99,7 @@ size_t RequestSentence::numTokens() const {
   return (request_->segmentTokens(index_));
 }
 
-void RequestSentence::completeSentence(Ptr<History> history) {
+void RequestSentence::completeSentence(History history) {
   // Relays completeSentence into request's processHistory, using index
   // information.
   request_->processHistory(index_, std::move(history));
@@ -112,6 +107,11 @@ void RequestSentence::completeSentence(Ptr<History> history) {
 
 Segment RequestSentence::getUnderlyingSegment() const {
   return request_->getSegment(index_);
+}
+
+bool operator<(const Request &a, const Request &b) {
+  // Among Requests, only sequence id is used for obtaining priority.
+  return a.Id_ < b.Id_;
 }
 
 bool operator<(const RequestSentence &a, const RequestSentence &b) {

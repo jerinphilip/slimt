@@ -12,6 +12,7 @@ add_library(
   Shortlist.cc
   Annotation.cc
   Splitter.cc
+  Request.cc
   Response.cc
   ResponseBuilder.cc
   HTML.cc

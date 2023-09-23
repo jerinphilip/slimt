@@ -4,7 +4,7 @@
 
 namespace slimt {
 
-void ResponseBuilder::operator()(Histories &&histories) {
+void ResponseBuilder::operator()(Histories &&histories) const {
   // TODO(jerinphilip) load Options into options and turn build
   // functions on or off.
   // options_ is unused, but we can try something here.
@@ -44,7 +44,7 @@ void ResponseBuilder::buildAlignments(Histories &histories,
 }
 
 void ResponseBuilder::buildTranslatedText(Histories &histories,
-                                          Response &response) {
+                                          Response &response) const {
   // Reserving length at least as much as source_ seems like a reasonable
   // thing to do to avoid reallocations.
   response.target.text.reserve(response.source.text.size());
