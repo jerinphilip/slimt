@@ -3,6 +3,7 @@
 #include <csignal>
 #include <ctime>
 #include <iostream>
+#include <memory>
 #include <sstream>
 #include <string>
 #include <unordered_set>
