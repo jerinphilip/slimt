@@ -10,9 +10,10 @@ namespace slimt::qmm {
 namespace detail {
 
 enum class Provider {
-  kNone,     //
-  kIntgemm,  //
-  kRuy       //
+  kNone,      //
+  kIntgemm,   //
+  kRuy,       //
+  kGemmology  //
 };
 
 template <enum Provider>
@@ -42,6 +43,10 @@ constexpr Provider kAutoProvider = Provider::kIntgemm;
 
 #ifdef SLIMT_HAS_RUY
 constexpr Provider kAutoProvider = Provider::kRuy;
+#endif
+
+#ifdef SLIMT_HAS_GEMMOLOGY
+constexpr Provider kAutoProvider = Provider::kGemmology;
 #endif
 }  // namespace detail
 
