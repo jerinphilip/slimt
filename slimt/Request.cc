@@ -8,8 +8,8 @@
 
 namespace slimt {
 
-size_t hashForCache(const Model &model, const Words &words) {
-  auto seed = reinterpret_cast<size_t>(&model);
+size_t cache_key(size_t model_id, const Words &words) {
+  auto seed = model_id;
   for (size_t word : words) {
     hash_combine<size_t>(seed, word);
   }
@@ -17,11 +17,11 @@ size_t hashForCache(const Model &model, const Words &words) {
 }
 
 // -----------------------------------------------------------------
-Request::Request(size_t Id, const Model &model, Segments &&segments,
+Request::Request(size_t Id, size_t model_id, Segments &&segments,
                  ResponseBuilder &&responseBuilder,
                  std::optional<TranslationCache> &cache)
     : Id_(Id),
-      model_(model),
+      model_id_(model_id),
       segments_(std::move(segments)),
       responseBuilder_(std::move(responseBuilder)),
       cache_(cache) {
@@ -45,7 +45,7 @@ Request::Request(size_t Id, const Model &model, Segments &&segments,
       // ProcessedRequestSentence). Also update accounting used elsewhere
       // (counter_) to reflect one less segment to translate.
       for (size_t idx = 0; idx < segments_.size(); idx++) {
-        size_t key = hashForCache(model_, getSegment(idx));
+        size_t key = cache_key(model_id_, getSegment(idx));
         auto [found, history] = cache_->find(key);
         if (found) {
           histories_[idx] = history;
@@ -79,7 +79,7 @@ void Request::processHistory(size_t index, History history) {
   // store the result.
   histories_[index] = std::move(history);
   if (cache_) {
-    size_t key = hashForCache(model_, getSegment(index));
+    size_t key = cache_key(model_id_, getSegment(index));
     cache_->store(key, histories_[index]);
   }
 
@@ -125,13 +125,17 @@ bool operator<(const RequestSentence &a, const RequestSentence &b) {
 // ----------------------------------------------------------------------
 
 void RequestBatch::log() {
-  size_t numTokens{0}, maxLength{0};
+  size_t num_tokens = 0;
+  size_t max_length = 0;
   for (auto &sentence : sentences_) {
-    numTokens += sentence.numTokens();
-    maxLength = std::max(maxLength, static_cast<size_t>(sentence.numTokens()));
+    num_tokens += sentence.numTokens();
+    max_length =
+        std::max(max_length, static_cast<size_t>(sentence.numTokens()));
   }
 
-  LOG(info, "RequestBatch(tokens={}, max-length={}, sentences_={})", numTokens,
+  (void)num_tokens;
+  (void)max_length;
+  LOG(info, "RequestBatch(tokens={}, max-length={}, sentences_={})", num_tokens,
       maxLength, sentences_.size());
 }
 

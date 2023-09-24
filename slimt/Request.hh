@@ -7,7 +7,6 @@
 
 #include "slimt/Annotation.hh"
 #include "slimt/Cache.hh"
-#include "slimt/Model.hh"
 #include "slimt/ResponseBuilder.hh"
 #include "slimt/Types.hh"
 
@@ -47,7 +46,7 @@ class Request {
   /// Request.
   /// @param [in] cache: Cache supplied externally to attempt to fetch
   /// translations or store them after completion for reuse later.
-  Request(size_t Id, const Model &model, Segments &&segments,
+  Request(size_t Id, size_t model_id, Segments &&segments,
           ResponseBuilder &&responseBuilder,
           std::optional<TranslationCache> &cache);
 
@@ -78,7 +77,7 @@ class Request {
   size_t Id_;
 
   /// Model associated with this request
-  const Model &model_;
+  size_t model_id_;
 
   /// Multiple translation-workers can concurrently access the same Request. The
   /// following atomic atomically operates on the variable holding sentences

@@ -10,6 +10,8 @@
 
 namespace slimt {
 
+class Model;
+
 class Batcher {
  public:
   explicit Batcher(size_t max_words, size_t wrap_length,

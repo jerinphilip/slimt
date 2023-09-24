@@ -45,15 +45,14 @@ Blocking::Blocking(const Blocking::Config &config)
       workspace_(/*deviceId=*/0, config.workspaceSizeInMB) {}
 
 std::vector<Response> Blocking::translateMultiple(
-    std::shared_ptr<TranslationModel> translationModel,
-    std::vector<std::string> &&sources,
-    const std::vector<ResponseOptions> &responseOptions) {
+    std::shared_ptr<Model> model, std::vector<std::string> &&sources,
+    const std::vector<Options> &responseOptions) {
   std::vector<HTML> htmls;
   for (size_t i = 0; i < sources.size(); i++) {
     htmls.emplace_back(std::move(sources[i]), responseOptions[i].HTML);
   }
-  std::vector<Response> responses = translateMultipleRaw(
-      translationModel, std::move(sources), responseOptions);
+  std::vector<Response> responses =
+      translateMultipleRaw(model, std::move(sources), responseOptions);
   for (size_t i = 0; i < responses.size(); i++) {
     htmls[i].restore(responses[i]);
   }
@@ -62,9 +61,8 @@ std::vector<Response> Blocking::translateMultiple(
 }
 
 std::vector<Response> Blocking::translateMultipleRaw(
-    std::shared_ptr<TranslationModel> translationModel,
-    std::vector<std::string> &&sources,
-    const std::vector<ResponseOptions> &responseOptions) {
+    std::shared_ptr<Model> model, std::vector<std::string> &&sources,
+    const std::vector<Options> &responseOptions) {
   std::vector<Response> responses;
   responses.resize(sources.size());
 
@@ -73,13 +71,13 @@ std::vector<Response> Blocking::translateMultipleRaw(
       responses[i] = std::move(response);
     };  //
     Ptr<Request> request =
-        translationModel->makeRequest(requestId_++, std::move(sources[i]),
-                                      callback, responseOptions[i], cache_);
-    batchingPool_.enqueueRequest(translationModel, request);
+        model->makeRequest(requestId_++, std::move(sources[i]), callback,
+                           responseOptions[i], cache_);
+    batchingPool_.enqueueRequest(model, request);
   }
 
   Batch batch;
-  Ptr<TranslationModel> model{nullptr};
+  Ptr<Model> model{nullptr};
   while (batchingPool_.generateBatch(model, batch)) {
     model->translateBatch(workspace_, batch);
   }
@@ -88,10 +86,9 @@ std::vector<Response> Blocking::translateMultipleRaw(
 }
 
 std::vector<Response> Blocking::pivotMultiple(
-    std::shared_ptr<TranslationModel> first,
-    std::shared_ptr<TranslationModel> second,
+    std::shared_ptr<Model> first, std::shared_ptr<Model> second,
     std::vector<std::string> &&sources,
-    const std::vector<ResponseOptions> &responseOptions) {
+    const std::vector<Options> &responseOptions) {
   std::vector<HTML> htmls;
   for (size_t i = 0; i < sources.size(); i++) {
     htmls.emplace_back(std::move(sources[i]), responseOptions[i].HTML);
@@ -124,7 +121,7 @@ std::vector<Response> Blocking::pivotMultiple(
   }
 
   Batch batch;
-  Ptr<TranslationModel> model{nullptr};
+  Ptr<Model> model{nullptr};
   while (batchingPool_.generateBatch(model, batch)) {
     model->translateBatch(workspace_, batch);
   }
@@ -161,9 +158,9 @@ Async::Async(const Async::Config &config)
       // the monitor is explicitly told to shutdown, which happens in the
       // destructor for this class.
       Batch batch;
-      Ptr<TranslationModel> translationModel{nullptr};
-      while (safeBatchingPool_.generateBatch(translationModel, batch)) {
-        translationModel->translateBatch(workspaces_[cpuId], batch);
+      Ptr<Model> model{nullptr};
+      while (safeBatchingPool_.generateBatch(model, batch)) {
+        model->translateBatch(workspaces_[cpuId], batch);
       }
     });
   }
@@ -180,10 +177,9 @@ Async::~Async() {
   workers_.clear();
 }
 
-void Async::pivot(std::shared_ptr<TranslationModel> first,
-                  std::shared_ptr<TranslationModel> second,
+void Async::pivot(std::shared_ptr<Model> first, std::shared_ptr<Model> second,
                   std::string &&source, CallbackType clientCallback,
-                  const ResponseOptions &responseOptions) {
+                  const Options &responseOptions) {
   Ptr<HTML> html =
       std::make_shared<HTML>(std::move(source), responseOptions.HTML);
   // This is callback chaining or CPS due to async.
@@ -228,9 +224,8 @@ void Async::pivot(std::shared_ptr<TranslationModel> first,
   translateRaw(first, std::move(source), internalCallback, responseOptions);
 }
 
-void Async::translate(std::shared_ptr<TranslationModel> translationModel,
-                      std::string &&source, CallbackType callback,
-                      const ResponseOptions &responseOptions) {
+void Async::translate(std::shared_ptr<Model> model, std::string &&source,
+                      CallbackType callback, const Options &responseOptions) {
   // Producer thread, a call to this function adds new work items. If batches
   // are available, notifies workers waiting.
   Ptr<HTML> html =
@@ -240,18 +235,17 @@ void Async::translate(std::shared_ptr<TranslationModel> translationModel,
     callback(std::move(response));
   };
 
-  translateRaw(translationModel, std::move(source), internalCallback,
-               responseOptions);
+  translateRaw(model, std::move(source), internalCallback, responseOptions);
 }
 
-void Async::translateRaw(std::shared_ptr<TranslationModel> translationModel,
-                         std::string &&source, CallbackType callback,
-                         const ResponseOptions &responseOptions) {
+void Async::translateRaw(std::shared_ptr<Model> model, std::string &&source,
+                         CallbackType callback,
+                         const Options &responseOptions) {
   // Producer thread, a call to this function adds new work items. If batches
   // are available, notifies workers waiting.
-  Ptr<Request> request = translationModel->makeRequest(
-      requestId_++, std::move(source), callback, responseOptions, cache_);
-  safeBatchingPool_.enqueueRequest(translationModel, request);
+  Ptr<Request> request = model->makeRequest(requestId_++, std::move(source),
+                                            callback, responseOptions, cache_);
+  safeBatchingPool_.enqueueRequest(model, request);
 }
 
 }  // namespace slimt
