@@ -559,7 +559,7 @@ Tensor affine_with_select<Provider::kGemmology>(
   // Prepare Activations (A).
   Tensor prepared_A(Type::i8, A.shape(), "quantized_acts");  // NOLINT
   gemmology::Shift::PrepareA(                                //
-      A.data<float>(), prepared_A.data<uint8_t>(),            //
+      A.data<float>(), prepared_A.data<uint8_t>(),           //
       a_quant,                                               //
       A_rows, width                                          //
   );
@@ -612,10 +612,10 @@ Tensor affine_with_select<Provider::kGemmology>(
   float unquant_multiplier = 1.0F / (a_quant * b_quant);
   auto multiply_callback = gemmology::callbacks::UnquantizeAndAddBiasAndWrite(
       unquant_multiplier, selected_bias.data<float>(), y.data<float>());
-  gemmology::Shift::Multiply(                                //
+  gemmology::Shift::Multiply(                                 //
       prepared_A.data<uint8_t>(), selected_B.data<int8_t>(),  //
-      A_rows, width, selected_B_cols,                        //
-      multiply_callback                                      //
+      A_rows, width, selected_B_cols,                         //
+      multiply_callback                                       //
   );
 
   return y;
@@ -645,7 +645,7 @@ Tensor affine<Provider::kGemmology>(Tensor& x, Tensor& W, Tensor& b,
   // Prepare Activations (A).
   Tensor prepared_A(Type::i8, A.shape(), "quantized_acts");  // NOLINT
   gemmology::Shift::PrepareA(                                //
-      A.data<float>(), prepared_A.data<uint8_t>(),            //
+      A.data<float>(), prepared_A.data<uint8_t>(),           //
       a_quant,                                               //
       A_rows, width                                          //
   );
@@ -679,10 +679,10 @@ Tensor affine<Provider::kGemmology>(Tensor& x, Tensor& W, Tensor& b,
   float unquant_multiplier = 1.0F / (a_quant * b_quant);
   auto multiply_callback = gemmology::callbacks::UnquantizeAndAddBiasAndWrite(
       unquant_multiplier, prepared_bias.data<float>(), y.data<float>());
-  gemmology::Shift::Multiply(                       //
+  gemmology::Shift::Multiply(                        //
       prepared_A.data<uint8_t>(), B.data<int8_t>(),  //
-      A_rows, width, B_cols,                        //
-      multiply_callback                             //
+      A_rows, width, B_cols,                         //
+      multiply_callback                              //
   );
 
   return y;
@@ -710,7 +710,7 @@ Tensor dot<Provider::kGemmology>(Tensor& x, Tensor& W, float a_quant,
   // Prepare Activations (A).
   Tensor prepared_A(Type::i8, A.shape(), "quantized_acts");  // NOLINT
   gemmology::Shift::PrepareA(                                //
-      A.data<float>(), prepared_A.data<uint8_t>(),            //
+      A.data<float>(), prepared_A.data<uint8_t>(),           //
       a_quant,                                               //
       A_rows, width                                          //
   );
@@ -750,10 +750,10 @@ Tensor dot<Provider::kGemmology>(Tensor& x, Tensor& W, float a_quant,
   float unquant_multiplier = 1.0F / (a_quant * b_quant);
   auto multiply_callback = gemmology::callbacks::UnquantizeAndAddBiasAndWrite(
       unquant_multiplier, prepared_bias.data<float>(), y.data<float>());
-  gemmology::Shift::Multiply(                       //
+  gemmology::Shift::Multiply(                        //
       prepared_A.data<uint8_t>(), B.data<int8_t>(),  //
-      A_rows, width, B_cols,                        //
-      multiply_callback                             //
+      A_rows, width, B_cols,                         //
+      multiply_callback                              //
   );
 
   return y;
