@@ -77,7 +77,7 @@ class AggregateBatcher {
   /// @param [out] batch: Batch to write onto, which is consumed at translation
   /// elsewhere.
   /// @returns Number of sentences in the generated batch.
-  size_t generate(Ptr<Model>& model, Batch& batch);
+  Batch generate(Ptr<Model>& model);
 
   /// Clear the aggregate queue. Does not clear the underlying model/request
   /// pairs but the next call to `generate()` will return 0. (Unless
@@ -85,7 +85,7 @@ class AggregateBatcher {
   void clear();
 
  private:
-  std::unordered_set<std::shared_ptr<Model>, HashPtr<Model>> aggregateQueue_;
+  std::unordered_set<std::shared_ptr<Model>, HashPtr<Model>> queue_;
 };
 
 /// The following mechanism operates in a multithreaded async-workflow guarding

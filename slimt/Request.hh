@@ -129,4 +129,34 @@ class RequestSentence {
 
 using RequestSentences = std::vector<RequestSentence>;
 
+// An empty batch is poison.
+class RequestBatch {
+ public:
+  RequestBatch() = default;
+  void clear() { sentences_.clear(); }
+
+  size_t size() const { return sentences_.size(); }
+
+  void add(const RequestSentence &sentence);
+
+  // Accessors to read from a Batch. For use in BatchTranslator (consumer on a
+  // PCQueue holding batches).
+  //
+  // sentences() are used to access sentences to construct marian internal
+  // batch.
+  const RequestSentences &sentences() { return sentences_; }
+
+  // On obtaining Histories after translating a batch, completeBatch can be
+  // called with Histories , which forwards the call to Request through
+  // RequestSentence and triggers completion, by setting the promised value to
+  // the future given to client.
+  void complete(const Histories &histories);
+
+  // Convenience function to log batch-statistics. numTokens, max-length.
+  void log();
+
+ private:
+  RequestSentences sentences_;
+};
+
 }  // namespace slimt

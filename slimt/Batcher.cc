@@ -23,12 +23,12 @@ Batcher::Batcher(size_t max_words, size_t wrap_length,
                  "longer than what can fit in a batch.");
 }
 
-Batch Batcher::generate() {
+RequestBatch Batcher::generate() {
   // For now simply iterates on buckets and converts batches greedily.  This
   // has to be enhanced with optimizing over priority. The baseline
   // implementation should at least be as fast as marian's maxi-batch with full
   // corpus size as maxi-batch size.
-  batch.clear();
+  RequestBatch batch;
   size_t paddedBatchSize = 0;
 
   for (size_t length = 0; length <= running_bucket_max_size_; length++) {
@@ -42,12 +42,12 @@ Batch Batcher::generate() {
       } else {
         // Check if elements exist
         assert(batch.size() > 0);
-        return batch.size();
+        return batch;
       }
     }
   }
 
-  return batch.size();
+  return batch;
 }
 
 size_t Batcher::enqueue(Ptr<Request> request) {
@@ -89,25 +89,27 @@ AggregateBatcher::AggregateBatcher() {
 
 size_t AggregateBatcher::enqueue(Ptr<Model> model, Ptr<Request> request) {
   size_t sentences_enqueued = model->enqueue(request);
-  aggregateQueue_.insert(model);
+  queue_.insert(model);
   return sentences_enqueued;
 }
 
-size_t AggregateBatcher::generate(Ptr<Model>& model, Batch& batch) {
-  while (!aggregateQueue_.empty()) {
-    auto candidate_iterator = aggregateQueue_.begin();
+RequestBatch AggregateBatcher::generate(Ptr<Model>& model) {
+  while (!queue_.empty()) {
+    auto candidate_iterator = queue_.begin();
     Ptr<Model> candidate = *candidate_iterator;
-    size_t num_sentences = candidate->generate(batch);
-    if (num_sentences > 0) {
+    RequestBatch batch = candidate->generate();
+    if (batch.size() > 0) {
       model = candidate;
-      return num_sentences;
+      return batch;
     }
     // Try the next model's batching pool.
-    aggregateQueue_.erase(candidate_iterator);
+    queue_.erase(candidate_iterator);
   }
-  return /*num_sentences=*/0;
+  // Empty.
+  RequestBatch batch;
+  return batch;
 }
 
-void AggregateBatcher::clear() { aggregateQueue_.clear(); }
+void AggregateBatcher::clear() { queue_.clear(); }
 
 }  // namespace slimt
