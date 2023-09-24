@@ -68,7 +68,6 @@ class Model {
   Tag tag_;
 
   std::vector<io::Item> items_;
-
   Tensor embedding_;
   std::vector<EncoderLayer> encoder_;
   Decoder decoder_;

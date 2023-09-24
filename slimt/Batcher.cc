@@ -3,8 +3,10 @@
 #include <cassert>
 
 #include "slimt/Batch.hh"
+#include "slimt/Model.hh"
 
-namespace slimt {
+namespace slimt::rd {
+
 Batcher::Batcher(size_t max_words, size_t wrap_length,
                  float tgt_length_limit_factor)
     : max_words_(max_words), running_bucket_max_size_(0) {
@@ -23,19 +25,19 @@ Batcher::Batcher(size_t max_words, size_t wrap_length,
                  "longer than what can fit in a batch.");
 }
 
-RequestBatch Batcher::generate() {
+Batch Batcher::generate() {
   // For now simply iterates on buckets and converts batches greedily.  This
   // has to be enhanced with optimizing over priority. The baseline
   // implementation should at least be as fast as marian's maxi-batch with full
   // corpus size as maxi-batch size.
-  RequestBatch batch;
-  size_t paddedBatchSize = 0;
+  Batch batch;
+  size_t padded_batch_size = 0;
 
   for (size_t length = 0; length <= running_bucket_max_size_; length++) {
     auto p = bucket_[length].begin();
     while (p != bucket_[length].end()) {
-      paddedBatchSize = (batch.size() + 1) * length;
-      if (paddedBatchSize <= max_words_) {
+      padded_batch_size = (batch.size() + 1) * length;
+      if (padded_batch_size <= max_words_) {
         auto q = p++;
         batch.add(*q);
         bucket_[length].erase(q);
@@ -50,11 +52,11 @@ RequestBatch Batcher::generate() {
   return batch;
 }
 
-size_t Batcher::enqueue(Ptr<Request> request) {
+size_t Batcher::enqueue(const Ptr<Request>& request) {
   size_t to_be_translated = 0;
   for (size_t i = 0; i < request->numSegments(); i++) {
     if (!request->cacheHitPrefilled(i)) {
-      RequestSentence sentence(i, request);
+      Unit sentence(i, request);
       size_t bucket_id = sentence.numTokens();
 
       // Due to a workaround for pivoting, unless we can discipline the
@@ -78,26 +80,25 @@ size_t Batcher::enqueue(Ptr<Request> request) {
 }
 
 void Batcher::clear() {
-  for (size_t length = 0; length < bucket_.size(); length++) {
-    bucket_[length].clear();
+  for (auto& item : bucket_) {
+    item.clear();
   }
 }
 
-AggregateBatcher::AggregateBatcher() {
-  // TODO(@jerinphilip): Set aggregate limits
-}
+AggregateBatcher::AggregateBatcher() = default;
 
-size_t AggregateBatcher::enqueue(Ptr<Model> model, Ptr<Request> request) {
+size_t AggregateBatcher::enqueue(const Ptr<Model>& model,
+                                 Ptr<Request> request) {
   size_t sentences_enqueued = model->enqueue(request);
   queue_.insert(model);
   return sentences_enqueued;
 }
 
-RequestBatch AggregateBatcher::generate(Ptr<Model>& model) {
+Batch AggregateBatcher::generate(Ptr<Model>& model) {
   while (!queue_.empty()) {
     auto candidate_iterator = queue_.begin();
     Ptr<Model> candidate = *candidate_iterator;
-    RequestBatch batch = candidate->generate();
+    Batch batch = candidate->generate();
     if (batch.size() > 0) {
       model = candidate;
       return batch;
@@ -106,10 +107,10 @@ RequestBatch AggregateBatcher::generate(Ptr<Model>& model) {
     queue_.erase(candidate_iterator);
   }
   // Empty.
-  RequestBatch batch;
+  Batch batch;
   return batch;
 }
 
 void AggregateBatcher::clear() { queue_.clear(); }
 
-}  // namespace slimt
+}  // namespace slimt::rd

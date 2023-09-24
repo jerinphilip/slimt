@@ -170,4 +170,18 @@ std::vector<Alignment> remapAlignments(const Response &first,
   return alignments;
 }
 
+Response combine(Response &&first, Response &&second) {
+  Response combined;
+
+  // Compute alignment first using internal matrices and mappings.
+  if (!first.alignments.empty()) {
+    combined.alignments = remapAlignments(first, second);
+  }
+
+  combined.source = std::move(first.source);
+  combined.target = std::move(second.target);
+
+  return combined;
+}
+
 }  // namespace slimt

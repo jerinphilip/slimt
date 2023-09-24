@@ -12,15 +12,17 @@ namespace slimt {
 
 class Model;
 
+namespace rd {
+
 class Batcher {
  public:
   explicit Batcher(size_t max_words, size_t wrap_length,
                    float tgt_length_limit_factor = 3.0);
 
-  // RequestSentence incorporates (tentative) notions of priority with each
+  // Unit incorporates (tentative) notions of priority with each
   // sentence. This method inserts the sentence into the internal data-structure
   // which maintains priority among sentences from multiple concurrent requests.
-  size_t enqueue(Ptr<Request> request);
+  size_t enqueue(const Ptr<Request>& request);
 
   // Loads sentences with sentences compiled from (tentatively) multiple
   // requests optimizing for both padding and priority.
@@ -31,7 +33,7 @@ class Batcher {
 
  private:
   size_t max_words_;
-  std::vector<std::set<RequestSentence>> bucket_;
+  std::vector<std::set<Unit>> bucket_;
   size_t batchNumber_{0};
   size_t running_bucket_max_size_;
 };
@@ -191,5 +193,6 @@ size_t ThreadsafeBatcher<BatcherType>::generate(Args&&... args) {
   enqueued_ -= sentences_in_batch;
   return sentences_in_batch;
 }
+}  // namespace rd
 
 }  // namespace slimt

@@ -48,4 +48,12 @@ struct Options {
 std::vector<Alignment> remapAlignments(const Response &first,
                                        const Response &second);
 
+// Combines two responses with first.target == second.source mapping alignments
+// etc accordingly. There are several constraints which are matched by only the
+// pivoting workflow in <>Service source, therefore this function is not for
+// external use and in a hidden namespace.
+Response combine(Response &&first, Response &&second);
+
+using Responses = std::vector<Response>;
+
 }  // namespace slimt

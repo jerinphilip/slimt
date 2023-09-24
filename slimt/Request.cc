@@ -16,11 +16,13 @@ size_t cache_key(size_t model_id, const Words &words) {
   return seed;
 }
 
+namespace rd {
+
 // -----------------------------------------------------------------
 Request::Request(size_t Id, size_t model_id, Segments &&segments,
                  ResponseBuilder &&responseBuilder,
                  std::optional<TranslationCache> &cache)
-    : Id_(Id),
+    : id_(Id),
       model_id_(model_id),
       segments_(std::move(segments)),
       responseBuilder_(std::move(responseBuilder)),
@@ -30,7 +32,7 @@ Request::Request(size_t Id, size_t model_id, Segments &&segments,
 
   // 1. If there are no segments_, we are never able to trigger the
   // responseBuilder calls from a different thread. This happens when the use
-  // provides empty input, or the sentence and subword preprocessing deems no
+  // provides empty input, or the unit and subword preprocessing deems no
   // translatable units present. However, in this case we want an empty valid
   // response. There's no need to do any additional processing here.
   if (segments_.empty()) {
@@ -42,7 +44,7 @@ Request::Request(size_t Id, size_t model_id, Segments &&segments,
     if (cache_) {
       // Iterate through segments, see if any can be prefilled from cache. If
       // prefilled, mark the particular segments as complete (non-empty
-      // ProcessedRequestSentence). Also update accounting used elsewhere
+      // ProcessedUnit). Also update accounting used elsewhere
       // (counter_) to reflect one less segment to translate.
       for (size_t idx = 0; idx < segments_.size(); idx++) {
         size_t key = cache_key(model_id_, getSegment(idx));
@@ -54,7 +56,7 @@ Request::Request(size_t Id, size_t model_id, Segments &&segments,
       }
       // 2. Also, if cache somehow manages to decrease all counter prefilling
       // histories, then we'd have to trigger ResponseBuilder as well. No
-      // segments go into batching and therefore no processHistory triggers.
+      // segments go into batching and therefore no complete triggers.
       if (counter_.load() == 0) {
         responseBuilder_(std::move(histories_));
       }
@@ -70,7 +72,7 @@ size_t Request::segmentTokens(size_t index) const {
 
 Segment Request::getSegment(size_t index) const { return segments_[index]; }
 
-void Request::processHistory(size_t index, History history) {
+void Request::complete(size_t index, History history) {
   // Concurrently called by multiple workers as a history from translation is
   // ready. The container storing histories is set with the value obtained.
 
@@ -92,29 +94,27 @@ void Request::processHistory(size_t index, History history) {
 
 // ------------------------------------------------------------------
 
-RequestSentence::RequestSentence(size_t index, Ptr<Request> request)
+Unit::Unit(size_t index, Ptr<Request> request)
     : index_(index), request_(std::move(request)) {}
 
-size_t RequestSentence::numTokens() const {
-  return (request_->segmentTokens(index_));
-}
+size_t Unit::numTokens() const { return (request_->segmentTokens(index_)); }
 
-void RequestSentence::completeSentence(History history) {
-  // Relays completeSentence into request's processHistory, using index
+void Unit::complete(History history) {
+  // Relays complete into request's complete, using index
   // information.
-  request_->processHistory(index_, std::move(history));
+  request_->complete(index_, std::move(history));
 }
 
-Segment RequestSentence::getUnderlyingSegment() const {
+Segment Unit::getUnderlyingSegment() const {
   return request_->getSegment(index_);
 }
 
 bool operator<(const Request &a, const Request &b) {
   // Among Requests, only sequence id is used for obtaining priority.
-  return a.Id_ < b.Id_;
+  return a.id_ < b.id_;
 }
 
-bool operator<(const RequestSentence &a, const RequestSentence &b) {
+bool operator<(const Unit &a, const Unit &b) {
   // Operator overload for usage in priority-queue / set.
   if (a.request_ == b.request_) {
     return a.index_ < b.index_;
@@ -124,29 +124,28 @@ bool operator<(const RequestSentence &a, const RequestSentence &b) {
 
 // ----------------------------------------------------------------------
 
-void RequestBatch::log() {
+void Batch::log() {
   size_t num_tokens = 0;
   size_t max_length = 0;
-  for (auto &sentence : sentences_) {
-    num_tokens += sentence.numTokens();
-    max_length =
-        std::max(max_length, static_cast<size_t>(sentence.numTokens()));
+  for (auto &unit : units_) {
+    num_tokens += unit.numTokens();
+    max_length = std::max(max_length, static_cast<size_t>(unit.numTokens()));
   }
 
   (void)num_tokens;
   (void)max_length;
-  LOG(info, "RequestBatch(tokens={}, max-length={}, sentences_={})", num_tokens,
-      maxLength, sentences_.size());
+  LOG(info, "Batch(tokens={}, max-length={}, units_={})", num_tokens, maxLength,
+      units_.size());
 }
 
-void RequestBatch::add(const RequestSentence &sentence) {
-  sentences_.push_back(sentence);
-}
+void Batch::add(const Unit &unit) { units_.push_back(unit); }
 
-void RequestBatch::complete(const Histories &histories) {
-  for (size_t i = 0; i < sentences_.size(); i++) {
-    sentences_[i].completeSentence(histories[i]);
+void Batch::complete(const Histories &histories) {
+  for (size_t i = 0; i < units_.size(); i++) {
+    units_[i].complete(histories[i]);
   }
 }
+
+}  // namespace rd
 
 }  // namespace slimt

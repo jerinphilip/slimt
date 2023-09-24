@@ -3,7 +3,6 @@
 #include <string>
 #include <utility>
 
-#include "byte_array_util.h"
 #include "slimt/Batch.hh"
 #include "slimt/Types.hh"
 
@@ -46,13 +45,13 @@ Blocking::Blocking(const Blocking::Config &config)
 
 std::vector<Response> Blocking::translateMultiple(
     std::shared_ptr<Model> model, std::vector<std::string> &&sources,
-    const std::vector<Options> &responseOptions) {
+    const std::vector<Options> &options) {
   std::vector<HTML> htmls;
   for (size_t i = 0; i < sources.size(); i++) {
-    htmls.emplace_back(std::move(sources[i]), responseOptions[i].HTML);
+    htmls.emplace_back(std::move(sources[i]), options[i].HTML);
   }
   std::vector<Response> responses =
-      translateMultipleRaw(model, std::move(sources), responseOptions);
+      translateMultipleRaw(model, std::move(sources), options);
   for (size_t i = 0; i < responses.size(); i++) {
     htmls[i].restore(responses[i]);
   }
@@ -62,7 +61,7 @@ std::vector<Response> Blocking::translateMultiple(
 
 std::vector<Response> Blocking::translateMultipleRaw(
     std::shared_ptr<Model> model, std::vector<std::string> &&sources,
-    const std::vector<Options> &responseOptions) {
+    const std::vector<Options> &options) {
   std::vector<Response> responses;
   responses.resize(sources.size());
 
@@ -70,9 +69,8 @@ std::vector<Response> Blocking::translateMultipleRaw(
     auto callback = [i, &responses](Response &&response) {
       responses[i] = std::move(response);
     };  //
-    Ptr<Request> request =
-        model->makeRequest(requestId_++, std::move(sources[i]), callback,
-                           responseOptions[i], cache_);
+    Ptr<Request> request = model->makeRequest(
+        requestId_++, std::move(sources[i]), callback, options[i], cache_);
     batchingPool_.enqueueRequest(model, request);
   }
 
@@ -87,17 +85,15 @@ std::vector<Response> Blocking::translateMultipleRaw(
 
 std::vector<Response> Blocking::pivotMultiple(
     std::shared_ptr<Model> first, std::shared_ptr<Model> second,
-    std::vector<std::string> &&sources,
-    const std::vector<Options> &responseOptions) {
+    std::vector<std::string> &&sources, const std::vector<Options> &options) {
   std::vector<HTML> htmls;
   for (size_t i = 0; i < sources.size(); i++) {
-    htmls.emplace_back(std::move(sources[i]), responseOptions[i].HTML);
+    htmls.emplace_back(std::move(sources[i]), options[i].HTML);
   }
 
   // Translate source to pivots. This is same as calling translateMultiple.
   std::vector<Response> sourcesToPivots;
-  sourcesToPivots =
-      translateMultipleRaw(first, std::move(sources), responseOptions);
+  sourcesToPivots = translateMultipleRaw(first, std::move(sources), options);
 
   // Translate pivots to targets, after we have outputs at pivot from first
   // round. We cannot use translateMultiple here because need consistency at
@@ -114,9 +110,8 @@ std::vector<Response> Blocking::pivotMultiple(
       pivotsToTargets[i] = std::move(response);
     };  //
 
-    Ptr<Request> request =
-        second->makePivotRequest(requestId_++, std::move(intermediate),
-                                 callback, responseOptions[i], cache_);
+    Ptr<Request> request = second->makePivotRequest(
+        requestId_++, std::move(intermediate), callback, options[i], cache_);
     batchingPool_.enqueueRequest(second, request);
   }
 
@@ -179,9 +174,8 @@ Async::~Async() {
 
 void Async::pivot(std::shared_ptr<Model> first, std::shared_ptr<Model> second,
                   std::string &&source, CallbackType clientCallback,
-                  const Options &responseOptions) {
-  Ptr<HTML> html =
-      std::make_shared<HTML>(std::move(source), responseOptions.HTML);
+                  const Options &options) {
+  Ptr<HTML> html = std::make_shared<HTML>(std::move(source), options.HTML);
   // This is callback chaining or CPS due to async.
 
   // We create a callback which feeds the result of first into a second
@@ -189,7 +183,7 @@ void Async::pivot(std::shared_ptr<Model> first, std::shared_ptr<Model> second,
   // (joiningCallback) which merges both results and creates our final response.
   //
 
-  auto internalCallback = [this, clientCallback, second, responseOptions,
+  auto internalCallback = [this, clientCallback, second, options,
                            html](Response &&sourceToPivot) {
     // We cannot eliminate the following copy, as we need two versions of
     // intermediate. Holding it in a copy allows moving the response into the
@@ -216,35 +210,33 @@ void Async::pivot(std::shared_ptr<Model> first, std::shared_ptr<Model> second,
     // Second call.
     Ptr<Request> request =
         second->makePivotRequest(requestId_++, std::move(intermediate),
-                                 joiningCallback, responseOptions, cache_);
+                                 joiningCallback, options, cache_);
     safeBatchingPool_.enqueueRequest(second, request);
   };
 
   // First call.
-  translateRaw(first, std::move(source), internalCallback, responseOptions);
+  translateRaw(first, std::move(source), internalCallback, options);
 }
 
 void Async::translate(std::shared_ptr<Model> model, std::string &&source,
-                      CallbackType callback, const Options &responseOptions) {
+                      CallbackType callback, const Options &options) {
   // Producer thread, a call to this function adds new work items. If batches
   // are available, notifies workers waiting.
-  Ptr<HTML> html =
-      std::make_shared<HTML>(std::move(source), responseOptions.HTML);
+  Ptr<HTML> html = std::make_shared<HTML>(std::move(source), options.HTML);
   auto internalCallback = [html, callback](Response &&response) {
     html->restore(response);
     callback(std::move(response));
   };
 
-  translateRaw(model, std::move(source), internalCallback, responseOptions);
+  translateRaw(model, std::move(source), internalCallback, options);
 }
 
 void Async::translateRaw(std::shared_ptr<Model> model, std::string &&source,
-                         CallbackType callback,
-                         const Options &responseOptions) {
+                         CallbackType callback, const Options &options) {
   // Producer thread, a call to this function adds new work items. If batches
   // are available, notifies workers waiting.
   Ptr<Request> request = model->makeRequest(requestId_++, std::move(source),
-                                            callback, responseOptions, cache_);
+                                            callback, options, cache_);
   safeBatchingPool_.enqueueRequest(model, request);
 }
 
