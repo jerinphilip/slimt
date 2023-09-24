@@ -19,12 +19,13 @@ class Decoder {
   Sentences decode(Tensor &encoder_out, Tensor &mask, const Words &source);
 
  private:
-  Tensor step(Tensor &encoder_out, Tensor &mask, Words &previous_step);
+  Tensor step(Tensor &encoder_out, Tensor &mask, std::vector<Tensor> &states,
+              Words &previous_step);
 
   static Words greedy_sample(Tensor &logits, const Words &words,
                              size_t batch_size);
 
-  void set_start_state(size_t batch_size);
+  std::vector<Tensor> start_states(size_t batch_size);
 
   Vocabulary &vocabulary_;
 

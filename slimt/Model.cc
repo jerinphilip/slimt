@@ -119,8 +119,8 @@ Sentences Decoder::decode(Tensor &encoder_out, Tensor &mask,
   Sentences sentences(batch_size);
 
   Words previous_slice = {};
-  set_start_state(batch_size);
-  Tensor decoder_out = step(encoder_out, mask, previous_slice);
+  std::vector<Tensor> states = start_states(batch_size);
+  Tensor decoder_out = step(encoder_out, mask, states, previous_slice);
 
   Tensor logits = affine_with_select(output_, decoder_out, indices, "logits");
 
@@ -130,7 +130,7 @@ Sentences Decoder::decode(Tensor &encoder_out, Tensor &mask,
   size_t remaining = sentences.size();
   size_t max_seq_length = max_target_length_factor_ * source_sequence_length;
   for (size_t i = 1; i < max_seq_length && remaining > 0; i++) {
-    Tensor decoder_out = step(encoder_out, mask, previous_slice);
+    Tensor decoder_out = step(encoder_out, mask, states, previous_slice);
 
     Tensor logits = affine_with_select(output_, decoder_out, indices, "logits");
 
@@ -141,10 +141,13 @@ Sentences Decoder::decode(Tensor &encoder_out, Tensor &mask,
   return sentences;
 }
 
-void Decoder::set_start_state(size_t batch_size) {
+std::vector<Tensor> Decoder::start_states(size_t batch_size) {
+  std::vector<Tensor> states;
   for (auto &layer : decoder_) {
-    layer.set_start_state(batch_size);
+    Tensor state = layer.start_state(batch_size);
+    states.push_back(std::move(state));
   }
+  return states;
 }
 
 Model::Model(Tag tag, Vocabulary &vocabulary, std::vector<io::Item> &&items,
@@ -189,7 +192,8 @@ void Decoder::register_parameters(const std::string &prefix,
   }
 }
 
-Tensor Decoder::step(Tensor &encoder_out, Tensor &mask, Words &previous_step) {
+Tensor Decoder::step(Tensor &encoder_out, Tensor &mask,
+                     std::vector<Tensor> &states, Words &previous_step) {
   // Infer batch-size from encoder_out.
   size_t encoder_feature_dim = encoder_out.dim(-1);
   size_t source_sequence_length = encoder_out.dim(-2);
@@ -229,9 +233,10 @@ Tensor Decoder::step(Tensor &encoder_out, Tensor &mask, Words &previous_step) {
   Tensor decoder_embed = from_sentences(previous_step, batch_size);
   transform_embedding(decoder_embed);
 
-  auto [x, attn] = decoder_[0].forward(encoder_out, mask, decoder_embed);
+  auto [x, attn] =
+      decoder_[0].forward(encoder_out, mask, states[0], decoder_embed);
   for (size_t i = 1; i < decoder_.size(); i++) {
-    auto [y, _attn] = decoder_[i].forward(encoder_out, mask, x);
+    auto [y, _attn] = decoder_[i].forward(encoder_out, mask, states[i], x);
     x = std::move(y);
   }
 
