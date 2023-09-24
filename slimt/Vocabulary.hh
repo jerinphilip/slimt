@@ -2,6 +2,8 @@
 
 #include <string_view>
 
+#include "slimt/Types.hh"
+
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #pragma GCC diagnostic ignored "-Wunused-parameter"
@@ -14,20 +16,16 @@ namespace slimt {
 
 class Vocabulary {
  public:
-  using Word = uint32_t;
-  using Words = std::vector<Word>;
-  using Views = std::vector<std::string_view>;
-
   explicit Vocabulary(const std::string &fpath);
   Vocabulary(void *data, size_t size);
   std::tuple<Words, Views> encode(const std::string_view &line,
-                                  bool add_eos = false);
+                                  bool add_eos = false) const;
   std::tuple<std::string, Views> decode(const Words &words,
-                                        bool ignore_eos = true);
+                                        bool ignore_eos = true) const;
 
-  Word pad_id() { return std::max(0, processor_.pad_id()); }
-  Word eos_id() { return processor_.eos_id(); }
-  size_t size() { return processor_.GetPieceSize(); }
+  Word pad_id() const { return std::max(0, processor_.pad_id()); }
+  Word eos_id() const { return processor_.eos_id(); }
+  size_t size() const { return processor_.GetPieceSize(); }
 
  private:
   sentencepiece::SentencePieceProcessor processor_;

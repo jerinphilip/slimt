@@ -1,16 +1,7 @@
 #include "slimt/Shortlist.hh"
 
+#include "slimt/Macros.hh"
 #include "slimt/Utils.hh"
-
-#define ABORT_IF(condition, ...) \
-  do {                           \
-    if (condition) {             \
-      std::cerr << #condition;   \
-      std::abort();              \
-    }                            \
-  } while (0)
-
-#define LOG(...) (void)0
 
 namespace slimt {
 
@@ -29,7 +20,7 @@ bool ShortlistGenerator::content_check() {
   for (size_t j = 0; j < shortlist_size_; j++) {
     fail_flag |= shortlist_[j] >= v_size;
   }
-  ABORT_IF(fail_flag, "Error: shortlist indices are out of bounds");
+  SLIMT_ABORT_IF(fail_flag, "Error: shortlist indices are out of bounds");
   return fail_flag;
 }
 
@@ -42,20 +33,21 @@ void ShortlistGenerator::load(const void* data, size_t blob_size,
    * short_lists array
    */
   (void)blob_size;
-  ABORT_IF(blob_size < sizeof(Header),
-           "Shortlist length {} too short to have a header", blob_size);
+  SLIMT_ABORT_IF(blob_size < sizeof(Header),
+                 "Shortlist length {} too short to have a header", blob_size);
 
   const char* ptr = static_cast<const char*>(data);
   const Header& header = *reinterpret_cast<const Header*>(ptr);
   ptr += sizeof(Header);
-  ABORT_IF(header.magic != kMagic, "Incorrect magic in binary shortlist");
+  SLIMT_ABORT_IF(header.magic != kMagic, "Incorrect magic in binary shortlist");
 
   uint64_t expected_size = sizeof(Header) +
                            header.word_to_offset_size * sizeof(uint64_t) +
-                           header.shortlist_size * sizeof(Vocabulary::Word);
-  ABORT_IF(expected_size != blob_size,
-           "Shortlist header claims file size should be {} but file is {}",
-           expected_size, blob_size);
+                           header.shortlist_size * sizeof(Word);
+  SLIMT_ABORT_IF(
+      expected_size != blob_size,
+      "Shortlist header claims file size should be {} but file is {}",
+      expected_size, blob_size);
 
   if (check) {
     size_t length = (       //
@@ -64,16 +56,16 @@ void ShortlistGenerator::load(const void* data, size_t blob_size,
         - sizeof(uint64_t)  // header.checksum
     );
     auto checksum_actual = hash_bytes<uint64_t, uint64_t>(
-        &header.first_num, (length) / sizeof(uint64_t));
+        &header.frequent, (length) / sizeof(uint64_t));
 
-    ABORT_IF(checksum_actual != header.checksum,
-             "checksum check failed: this binary shortlist is corrupted");
+    SLIMT_ABORT_IF(checksum_actual != header.checksum,
+                   "checksum check failed: this binary shortlist is corrupted");
   }
 
-  first_num_ = header.first_num;
-  best_num_ = header.best_num;
-  LOG(info, "[data] Lexical short list first_num {} and best_num {}",
-      first_num_, best_num_);
+  frequent_ = header.frequent;
+  best_ = header.best;
+  LOG(info, "[data] Lexical short list frequent {} and best {}", frequent_,
+      best_);
 
   word_to_offset_size_ = header.word_to_offset_size;
   shortlist_size_ = header.shortlist_size;
@@ -82,7 +74,7 @@ void ShortlistGenerator::load(const void* data, size_t blob_size,
   word_to_offset_ = reinterpret_cast<const uint64_t*>(ptr);
   ptr += word_to_offset_size_ * sizeof(uint64_t);
 
-  shortlist_ = reinterpret_cast<const Vocabulary::Word*>(ptr);
+  shortlist_ = reinterpret_cast<const Word*>(ptr);
 
   // Verify offsets and vocab ids are within bounds if requested by user.
   if (check) {
@@ -115,8 +107,8 @@ Shortlist ShortlistGenerator::generate(const Words& words) const {
   std::vector<bool> source_table(source_size, false);
   std::vector<bool> target_table(target_size, false);
 
-  // Add first_num most frequent words
-  for (Word i = 0; i < first_num_ && i < target_size; ++i) {
+  // Add frequent most frequent words
+  for (Word i = 0; i < frequent_ && i < target_size; ++i) {
     target_table[i] = true;
   }
 
@@ -149,7 +141,7 @@ Shortlist ShortlistGenerator::generate(const Words& words) const {
   // Ensure that the generated vocabulary items from a shortlist are a
   // multiple-of-eight This is necessary until intgemm supports
   // non-multiple-of-eight matrices.
-  for (size_t i = first_num_; i < target_size && target_table_ones % 8 != 0;
+  for (size_t i = frequent_; i < target_size && target_table_ones % 8 != 0;
        i++) {
     if (!target_table[i]) {
       target_table[i] = true;
