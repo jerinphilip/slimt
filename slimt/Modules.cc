@@ -172,15 +172,15 @@ Tensor linear(Linear &parameters, Tensor &x, const std::string &name = "") {
   return y;
 }
 
-void SSRU::set_start_state(size_t batch_size) {
+Tensor SSRU::start_state(size_t batch_size) {
   // auto start = graph->constant({1, 1, dimBatch, dim}, inits::zeros());
   size_t feature_dim = O_.W.dim(-1);
   Tensor start(Type::f32, Shape({batch_size, feature_dim}), "start");
   start.fill_in_place(0.0F);
-  state_ = std::move(start);
+  return start;
 }
 
-Tensor SSRU::forward(Tensor &x) {
+Tensor SSRU::forward(Tensor &state, Tensor &x) {
   // From Research to Production and Back: Ludicrously Fast Neural Machine
   // Translation (https://aclanthology.org/D19-5632.pdf) Section 3.1 describes
   // SSRU. SSRU is described by the following recurrent equations - which
@@ -206,7 +206,7 @@ Tensor SSRU::forward(Tensor &x) {
 
   // f(t) = σ(Wt . x(t) + bf )
 
-  Tensor &c = state_;  // Load context from saved-state.
+  Tensor &c = state;  // Load context from saved-state.
 
   Tensor f_out = affine(F_, x, "rnn_f");  // Forget gate?
   Tensor f = sigmoid(f_out);
@@ -230,14 +230,15 @@ Tensor SSRU::forward(Tensor &x) {
 
   Tensor h = ln_.forward(o);
 
-  state_ = std::move(c_next);
+  state = std::move(c_next);
 
   return h;
 }
 
 std::tuple<Tensor, Tensor> DecoderLayer::forward(Tensor &encoder_out,
-                                                 Tensor &mask, Tensor &x) {
-  Tensor decoder_out = rnn_.forward(x);
+                                                 Tensor &mask, Tensor &state,
+                                                 Tensor &x) {
+  Tensor decoder_out = rnn_.forward(state, x);
 
   // Assign query, key, value for cross-attention.
   Tensor &q = decoder_out;
