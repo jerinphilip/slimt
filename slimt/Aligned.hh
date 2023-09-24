@@ -1,3 +1,4 @@
+#pragma once
 #include <cstdint>
 #include <cstdlib>
 
@@ -12,6 +13,11 @@ class Aligned {
 
   void* data() const;
   size_t size() const;
+
+  char* begin() const;
+  char* end() const;
+
+  bool empty() const;
 
   Aligned(const Aligned&) = delete;
   Aligned& operator=(const Aligned&) = delete;
