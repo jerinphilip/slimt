@@ -83,8 +83,7 @@ Model::Model(const Config &config, View model)
 }
 
 Decoder::Decoder(const Config &config, Tensor &embedding)
-    : tgt_length_limit_factor_(config.tgt_length_limit_factor),
-      embedding_(embedding) {
+    : embedding_(embedding) {
   for (size_t i = 0; i < config.decoder_layers; i++) {
     decoder_.emplace_back(i + 1, config.feed_forward_depth,
                           config.attention_num_heads);

@@ -48,8 +48,6 @@ class Decoder {
               Words &previous_step, Words &shortlist);
 
  private:
-  float tgt_length_limit_factor_;
-
   Tensor &embedding_;
   std::vector<DecoderLayer> decoder_;
   Affine output_;
