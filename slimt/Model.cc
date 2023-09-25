@@ -39,6 +39,33 @@ void transform_embedding(Tensor &word_embedding, size_t start = 0) {
                            word_embedding_ptr);
 }
 
+Encoder::Encoder(const Config &config) {
+  for (size_t i = 0; i < config.encoder_layers; i++) {
+    encoder_.emplace_back(i + 1, config.feed_forward_depth,
+                          config.attention_num_heads);
+  }
+}
+
+Tensor Encoder::forward(Tensor &word_embedding, Tensor &mask) {
+  auto [x, attn] = encoder_[0].forward(word_embedding, mask);
+
+  for (size_t i = 1; i < encoder_.size(); i++) {
+    EncoderLayer &layer = encoder_[i];
+    auto [y, attn_y] = layer.forward(x, mask);
+
+    // Overwriting x so that x is destroyed and we need lesser working memory.
+    x = std::move(y);
+  }
+  return std::move(x);
+}
+
+void Encoder::register_parameters(const std::string &prefix,
+                                  ParameterMap &parameters) {
+  for (EncoderLayer &layer : encoder_) {
+    layer.register_parameters(prefix, parameters);
+  }
+}
+
 Sentences Model::translate(Batch &batch) {
   Tensor &indices = batch.indices();
   Tensor &mask = batch.mask();
@@ -53,18 +80,7 @@ Sentences Model::translate(Batch &batch) {
   // https://github.com/browsermt/marian-dev/blob/14c9d9b0e732f42674e41ee138571d5a7bf7ad94/src/models/transformer.h#L570
   // https://github.com/browsermt/marian-dev/blob/14c9d9b0e732f42674e41ee138571d5a7bf7ad94/src/models/transformer.h#L133
   modify_mask_for_pad_tokens_in_attention(mask.data<float>(), mask.size());
-
-  auto [x, attn] = encoder_[0].forward(word_embedding, mask);
-
-  for (size_t i = 1; i < encoder_.size(); i++) {
-    EncoderLayer &layer = encoder_[i];
-    auto [y, attn_y] = layer.forward(x, mask);
-
-    // Overwriting x so that x is destroyed and we need lesser working memory.
-    x = std::move(y);
-  }
-
-  Tensor &encoder_out = x;
+  Tensor encoder_out = encoder_.forward(word_embedding, mask);
   return decoder_.decode(encoder_out, mask, batch.words());
 }
 
@@ -150,21 +166,16 @@ std::vector<Tensor> Decoder::start_states(size_t batch_size) {
   return states;
 }
 
-Model::Model(Config config, Vocabulary &vocabulary,
-             std::vector<io::Item> &&items,
+Model::Model(const Config &config, Vocabulary &vocabulary, io::Items &&items,
              ShortlistGenerator &&shortlist_generator)
     : items_(std::move(items)),
+      encoder_(config),                        //
       decoder_(config,                         //
                vocabulary,                     //
                embedding_,                     //
                std::move(shortlist_generator)  //
       ) {
-  for (size_t i = 0; i < config.encoder_layers; i++) {
-    encoder_.emplace_back(i + 1, config.feed_forward_depth,
-                          config.attention_num_heads);
-  }
-
-  load_parameters_from_items();
+  load_parameters();
 }
 
 Decoder::Decoder(const Config &config, Vocabulary &vocabulary,
@@ -243,7 +254,7 @@ Tensor Decoder::step(Tensor &encoder_out, Tensor &mask,
   return std::move(x);
 }
 
-void Model::load_parameters_from_items() {
+void Model::load_parameters() {
   // Get the parameterss from strings to target tensors to load.
   ParameterMap parameters;
   std::string prefix;
@@ -277,10 +288,10 @@ void Model::load_parameters_from_items() {
   }
 
   for (std::string &entry : missed) {
-    std::cerr << "Failed to ingest expected load of " << entry << "\n";
+    std::cerr << "[warn] Failed to ingest expected load of " << entry << "\n";
   }
   for (auto &parameter : parameters) {
-    std::cerr << "Failed to complete expected load of ";
+    std::cerr << "[warn] Failed to complete expected load of ";
     std::cerr << parameter.first << "\n";
   }
 }
@@ -288,9 +299,7 @@ void Model::load_parameters_from_items() {
 void Model::register_parameters(const std::string &prefix,
                                 ParameterMap &parameters) {
   parameters.emplace("Wemb", &embedding_);
-  for (EncoderLayer &layer : encoder_) {
-    layer.register_parameters(prefix, parameters);
-  }
+  encoder_.register_parameters(prefix, parameters);
   decoder_.register_parameters(prefix, parameters);
 }
 

@@ -19,6 +19,16 @@ struct Config {
   // NOLINTEND
 };
 
+class Encoder {
+ public:
+  explicit Encoder(const Config &config);
+  Tensor forward(Tensor &embedding, Tensor &mask);
+  void register_parameters(const std::string &prefix, ParameterMap &parameters);
+
+ private:
+  std::vector<EncoderLayer> encoder_;
+};
+
 class Decoder {
  public:
   Decoder(const Config &config, Vocabulary &vocabulary, Tensor &embedding,
@@ -49,21 +59,19 @@ class Decoder {
 
 class Model {
  public:
-  explicit Model(Config config, Vocabulary &vocabulary,
-                 std::vector<io::Item> &&items,
-                 ShortlistGenerator &&shortlist_generator);
+  explicit Model(const Config &config, Vocabulary &vocabulary,
+                 io::Items &&items, ShortlistGenerator &&shortlist_generator);
 
   Sentences translate(Batch &batch);
 
  private:
-  void load_parameters_from_items();
   void register_parameters(const std::string &prefix, ParameterMap &parameters);
+  void load_parameters();
 
   Config config_;
-
   std::vector<io::Item> items_;
   Tensor embedding_;
-  std::vector<EncoderLayer> encoder_;
+  Encoder encoder_;
   Decoder decoder_;
 };
 
