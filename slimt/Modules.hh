@@ -29,7 +29,7 @@ class LayerNorm {
 
 class Attention {
  public:
-  explicit Attention(std::string name);
+  explicit Attention(std::string name, size_t num_heads);
   void register_parameters(const std::string &prefix, ParameterMap &parameters);
   std::tuple<Tensor, Tensor> forward(Tensor &q, Tensor &k, Tensor &v,
                                      Tensor &mask);
@@ -38,7 +38,7 @@ class Attention {
   std::string name_;
   Affine Q_, K_, V_, O_;
   LayerNorm ln_;
-  size_t num_heads_ = 8;  // FIXME(-1): HARDCODE
+  size_t num_heads_;
 };
 
 class SSRU {
@@ -67,7 +67,7 @@ class FFN {
 
 class EncoderLayer {
  public:
-  EncoderLayer(size_t depth, size_t ffn_count);
+  EncoderLayer(size_t depth, size_t ffn_count, size_t num_heads);
   void register_parameters(const std::string &prefix, ParameterMap &parameters);
   std::tuple<Tensor, Tensor> forward(Tensor &x, Tensor &mask);
 
@@ -80,7 +80,7 @@ class EncoderLayer {
 
 class DecoderLayer {
  public:
-  explicit DecoderLayer(size_t depth, size_t ffn_count);
+  explicit DecoderLayer(size_t depth, size_t ffn_count, size_t num_heads);
   void register_parameters(const std::string &prefix, ParameterMap &parameters);
   std::tuple<Tensor, Tensor> forward(Tensor &encoder_out, Tensor &mask,
                                      Tensor &state, Tensor &x);

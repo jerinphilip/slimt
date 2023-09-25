@@ -128,7 +128,7 @@ Sentences Decoder::decode(Tensor &encoder_out, Tensor &mask,
   record(previous_slice, sentences);
 
   size_t remaining = sentences.size();
-  size_t max_seq_length = max_target_length_factor_ * source_sequence_length;
+  size_t max_seq_length = tgt_length_limit_factor_ * source_sequence_length;
   for (size_t i = 1; i < max_seq_length && remaining > 0; i++) {
     Tensor decoder_out = step(encoder_out, mask, states, previous_slice);
 
@@ -150,32 +150,32 @@ std::vector<Tensor> Decoder::start_states(size_t batch_size) {
   return states;
 }
 
-Model::Model(Tag tag, Vocabulary &vocabulary, std::vector<io::Item> &&items,
+Model::Model(Config config, Vocabulary &vocabulary,
+             std::vector<io::Item> &&items,
              ShortlistGenerator &&shortlist_generator)
-    : tag_(tag),
-      items_(std::move(items)),
-      decoder_(                                //
-          Config::tiny11::decoder_layers,      //
-          Config::tiny11::feed_forward_depth,  //
-          vocabulary,                          //
-          embedding_,                          //
-          std::move(shortlist_generator)       //
+    : items_(std::move(items)),
+      decoder_(config,                         //
+               vocabulary,                     //
+               embedding_,                     //
+               std::move(shortlist_generator)  //
       ) {
-  for (size_t i = 0; i < Config::tiny11::encoder_layers; i++) {
-    encoder_.emplace_back(i + 1, Config::tiny11::feed_forward_depth);
+  for (size_t i = 0; i < config.encoder_layers; i++) {
+    encoder_.emplace_back(i + 1, config.feed_forward_depth,
+                          config.attention_num_heads);
   }
 
   load_parameters_from_items();
-  (void)tag_;  // Apparently tag not used. This should fix.
 }
 
-Decoder::Decoder(size_t decoders, size_t ffn_count, Vocabulary &vocabulary,
+Decoder::Decoder(const Config &config, Vocabulary &vocabulary,
                  Tensor &embedding, ShortlistGenerator &&shortlist_generator)
-    : vocabulary_(vocabulary),
+    : tgt_length_limit_factor_(config.tgt_length_limit_factor),
+      vocabulary_(vocabulary),
       embedding_(embedding),
       shortlist_generator_(std::move(shortlist_generator)) {
-  for (size_t i = 0; i < decoders; i++) {
-    decoder_.emplace_back(i + 1, ffn_count);
+  for (size_t i = 0; i < config.decoder_layers; i++) {
+    decoder_.emplace_back(i + 1, config.feed_forward_depth,
+                          config.attention_num_heads);
   }
 }
 

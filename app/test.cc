@@ -690,12 +690,9 @@ void integration() {
       vocab, vocab                                   //
   );
 
-  size_t encoder_layers = 6;
-  size_t decoder_layers = 2;
-  size_t ffn_depth = 2;
-
+  Config config;
   Model model(                        //
-      Tag::tiny11,                    //
+      config,                         //
       vocab,                          //
       std::move(items),               //
       std::move(shortlist_generator)  //

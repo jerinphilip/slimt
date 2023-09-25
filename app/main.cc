@@ -65,7 +65,8 @@ void run(const Options &options) {
 
   // Load model
   auto items = io::loadItems(mmap.model.data());
-  Model model(Tag::tiny11, vocabulary, std::move(items),
+  Config config;
+  Model model(config, vocabulary, std::move(items),
               std::move(shortlist_generator));
 
   using Sentences = std::vector<Words>;

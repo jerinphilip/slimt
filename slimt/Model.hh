@@ -9,10 +9,20 @@
 
 namespace slimt {
 
+struct Config {
+  // NOLINTBEGIN (readability-identifier-naming)
+  size_t encoder_layers = 6;
+  size_t decoder_layers = 2;
+  size_t feed_forward_depth = 2;
+  size_t tgt_length_limit_factor = 2;
+  size_t attention_num_heads = 8;
+  // NOLINTEND
+};
+
 class Decoder {
  public:
-  Decoder(size_t decoders, size_t ffn_count, Vocabulary &vocabulary,
-          Tensor &embedding, ShortlistGenerator &&shortlist_generator);
+  Decoder(const Config &config, Vocabulary &vocabulary, Tensor &embedding,
+          ShortlistGenerator &&shortlist_generator);
 
   void register_parameters(const std::string &prefix, ParameterMap &parameters);
 
@@ -27,6 +37,7 @@ class Decoder {
 
   std::vector<Tensor> start_states(size_t batch_size);
 
+  float tgt_length_limit_factor_;
   Vocabulary &vocabulary_;
 
   Tensor &embedding_;
@@ -34,30 +45,12 @@ class Decoder {
   Affine output_;
 
   ShortlistGenerator shortlist_generator_;
-
-  float max_target_length_factor_ = 1.5;  // FIXME(-1): HARDCODE
-};
-
-// Restrict the models that can be created by a few kinds.
-enum class Tag {
-  // NOLINTBEGIN (readability-identifier-naming)
-  tiny11  //
-  // NOLINTEND
-};
-
-struct Config {
-  // NOLINTBEGIN (readability-identifier-naming)
-  struct tiny11 {
-    static constexpr size_t encoder_layers = 6;
-    static constexpr size_t decoder_layers = 2;
-    static constexpr size_t feed_forward_depth = 2;
-  };
-  // NOLINTEND
 };
 
 class Model {
  public:
-  explicit Model(Tag tag, Vocabulary &vocabulary, std::vector<io::Item> &&items,
+  explicit Model(Config config, Vocabulary &vocabulary,
+                 std::vector<io::Item> &&items,
                  ShortlistGenerator &&shortlist_generator);
 
   Sentences translate(Batch &batch);
@@ -66,7 +59,7 @@ class Model {
   void load_parameters_from_items();
   void register_parameters(const std::string &prefix, ParameterMap &parameters);
 
-  Tag tag_;
+  Config config_;
 
   std::vector<io::Item> items_;
   Tensor embedding_;
