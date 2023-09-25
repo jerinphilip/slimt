@@ -8,6 +8,7 @@
 #include <iostream>
 #include <limits>
 
+#include "slimt/Macros.hh"
 #include "slimt/TensorOps.hh"
 #include "slimt/Utils.hh"
 

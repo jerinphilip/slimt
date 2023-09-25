@@ -68,7 +68,7 @@ void run(const Options &options) {
   Model model(Tag::tiny11, vocabulary, std::move(items),
               std::move(shortlist_generator));
 
-  using Sentences = std::vector<Vocabulary::Words>;
+  using Sentences = std::vector<Words>;
 
   AverageMeter<float> wps;
 
