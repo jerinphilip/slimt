@@ -85,10 +85,10 @@ Histories Translator::decode(Tensor &encoder_out, Tensor &mask,
   Alignments alignments(sentences.size());
   for (size_t i = 0; i < sentences.size(); i++) {
     Hypothesis hypothesis{
-        .target = sentences[i],     //
-        .alignment = alignments[i]  //
+        .target = std::move(sentences[i]),     //
+        .alignment = std::move(alignments[i])  //
     };
-    auto history = std::make_shared<Hypothesis>();
+    auto history = std::make_shared<Hypothesis>(std::move(hypothesis));
     histories.push_back(std::move(history));
   }
 
@@ -117,9 +117,7 @@ Histories Translator::forward(Batch &batch) {
 
 Response Translator::translate(std::string source, const Options &options) {
   // Create a request
-  std::cerr << "Translating : \n" << source << std::endl;
   auto [annotated_source, segments] = processor_.process(std::move(source));
-  std::cerr << "Translating : \n" << annotated_source.text << std::endl;
 
   std::promise<Response> promise;
   auto future = promise.get_future();

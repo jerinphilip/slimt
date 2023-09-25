@@ -22,7 +22,7 @@ void ResponseBuilder::operator()(Histories &&histories) {
        sentence_idx++) {
     // TODO(jerin): Change hardcode of nBest = 1
 
-    Words words /*= std::get<0>(result)*/;
+    Words words = histories[sentence_idx]->target;
 
     auto [decoded, views] = vocabulary_.decode(words, /*ignore_eos=*/false);
 
