@@ -56,13 +56,8 @@ endif(WITH_RUY)
 if(WITH_GEMMOLOGY)
   set(SLIMT_COMPILE_DEFINITIONS ${SLIMT_COMPILE_DEFINITIONS}
                                 SLIMT_HAS_GEMMOLOGY)
-  if(APPLE)
-    add_library(xsimd INTERFACE)
-    target_include_directories(
-      xsimd INTERFACE "/opt/homebrew/Cellar/xsimd/11.1.0/include")
-    add_library(xsimd::xsimd ALIAS xsimd)
-    set(SLIMT_EXTERNAL_LIBS ${SLIMT_EXTERNAL_LIBS} xsimd::xsimd)
-  endif(APPLE)
+  find_package(xsimd REQUIRED)
+  set(SLIMT_EXTERNAL_LIBS ${SLIMT_EXTERNAL_LIBS} xsimd)
 endif(WITH_GEMMOLOGY)
 
 # cmake-format: off
