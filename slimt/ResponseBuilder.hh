@@ -1,6 +1,7 @@
 #pragma once
 
 #include <functional>
+#include <future>
 #include <optional>
 
 #include "slimt/Annotation.hh"
@@ -31,37 +32,25 @@ class ResponseBuilder {
   /// to provide translation quality probability.
   ResponseBuilder(Options options, AnnotatedText &&source,
                   const Vocabulary &vocabulary,
-                  std::function<void(Response &&)> callback)
+                  std::promise<Response> &&promise)
       : options_(options),
         vocabulary_(vocabulary),
         source_(std::move(source)),
-        callback_(std::move(callback)) {}
+        promise_(std::move(promise)) {}
 
   /// Constructs and sets the promise of a Response object from obtained
   /// histories after translating.
   /// @param [in] histories: Histories obtained after translating the Request
   /// from which this functor is called.
-  void operator()(Histories &&histories) const;
+  void operator()(Histories &&histories);
 
  private:
-  /// Builds alignments from histories and writes onto response.
-  /// @param histories [in]
-  /// @param response [out]
-  static void buildAlignments(Histories &histories, Response &response);
-
-  /// Builds translated text and subword annotations and writes onto response.
-  /// @param histories [in]
-  /// @param response [out]
-  void buildTranslatedText(Histories &histories, Response &response) const;
-
   // Data members are context/curried args for the functor.
-
   Options options_;
   const Vocabulary &vocabulary_;  // vocabulary are required for decoding
                                   // and any source validation checks.
   AnnotatedText source_;
-  std::function<void(Response &&)>
-      callback_;  //  To be set when callback triggered and
-                  //  after Response constructed.
+
+  std::promise<Response> promise_;
 };
 }  // namespace slimt

@@ -4,7 +4,7 @@
 
 namespace slimt {
 
-void ResponseBuilder::operator()(Histories &&histories) const {
+void ResponseBuilder::operator()(Histories &&histories) {
   // TODO(jerinphilip) load Options into options and turn build
   // functions on or off.
   // options_ is unused, but we can try something here.
@@ -14,37 +14,6 @@ void ResponseBuilder::operator()(Histories &&histories) const {
 
   // Move source_ into response.
   response.source = std::move(source_);
-
-  // Should be after source is set
-  buildTranslatedText(histories, response);
-
-  if (options_.alignment || options_.HTML) {
-    buildAlignments(histories, response);
-  }
-
-  callback_(std::move(response));
-}
-
-void ResponseBuilder::buildAlignments(Histories &histories,
-                                      Response &response) {
-  (void)histories;
-  (void)response;
-  /*
-  for (auto &history : histories) {
-    // TODO(jerin): Change hardcode of nBest = 1
-    NBestList onebest = history->nBest(1);
-
-    Result result = onebest[0];  // Expecting only one result;
-    Words words = std::get<0>(result);
-    auto hyp = std::get<1>(result);
-    auto softAlignment = hyp->tracebackAlignment();
-    response.alignments.push_back(std::move(softAlignment));
-  }
-  */
-}
-
-void ResponseBuilder::buildTranslatedText(Histories &histories,
-                                          Response &response) const {
   // Reserving length at least as much as source_ seems like a reasonable
   // thing to do to avoid reallocations.
   response.target.text.reserve(response.source.text.size());
@@ -70,6 +39,8 @@ void ResponseBuilder::buildTranslatedText(Histories &histories,
           response.source.gap(sentence_idx + 1));
     }
   }
+
+  promise_.set_value(std::move(response));
 }
 
 }  // namespace slimt

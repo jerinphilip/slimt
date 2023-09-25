@@ -122,14 +122,11 @@ Response Translator::translate(std::string source, const Options &options) {
   processor_.process(std::move(source), annotated_source, segments);
 
   std::promise<Response> promise;
-  auto callback = [&promise](Response &&response) {
-    promise.set_value(std::move(response));
-  };
-
   auto future = promise.get_future();
 
   ResponseBuilder response_builder(options, std::move(annotated_source),
-                                   vocabulary_, callback);
+                                   vocabulary_, std::move(promise));
+
   auto request = std::make_shared<rd::Request>(  //
       id_, model_id_,                            //
       std::move(segments),                       //
@@ -139,6 +136,7 @@ Response Translator::translate(std::string source, const Options &options) {
 
   rd::Batcher batcher(config_.max_words, config_.wrap_length,
                       config_.tgt_length_limit_factor);
+  batcher.enqueue(request);
 
   rd::Batch rd_batch = batcher.generate();
   while (!rd_batch.empty()) {
@@ -146,6 +144,7 @@ Response Translator::translate(std::string source, const Options &options) {
     Batch batch = convert(rd_batch);
     Histories histories = forward(batch);
     rd_batch.complete(histories);
+    rd_batch = batcher.generate();
   }
 
   future.wait();
