@@ -1,5 +1,6 @@
 #pragma once
 #include "slimt/Batch.hh"
+#include "slimt/Frontend.hh"
 #include "slimt/Io.hh"
 #include "slimt/Macros.hh"
 #include "slimt/Model.hh"

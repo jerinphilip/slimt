@@ -28,14 +28,16 @@ using Segment = Words;
 using Segments = std::vector<Segment>;
 using Sentences = std::vector<Words>;
 
-struct Hypothesis {
-  std::string source;
-  std::string target;
-  std::string alignments;
-};
-
 template <class T>
 using Ptr = std::shared_ptr<T>;
+
+using Alignment = std::vector<std::vector<float>>;
+using Alignments = std::vector<Alignment>;
+
+struct Hypothesis {
+  Segment target;
+  Alignment alignment;
+};
 
 using History = Ptr<Hypothesis>;
 using Histories = std::vector<History>;

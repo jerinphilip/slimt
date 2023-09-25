@@ -125,25 +125,26 @@ bool operator<(const Unit &a, const Unit &b) {
 // ----------------------------------------------------------------------
 
 void Batch::log() {
-  size_t num_tokens = 0;
-  size_t max_length = 0;
-  for (auto &unit : units_) {
-    num_tokens += unit.numTokens();
-    max_length = std::max(max_length, static_cast<size_t>(unit.numTokens()));
-  }
-
-  (void)num_tokens;
-  (void)max_length;
-  LOG(info, "Batch(tokens={}, max-length={}, units_={})", num_tokens, maxLength,
-      units_.size());
+  (void)token_count_;
+  LOG(info, "Batch(tokens={}, max-length={}, units_={})", token_count_,
+      max_length_, units_.size());
 }
 
-void Batch::add(const Unit &unit) { units_.push_back(unit); }
+void Batch::add(const Unit &unit) {
+  units_.push_back(unit);
+  token_count_ += unit.numTokens();
+  max_length_ = std::max(max_length_, static_cast<size_t>(unit.numTokens()));
+}
 
 void Batch::complete(const Histories &histories) {
   for (size_t i = 0; i < units_.size(); i++) {
     units_[i].complete(histories[i]);
   }
+}
+void Batch::clear() {
+  units_.clear();
+  token_count_ = 0;
+  max_length_ = 0;
 }
 
 }  // namespace rd

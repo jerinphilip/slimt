@@ -66,8 +66,8 @@ void run(const Options &options) {
   // Load model
   auto items = io::loadItems(mmap.model.data());
   Config config;
-  Model model(config, vocabulary, std::move(items),
-              std::move(shortlist_generator));
+  Translator translator(config, vocabulary, std::move(items),
+                        std::move(shortlist_generator));
 
   using Sentences = std::vector<Words>;
 

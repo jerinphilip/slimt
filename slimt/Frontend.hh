@@ -14,24 +14,21 @@ struct Data {
 
 class Translator {
  public:
-  struct Config {
-    size_t max_words;
-    size_t wrap_length;
-    size_t tgt_length_limit_factor;
-  };
-
   explicit Translator(Data data, Config config);
-  Responses translate(std::vector<std::string> sources, const Options &options);
+  Histories decode(Tensor &encoder_out, Tensor &mask, const Words &source);
+  Histories forward(Batch &batch);
+  Response translate(std::string source, const Options &options);
 
  private:
+  Config config_;
   TextProcessor processor_;
   Vocabulary vocabulary_;
+  ShortlistGenerator shortlist_generator_;
 
   // Model related stuff.
-  std::vector<io::Item> items_;
-  Tensor embedding_;
-  std::vector<EncoderLayer> encoder_;
-  Decoder decoder_;
+  Model model_;
+  size_t id_ = 0;
+  size_t model_id_ = 0;
 };
 
 }  // namespace slimt

@@ -9,8 +9,6 @@
 
 namespace slimt {
 
-using Alignment = std::vector<std::vector<float>>;
-
 /// Response holds AnnotatedText(s) of source-text and translated text,
 /// alignment information between source and target sub-words and sentences.
 ///

@@ -133,9 +133,11 @@ using Units = std::vector<Unit>;
 class Batch {
  public:
   Batch() = default;
-  void clear() { units_.clear(); }
+  void clear();
 
   size_t size() const { return units_.size(); }
+  bool empty() const { return units_.empty(); }
+  size_t max_length() const { return max_length_; }
 
   void add(const Unit &unit);
 
@@ -157,6 +159,8 @@ class Batch {
 
  private:
   Units units_;
+  size_t token_count_ = 0;
+  size_t max_length_ = 0;
 };
 
 }  // namespace slimt::rd
