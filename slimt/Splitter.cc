@@ -92,9 +92,10 @@ TextProcessor::TextProcessor(size_t wrap_length, const std::string &mode,
   ssplit_ = loadSplitter(memory);
 }
 
-void TextProcessor::process(std::string &&input, AnnotatedText &source,
-                            Segments &segments) const {
-  source = AnnotatedText(std::move(input));
+std::tuple<AnnotatedText, Segments> TextProcessor::process(
+    std::string &&input) const {
+  AnnotatedText source(std::move(input));
+  Segments segments;
   std::string_view input_converted(source.text.data(), source.text.size());
   auto sentence_stream =
       ug::ssplit::SentenceStream(input_converted, ssplit_, ssplit_mode_);
@@ -116,6 +117,7 @@ void TextProcessor::process(std::string &&input, AnnotatedText &source,
       wrap(segment, word_ranges, segments, source);
     }
   }
+  return {std::move(source), std::move(segments)};
 }
 
 void TextProcessor::wrap(Segment &segment,

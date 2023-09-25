@@ -52,8 +52,7 @@ class TextProcessor {
   /// and stored in AnnotatedText for consumption of marian translation
   /// pipeline.
 
-  void process(std::string &&input, AnnotatedText &source,
-               Segments &segments) const;
+  std::tuple<AnnotatedText, Segments> process(std::string &&input) const;
 
   void processFromAnnotation(AnnotatedText &source, Segments &segments) const;
 

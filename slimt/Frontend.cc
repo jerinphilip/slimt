@@ -117,9 +117,9 @@ Histories Translator::forward(Batch &batch) {
 
 Response Translator::translate(std::string source, const Options &options) {
   // Create a request
-  AnnotatedText annotated_source;
-  Segments segments;
-  processor_.process(std::move(source), annotated_source, segments);
+  std::cerr << "Translating : \n" << source << std::endl;
+  auto [annotated_source, segments] = processor_.process(std::move(source));
+  std::cerr << "Translating : \n" << annotated_source.text << std::endl;
 
   std::promise<Response> promise;
   auto future = promise.get_future();
