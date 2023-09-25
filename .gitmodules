@@ -10,3 +10,6 @@
 [submodule "3rd-party/ssplit-cpp"]
 	path = 3rd-party/ssplit-cpp
 	url = https://github.com/browsermt/ssplit-cpp
+[submodule "3rd-party/gemmology"]
+	path = 3rd-party/gemmology
+	url = https://github.com/mozilla/gemmology.git
