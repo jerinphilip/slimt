@@ -34,7 +34,6 @@ class Batcher {
  private:
   size_t max_words_;
   std::vector<std::set<Unit>> bucket_;
-  size_t batchNumber_{0};
   size_t running_bucket_max_size_;
 };
 
