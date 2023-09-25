@@ -637,7 +637,7 @@ namespace slimt {
 template <class Field>
 struct Record {
   Field model;
-  Field vocab;
+  Field vocabulary;
   Field shortlist;
 };
 
@@ -655,54 +655,28 @@ void integration() {
 
   Record<std::string> path{
       .model = prefix_browsermt("model.intgemm.alphas.bin"),  //
-      .vocab = prefix_browsermt("vocab.deen.spm"),            //
+      .vocabulary = prefix_browsermt("vocab.deen.spm"),       //
       .shortlist = prefix_browsermt("lex.s2t.bin")            //
   };
 
   Record<io::MmapFile> mmap{
-      .model = io::MmapFile(path.model),          //
-      .vocab = io::MmapFile(path.vocab),          //
-      .shortlist = io::MmapFile(path.shortlist),  //
+      .model = io::MmapFile(path.model),            //
+      .vocabulary = io::MmapFile(path.vocabulary),  //
+      .shortlist = io::MmapFile(path.shortlist),    //
   };
 
-  // Tokenize into numeric-ids using sentencepiece.
-  Vocabulary vocab(mmap.vocab.data(), mmap.vocab.size());
-
-  uint64_t batch_size = 2;
-  uint64_t sequence_length = 4;
-  Batch batch(batch_size, sequence_length, vocab.pad_id());
-  std::vector<std::string> lines = {"1 2", "1 2 3"};
-  for (const auto &line : lines) {
-    bool add_eos = true;
-    auto [words, views] = vocab.encode(line, add_eos);
-    // std::cout << "Adding ";
-    for (size_t i = 0; i < views.size(); i++) {
-      // std::cout << "[" << views[i] << ": " << words[i] << "]";
-    }
-    // std::cout << "\n";
-    batch.add(words);
-  }
-
-  // Load model
-  auto items = io::loadItems(mmap.model.data());
-  ShortlistGenerator shortlist_generator(            //
-      mmap.shortlist.data(), mmap.shortlist.size(),  //
-      vocab, vocab                                   //
-  );
+  Record<View> view{
+      .model = {mmap.model.data(), mmap.model.size()},                 //
+      .vocabulary = {mmap.vocabulary.data(), mmap.vocabulary.size()},  //
+      .shortlist = {mmap.shortlist.data(), mmap.shortlist.size()},     //
+  };
 
   Config config;
-  Model model(                        //
-      config,                         //
-      vocab,                          //
-      std::move(items),               //
-      std::move(shortlist_generator)  //
-  );
-
-  auto sentences = model.translate(batch);
-  for (auto &sentence : sentences) {
-    auto [result, views] = vocab.decode(sentence);
-    std::cout << result << "\n";
-  }
+  Translator translator(config, view.model, view.shortlist, view.vocabulary);
+  std::string source = "1 2\n1 2 3\n";
+  slimt::Options opts;
+  Response response = translator.translate(source, opts);
+  fprintf(stdout, "%s\n", response.target.text.c_str());
 }
 
 void ShortlistGen() {
