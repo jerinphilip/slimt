@@ -4,6 +4,7 @@
 
 #include "slimt/Annotation.hh"
 #include "slimt/Cache.hh"
+#include "slimt/Types.hh"
 #include "slimt/Utils.hh"
 
 namespace slimt {

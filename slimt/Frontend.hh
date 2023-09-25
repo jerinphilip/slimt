@@ -1,8 +1,11 @@
 
 #pragma once
+#include <optional>
+
 #include "slimt/Model.hh"
 #include "slimt/Response.hh"
 #include "slimt/Splitter.hh"
+#include "slimt/Types.hh"
 
 namespace slimt {
 
@@ -20,6 +23,7 @@ class Translator {
   Response translate(std::string source, const Options &options);
 
  private:
+  std::optional<TranslationCache> cache_;
   Config config_;
   TextProcessor processor_;
   Vocabulary vocabulary_;

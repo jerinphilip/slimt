@@ -6,11 +6,12 @@
 #include <vector>
 
 #include "slimt/Annotation.hh"
-#include "slimt/Cache.hh"
 #include "slimt/ResponseBuilder.hh"
 #include "slimt/Types.hh"
 
 namespace slimt::rd {
+
+using TranslationCache = slimt::TranslationCache;
 
 /// A Request is an internal representation used to represent a request after
 /// processed by TextProcessor into units constituted by marian::Words.

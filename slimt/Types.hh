@@ -6,6 +6,8 @@
 #include <string_view>
 #include <vector>
 
+#include "slimt/Cache.hh"
+
 namespace slimt {
 
 /// ByteRange stores indices for half-interval [begin, end) in a string. Can be
@@ -41,5 +43,6 @@ struct Hypothesis {
 
 using History = Ptr<Hypothesis>;
 using Histories = std::vector<History>;
+using TranslationCache = AtomicCache<size_t, History>;
 
 }  // namespace slimt

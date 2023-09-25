@@ -121,8 +121,12 @@ Response Translator::translate(std::string source, const Options &options) {
 
   ResponseBuilder response_builder(options, std::move(annotated_source),
                                    vocabulary_, callback);
-  auto request = std::make_shared<rd::Request>(
-      id_, model_id_, std::move(segments), std::move(response_builder));
+  auto request = std::make_shared<rd::Request>(  //
+      id_, model_id_,                            //
+      std::move(segments),                       //
+      std::move(response_builder),               //
+      cache_                                     //
+  );
 
   rd::Batcher batcher(config_.max_words, config_.wrap_length,
                       config_.tgt_length_limit_factor);

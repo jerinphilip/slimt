@@ -5,7 +5,6 @@
 #include <vector>
 
 #include "slimt/Macros.hh"
-#include "slimt/Types.hh"
 
 namespace slimt {
 
@@ -88,7 +87,5 @@ class AtomicCache {
   Hash hash_;
   Equals equals_;
 };
-
-using TranslationCache = AtomicCache<size_t, History>;
 
 }  // namespace slimt
