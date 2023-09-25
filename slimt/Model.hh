@@ -64,6 +64,11 @@ class Model {
 
   Sentences translate(Batch &batch);
 
+  Config &config() { return config_; }
+  Tensor &embedding() { return embedding_; }
+  Encoder &encoder() { return encoder_; }
+  Decoder &decoder() { return decoder_; }
+
  private:
   void register_parameters(const std::string &prefix, ParameterMap &parameters);
   void load_parameters();
