@@ -20,11 +20,9 @@ void ResponseBuilder::operator()(Histories &&histories) {
 
   for (size_t sentence_idx = 0; sentence_idx < histories.size();
        sentence_idx++) {
-    // TODO(jerin): Change hardcode of nBest = 1
-
     Words words = histories[sentence_idx]->target;
-
-    auto [decoded, views] = vocabulary_.decode(words, /*ignore_eos=*/false);
+    std::string decoded;
+    auto views = vocabulary_.decode(words, decoded, /*ignore_eos=*/false);
 
     // For each sentence, prepend the filler text between the corresponding
     // source-sentence and the source-sentence before.

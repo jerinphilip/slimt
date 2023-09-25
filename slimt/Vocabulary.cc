@@ -54,11 +54,11 @@ std::tuple<Words, Views> Vocabulary::encode(const std::string_view &line,
     std_views.emplace_back(view.data(), view.size());
   }
 
-  return {std::move(words), std::move(std_views)};
+  return std::make_tuple(words, std_views);
 }
 
-std::tuple<std::string, Views> Vocabulary::decode(const Words &words,
-                                                  bool ignore_eos) const {
+Views Vocabulary::decode(const Words &words, std::string &decoded,
+                         bool ignore_eos) const {
   sentencepiece::SentencePieceText sentencepiece_text;
   std::vector<std::string_view> views;
 
@@ -72,11 +72,10 @@ std::tuple<std::string, Views> Vocabulary::decode(const Words &words,
   processor_.Decode(sentence, &sentencepiece_text);
 
   // Creates copy of string.
-  auto decoded = sentencepiece_text.text();
-  std::string_view decoded_view(decoded);
+  decoded = std::move(sentencepiece_text.text());
   for (const auto &piece : sentencepiece_text.pieces()) {
     size_t size = piece.end() - piece.begin();
-    std::string_view view = decoded_view.substr(piece.begin(), size);
+    std::string_view view(decoded.data() + piece.begin(), size);
     views.push_back(view);
   }
 
@@ -84,7 +83,7 @@ std::tuple<std::string, Views> Vocabulary::decode(const Words &words,
     views.pop_back();
   }
 
-  return {std::move(decoded), std::move(views)};
+  return views;
 }
 
 }  // namespace slimt

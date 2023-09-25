@@ -709,7 +709,8 @@ void ShortlistGen() {
   Shortlist shortlist = shortlist_generator.generate(words);
 
   const auto &likely_target_words = shortlist.words();
-  auto [decoded, dviews] = vocab.decode(likely_target_words);
+  std::string decoded;
+  auto dviews = vocab.decode(likely_target_words, decoded);
   for (size_t i = 0; i < likely_target_words.size(); i++) {
     std::cout << "[" << dviews[i] << ": " << likely_target_words[i] << "] ";
   }
