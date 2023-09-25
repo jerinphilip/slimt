@@ -43,7 +43,7 @@ Batch Batcher::generate() {
         bucket_[length].erase(q);
       } else {
         // Check if elements exist
-        assert(batch.size() > 0);
+        assert(!batch.empty());
         return batch;
       }
     }
@@ -88,25 +88,31 @@ void Batcher::clear() {
 AggregateBatcher::AggregateBatcher() = default;
 
 size_t AggregateBatcher::enqueue(const Ptr<Model>& model,
-                                 Ptr<Request> request) {
-  size_t sentences_enqueued = model->enqueue(request);
-  queue_.insert(model);
-  return sentences_enqueued;
+                                 const Ptr<Request>& request) {
+  (void)queue_;
+  (void)model;
+  (void)request;
+  return 0;
+  // size_t sentences_enqueued = model->enqueue(request);
+  // queue_.insert(model);
+  // return sentences_enqueued;
 }
 
 Batch AggregateBatcher::generate(Ptr<Model>& model) {
-  while (!queue_.empty()) {
-    auto candidate_iterator = queue_.begin();
-    Ptr<Model> candidate = *candidate_iterator;
-    Batch batch = candidate->generate();
-    if (batch.size() > 0) {
-      model = candidate;
-      return batch;
-    }
-    // Try the next model's batching pool.
-    queue_.erase(candidate_iterator);
-  }
-  // Empty.
+  (void)queue_;
+  (void)model;
+  // while (!queue_.empty()) {
+  //   auto candidate_iterator = queue_.begin();
+  //   Ptr<Model> candidate = *candidate_iterator;
+  //   Batch batch = candidate->generate();
+  //   if (batch.size() > 0) {
+  //     model = candidate;
+  //     return batch;
+  //   }
+  //   // Try the next model's batching pool.
+  //   queue_.erase(candidate_iterator);
+  // }
+  // // Empty.
   Batch batch;
   return batch;
 }

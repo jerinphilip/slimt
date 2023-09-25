@@ -17,20 +17,19 @@ struct Data {
 
 class Translator {
  public:
-  explicit Translator(Data data, Config config);
+  Translator(const Config &config, View model, View shortlist, View vocabulary);
   Histories decode(Tensor &encoder_out, Tensor &mask, const Words &source);
   Histories forward(Batch &batch);
   Response translate(std::string source, const Options &options);
 
  private:
-  std::optional<TranslationCache> cache_;
   Config config_;
-  TextProcessor processor_;
   Vocabulary vocabulary_;
-  ShortlistGenerator shortlist_generator_;
-
-  // Model related stuff.
+  TextProcessor processor_;
   Model model_;
+  ShortlistGenerator shortlist_generator_;
+  std::optional<TranslationCache> cache_;
+
   size_t id_ = 0;
   size_t model_id_ = 0;
 };

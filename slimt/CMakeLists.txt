@@ -3,6 +3,7 @@ add_library(
   Aligned.cc
   Annotation.cc
   Batch.cc
+  Batcher.cc
   Frontend.cc
   HTML.cc
   Io.cc

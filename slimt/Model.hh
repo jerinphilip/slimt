@@ -20,6 +20,10 @@ struct Config {
 
   size_t max_words = 1024;
   size_t wrap_length = 128;
+
+  std::string prefix_path;
+  std::string split_mode = "sentence";
+
   // NOLINTEND
 };
 
@@ -35,8 +39,7 @@ class Encoder {
 
 class Decoder {
  public:
-  Decoder(const Config &config, Vocabulary &vocabulary, Tensor &embedding,
-          ShortlistGenerator &&shortlist_generator);
+  Decoder(const Config &config, Tensor &embedding);
 
   void register_parameters(const std::string &prefix, ParameterMap &parameters);
 
@@ -46,13 +49,10 @@ class Decoder {
 
  private:
   float tgt_length_limit_factor_;
-  Vocabulary &vocabulary_;
 
   Tensor &embedding_;
   std::vector<DecoderLayer> decoder_;
   Affine output_;
-
-  ShortlistGenerator shortlist_generator_;
 };
 
 Words greedy_sample(Tensor &logits, const Words &words, size_t batch_size);
@@ -60,8 +60,7 @@ void transform_embedding(Tensor &word_embedding, size_t start = 0);
 
 class Model {
  public:
-  explicit Model(const Config &config, Vocabulary &vocabulary,
-                 io::Items &&items, ShortlistGenerator &&shortlist_generator);
+  explicit Model(const Config &config, View model);
 
   Config &config() { return config_; }
   Tensor &embedding() { return embedding_; }

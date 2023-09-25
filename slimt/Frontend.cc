@@ -22,6 +22,15 @@ Batch convert(rd::Batch &rd_batch) {
 }
 
 }  // namespace
+Translator::Translator(const Config &config, View model, View shortlist,
+                       View vocabulary)
+    : config_(config),
+      vocabulary_(vocabulary.data, vocabulary.size),
+      processor_(config.wrap_length, config.split_mode, vocabulary_,
+                 config.prefix_path),
+      model_(config, model),
+      shortlist_generator_(shortlist.data, shortlist.size, vocabulary_,
+                           vocabulary_) {}
 
 Histories Translator::decode(Tensor &encoder_out, Tensor &mask,
                              const Words &source) {

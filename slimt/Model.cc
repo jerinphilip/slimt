@@ -75,24 +75,16 @@ std::vector<Tensor> Decoder::start_states(size_t batch_size) {
   return states;
 }
 
-Model::Model(const Config &config, Vocabulary &vocabulary, io::Items &&items,
-             ShortlistGenerator &&shortlist_generator)
-    : items_(std::move(items)),
-      encoder_(config),                        //
-      decoder_(config,                         //
-               vocabulary,                     //
-               embedding_,                     //
-               std::move(shortlist_generator)  //
-      ) {
+Model::Model(const Config &config, View model)
+    : items_(io::loadItems(model.data)),
+      encoder_(config),  //
+      decoder_(config, embedding_) {
   load_parameters();
 }
 
-Decoder::Decoder(const Config &config, Vocabulary &vocabulary,
-                 Tensor &embedding, ShortlistGenerator &&shortlist_generator)
+Decoder::Decoder(const Config &config, Tensor &embedding)
     : tgt_length_limit_factor_(config.tgt_length_limit_factor),
-      vocabulary_(vocabulary),
-      embedding_(embedding),
-      shortlist_generator_(std::move(shortlist_generator)) {
+      embedding_(embedding) {
   for (size_t i = 0; i < config.decoder_layers; i++) {
     decoder_.emplace_back(i + 1, config.feed_forward_depth,
                           config.attention_num_heads);

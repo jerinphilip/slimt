@@ -72,7 +72,7 @@ class AggregateBatcher {
   /// is complete.
   /// @param [in] request: A request to be enqueued to model.
   /// @returns number of sentences added for translation.
-  size_t enqueue(Ptr<Model> model, Ptr<Request> request);
+  size_t enqueue(const Ptr<Model>& model, const Ptr<Request>& request);
 
   /// Generate a batch from pending requests, obtained from available
   /// Models.

@@ -5,6 +5,14 @@
 #include "3rd-party/CLI11.hpp"
 #include "slimt/slimt.hh"
 
+inline std::string read_from_stdin() {
+  // Read a large input text blob from stdin
+  std::ostringstream stream;
+  stream << std::cin.rdbuf();
+  std::string input = stream.str();
+  return input;
+}
+
 template <class Field>
 struct Record {
   Field model;
@@ -56,78 +64,20 @@ void run(const Options &options) {
       .shortlist = io::MmapFile(adjusted.shortlist),    //
   };
 
-  // Tokenize into numeric-ids using sentencepiece.
-  Vocabulary vocabulary(mmap.vocabulary.data(), mmap.vocabulary.size());
-  ShortlistGenerator shortlist_generator(            //
-      mmap.shortlist.data(), mmap.shortlist.size(),  //
-      vocabulary, vocabulary                         //
-  );
-
-  // Load model
-  auto items = io::loadItems(mmap.model.data());
-  Config config;
-  Translator translator(config, vocabulary, std::move(items),
-                        std::move(shortlist_generator));
-
-  using Sentences = std::vector<Words>;
-
-  AverageMeter<float> wps;
-
-  auto batch_and_translate = [&vocabulary, &model, &wps](    //
-                                 Sentences &sentences,       //
-                                 size_t max_sequence_length  //
-                             ) {
-    Timer timer;
-    uint64_t batch_size = sentences.size();
-    Batch batch(batch_size, max_sequence_length, vocabulary.pad_id());
-    for (auto &sentence : sentences) {
-      batch.add(sentence);
-    }
-
-    auto translated = model.translate(batch);
-    for (auto &sentence : translated) {
-      auto [result, views] = vocabulary.decode(sentence);
-      std::cout << result << "\n";
-    }
-    size_t words_processed = max_sequence_length * sentences.size();
-    float batch_wps = words_processed / timer.elapsed();
-    wps.record(batch_wps);
+  Record<View> view{
+      .model = {mmap.model.data(), mmap.model.size()},                 //
+      .vocabulary = {mmap.vocabulary.data(), mmap.vocabulary.size()},  //
+      .shortlist = {mmap.shortlist.data(), mmap.shortlist.size()},     //
   };
 
-  std::string line;
-  size_t max_sequence_length = 0;
-  size_t token_count = 0;
-  size_t line_no = 0;
-  Sentences sentences;
-  while (getline(std::cin, line)) {
-    auto [words, views] = vocabulary.encode(line, /*add_eos =*/true);
-    // std::cout << "Adding ";
-    // for (const auto &view : views) {
-    //   std::cout << "[" << view << "]";
-    // }
-    // std::cout << "\n";
+  Config config;
+  Translator translator(config, view.model, view.shortlist, view.vocabulary);
+  std::string source = read_from_stdin();
+  slimt::Options opts;
+  Response response = translator.translate(source, opts);
+  fprintf(stdout, "%s\n", response.target.text.c_str());
 
-    size_t candidate_max_sequence_length =
-        std::max(words.size(), max_sequence_length);
-    ++line_no;
-
-    token_count = candidate_max_sequence_length * (line_no);
-    if (token_count > options.max_tokens_per_batch) {
-      batch_and_translate(sentences, max_sequence_length);
-      sentences.clear();
-      max_sequence_length = 0;
-    }
-    sentences.push_back(std::move(words));
-    max_sequence_length = candidate_max_sequence_length;
-  }
-
-  // Overhang.
-  if (!sentences.empty()) {
-    batch_and_translate(sentences, max_sequence_length);
-    sentences.clear();
-  }
-
-  fprintf(stdout, "wps: %f\n", wps.value());
+  // fprintf(stdout, "wps: %f\n", wps.value());
 }
 
 int main(int argc, char *argv[]) {
