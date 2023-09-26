@@ -20,3 +20,13 @@ add_subdirectory(intgemm EXCLUDE_FROM_ALL)
 
 # ruy
 add_subdirectory(ruy EXCLUDE_FROM_ALL)
+
+add_subdirectory(ssplit-cpp EXCLUDE_FROM_ALL)
+# To enable "#include "ssplit.h"
+# TODO(any): Fix later.
+get_property(
+  INCLUDE_DIRECTORIES
+  DIRECTORY ssplit-cpp/src
+  PROPERTY INCLUDE_DIRECTORIES)
+target_include_directories(ssplit PUBLIC ${INCLUDE_DIRECTORIES})
+add_library(Ssplit::Ssplit ALIAS ssplit)

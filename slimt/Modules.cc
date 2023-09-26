@@ -258,15 +258,15 @@ std::tuple<Tensor, Tensor> DecoderLayer::forward(Tensor &encoder_out,
   return std::make_tuple(std::move(normalized_ffn_out), std::move(attn));
 }
 
-EncoderLayer::EncoderLayer(size_t depth, size_t ffn_count)
-    : depth_(depth), attention_("self") {
+EncoderLayer::EncoderLayer(size_t depth, size_t ffn_count, size_t num_heads)
+    : depth_(depth), attention_("self", num_heads) {
   for (size_t i = 0; i < ffn_count; i++) {
     ffn_.emplace_back(i + 1);
   }
 }
 
-DecoderLayer::DecoderLayer(size_t depth, size_t ffn_count)
-    : depth_(depth), attention_("context") {
+DecoderLayer::DecoderLayer(size_t depth, size_t ffn_count, size_t num_heads)
+    : depth_(depth), attention_("context", num_heads) {
   for (size_t i = 0; i < ffn_count; i++) {
     ffn_.emplace_back(i + 1);
   }
@@ -369,7 +369,8 @@ void DecoderLayer::register_parameters(const std::string &prefix,
   ffn_ffn_.register_parameters(decoder_prefix + "_ffn_ffn", parameters);
 }
 
-Attention::Attention(std::string name) : name_(std::move(name)) {}
+Attention::Attention(std::string name, size_t num_heads)
+    : name_(std::move(name)), num_heads_(num_heads) {}
 
 void Attention::register_parameters(const std::string &prefix,
                                     ParameterMap &parameters) {

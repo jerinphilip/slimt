@@ -12,7 +12,7 @@
 
 namespace slimt {
 
-void transform_embedding(Tensor &word_embedding, size_t start = 0) {
+void transform_embedding(Tensor &word_embedding, size_t start /* = 0*/) {
   // This is a pain, why does marian-transpose here, I do not get yet.
 
   uint64_t embed_dim = word_embedding.dim(-1);
@@ -39,21 +39,14 @@ void transform_embedding(Tensor &word_embedding, size_t start = 0) {
                            word_embedding_ptr);
 }
 
-Sentences Model::translate(Batch &batch) {
-  Tensor &indices = batch.indices();
-  Tensor &mask = batch.mask();
+Encoder::Encoder(const Config &config) {
+  for (size_t i = 0; i < config.encoder_layers; i++) {
+    encoder_.emplace_back(i + 1, config.feed_forward_depth,
+                          config.attention_num_heads);
+  }
+}
 
-  // uint64_t batch_size = indices.dim(-2);
-  // uint64_t sequence_length = indices.dim(-1);
-  // uint64_t embed_dim = embedding_.dim(-1);
-
-  Tensor word_embedding = index_select(embedding_, indices, "word_embedding");
-  transform_embedding(word_embedding);
-
-  // https://github.com/browsermt/marian-dev/blob/14c9d9b0e732f42674e41ee138571d5a7bf7ad94/src/models/transformer.h#L570
-  // https://github.com/browsermt/marian-dev/blob/14c9d9b0e732f42674e41ee138571d5a7bf7ad94/src/models/transformer.h#L133
-  modify_mask_for_pad_tokens_in_attention(mask.data<float>(), mask.size());
-
+Tensor Encoder::forward(Tensor &word_embedding, Tensor &mask) {
   auto [x, attn] = encoder_[0].forward(word_embedding, mask);
 
   for (size_t i = 1; i < encoder_.size(); i++) {
@@ -63,82 +56,14 @@ Sentences Model::translate(Batch &batch) {
     // Overwriting x so that x is destroyed and we need lesser working memory.
     x = std::move(y);
   }
-
-  Tensor &encoder_out = x;
-  return decoder_.decode(encoder_out, mask, batch.words());
+  return std::move(x);
 }
 
-Words Decoder::greedy_sample(Tensor &logits, const Words &words,
-                             size_t batch_size) {
-  Words sampled_words;
-  for (size_t i = 0; i < batch_size; i++) {
-    auto *data = logits.data<float>();
-    size_t max_index = 0;
-    float max_value = data[0];
-    size_t stride = words.size();
-    for (size_t cls = 1; cls < stride; cls++) {
-      float value = data[i * stride + cls];
-      if (value > max_value) {
-        max_index = cls;
-        max_value = value;
-      }
-    }
-
-    sampled_words.push_back(words[max_index]);
+void Encoder::register_parameters(const std::string &prefix,
+                                  ParameterMap &parameters) {
+  for (EncoderLayer &layer : encoder_) {
+    layer.register_parameters(prefix, parameters);
   }
-  return sampled_words;
-}
-
-Sentences Decoder::decode(Tensor &encoder_out, Tensor &mask,
-                          const Words &source) {
-  // Prepare a shortlist for the entire batch.
-  size_t batch_size = encoder_out.dim(-3);
-  size_t source_sequence_length = encoder_out.dim(-2);
-
-  Shortlist shortlist = shortlist_generator_.generate(source);
-  const auto &indices = shortlist.words();
-  // The following can be used to check if shortlist is going wrong.
-  // std::vector<uint32_t> indices(vocabulary_.size());
-  // std::iota(indices.begin(), indices.end(), 0);
-
-  std::vector<bool> complete(batch_size, false);
-  uint32_t eos = vocabulary_.eos_id();
-  auto record = [eos, &complete](Words &step, Sentences &sentences) {
-    size_t finished = 0;
-    for (size_t i = 0; i < step.size(); i++) {
-      if (not complete[i]) {
-        complete[i] = (step[i] == eos);
-        sentences[i].push_back(step[i]);
-      }
-      finished += static_cast<int>(complete[i]);
-    }
-    return sentences.size() - finished;
-  };
-
-  // Initialize a first step.
-  Sentences sentences(batch_size);
-
-  Words previous_slice = {};
-  std::vector<Tensor> states = start_states(batch_size);
-  Tensor decoder_out = step(encoder_out, mask, states, previous_slice);
-
-  Tensor logits = affine_with_select(output_, decoder_out, indices, "logits");
-
-  previous_slice = greedy_sample(logits, indices, batch_size);
-  record(previous_slice, sentences);
-
-  size_t remaining = sentences.size();
-  size_t max_seq_length = max_target_length_factor_ * source_sequence_length;
-  for (size_t i = 1; i < max_seq_length && remaining > 0; i++) {
-    Tensor decoder_out = step(encoder_out, mask, states, previous_slice);
-
-    Tensor logits = affine_with_select(output_, decoder_out, indices, "logits");
-
-    previous_slice = greedy_sample(logits, indices, batch_size);
-    remaining = record(previous_slice, sentences);
-  }
-
-  return sentences;
 }
 
 std::vector<Tensor> Decoder::start_states(size_t batch_size) {
@@ -150,32 +75,18 @@ std::vector<Tensor> Decoder::start_states(size_t batch_size) {
   return states;
 }
 
-Model::Model(Tag tag, Vocabulary &vocabulary, std::vector<io::Item> &&items,
-             ShortlistGenerator &&shortlist_generator)
-    : tag_(tag),
-      items_(std::move(items)),
-      decoder_(                                //
-          Config::tiny11::decoder_layers,      //
-          Config::tiny11::feed_forward_depth,  //
-          vocabulary,                          //
-          embedding_,                          //
-          std::move(shortlist_generator)       //
-      ) {
-  for (size_t i = 0; i < Config::tiny11::encoder_layers; i++) {
-    encoder_.emplace_back(i + 1, Config::tiny11::feed_forward_depth);
-  }
-
-  load_parameters_from_items();
-  (void)tag_;  // Apparently tag not used. This should fix.
+Model::Model(const Config &config, View model)
+    : items_(io::loadItems(model.data)),
+      encoder_(config),  //
+      decoder_(config, embedding_) {
+  load_parameters();
 }
 
-Decoder::Decoder(size_t decoders, size_t ffn_count, Vocabulary &vocabulary,
-                 Tensor &embedding, ShortlistGenerator &&shortlist_generator)
-    : vocabulary_(vocabulary),
-      embedding_(embedding),
-      shortlist_generator_(std::move(shortlist_generator)) {
-  for (size_t i = 0; i < decoders; i++) {
-    decoder_.emplace_back(i + 1, ffn_count);
+Decoder::Decoder(const Config &config, Tensor &embedding)
+    : embedding_(embedding) {
+  for (size_t i = 0; i < config.decoder_layers; i++) {
+    decoder_.emplace_back(i + 1, config.feed_forward_depth,
+                          config.attention_num_heads);
   }
 }
 
@@ -193,7 +104,8 @@ void Decoder::register_parameters(const std::string &prefix,
 }
 
 Tensor Decoder::step(Tensor &encoder_out, Tensor &mask,
-                     std::vector<Tensor> &states, Words &previous_step) {
+                     std::vector<Tensor> &states, Words &previous_step,
+                     Words &shortlist) {
   // Infer batch-size from encoder_out.
   size_t encoder_feature_dim = encoder_out.dim(-1);
   size_t source_sequence_length = encoder_out.dim(-2);
@@ -240,10 +152,11 @@ Tensor Decoder::step(Tensor &encoder_out, Tensor &mask,
     x = std::move(y);
   }
 
-  return std::move(x);
+  Tensor logits = affine_with_select(output_, x, shortlist, "logits");
+  return logits;
 }
 
-void Model::load_parameters_from_items() {
+void Model::load_parameters() {
   // Get the parameterss from strings to target tensors to load.
   ParameterMap parameters;
   std::string prefix;
@@ -277,10 +190,10 @@ void Model::load_parameters_from_items() {
   }
 
   for (std::string &entry : missed) {
-    std::cerr << "Failed to ingest expected load of " << entry << "\n";
+    std::cerr << "[warn] Failed to ingest expected load of " << entry << "\n";
   }
   for (auto &parameter : parameters) {
-    std::cerr << "Failed to complete expected load of ";
+    std::cerr << "[warn] Failed to complete expected load of ";
     std::cerr << parameter.first << "\n";
   }
 }
@@ -288,10 +201,28 @@ void Model::load_parameters_from_items() {
 void Model::register_parameters(const std::string &prefix,
                                 ParameterMap &parameters) {
   parameters.emplace("Wemb", &embedding_);
-  for (EncoderLayer &layer : encoder_) {
-    layer.register_parameters(prefix, parameters);
-  }
+  encoder_.register_parameters(prefix, parameters);
   decoder_.register_parameters(prefix, parameters);
+}
+
+Words greedy_sample(Tensor &logits, const Words &words, size_t batch_size) {
+  Words sampled_words;
+  for (size_t i = 0; i < batch_size; i++) {
+    auto *data = logits.data<float>();
+    size_t max_index = 0;
+    float max_value = data[0];
+    size_t stride = words.size();
+    for (size_t cls = 1; cls < stride; cls++) {
+      float value = data[i * stride + cls];
+      if (value > max_value) {
+        max_index = cls;
+        max_value = value;
+      }
+    }
+
+    sampled_words.push_back(words[max_index]);
+  }
+  return sampled_words;
 }
 
 }  // namespace slimt

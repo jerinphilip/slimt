@@ -27,7 +27,7 @@ namespace detail {
 
 #ifdef SLIMT_HAS_INTGEMM
 template <>
-Tensor affine_with_select<Provider::kIntgemm>(
+Tensor affine_with_select<Provider::Intgemm>(
     Tensor& x, Tensor& W, Tensor& b, float a_quant, float b_quant,
     const std::vector<uint32_t>& indices, const std::string& name) {
   // Naming is to simplify thinking with the intgemm API below.
@@ -56,7 +56,7 @@ Tensor affine_with_select<Provider::kIntgemm>(
 
   // Prepare bias
   Tensor prepared_bias(Type::f32, bias.shape(), "prepared_bias");
-  constexpr float kMax8bit = 127.0F;
+  constexpr float kMax8bit = kInt8Maxf;
   float a_alpha = kMax8bit / a_quant;
   float b_alpha = kMax8bit / b_quant;
 
@@ -111,9 +111,8 @@ Tensor affine_with_select<Provider::kIntgemm>(
 }
 
 template <>
-Tensor affine<Provider::kIntgemm>(Tensor& x, Tensor& W, Tensor& b,
-                                  float a_quant, float b_quant,
-                                  const std::string& name) {
+Tensor affine<Provider::Intgemm>(Tensor& x, Tensor& W, Tensor& b, float a_quant,
+                                 float b_quant, const std::string& name) {
   // Naming is to simplify thinking with the intgemm API below.
   Tensor& A = x;  // NOLINT
   Tensor& B = W;  // NOLINT
@@ -141,10 +140,10 @@ Tensor affine<Provider::kIntgemm>(Tensor& x, Tensor& W, Tensor& b,
 
   // Prepare bias
   Tensor prepared_bias(Type::f32, bias.shape(), "prepared_bias");
-  float a_alpha = 127.0F / a_quant;
-  float b_alpha = 127.0F / b_quant;
+  float a_alpha = kInt8Maxf / a_quant;
+  float b_alpha = kInt8Maxf / b_quant;
 
-  float bias_unquant_multiplier = (-1.0F * (a_alpha * b_alpha)) / 127.0F;
+  float bias_unquant_multiplier = (-1.0F * (a_alpha * b_alpha)) / kInt8Maxf;
   auto prepare_bias_callback = intgemm::callbacks::UnquantizeAndAddBiasAndWrite(
       bias_unquant_multiplier, bias.data<float>(),  //
       prepared_bias.data<float>()                   //
@@ -177,8 +176,8 @@ Tensor affine<Provider::kIntgemm>(Tensor& x, Tensor& W, Tensor& b,
 }
 
 template <>
-Tensor dot<Provider::kIntgemm>(Tensor& x, Tensor& W, float a_quant,
-                               float b_quant, const std::string& name) {
+Tensor dot<Provider::Intgemm>(Tensor& x, Tensor& W, float a_quant,
+                              float b_quant, const std::string& name) {
   // Naming is to simplify thinking with the intgemm API below.
   Tensor& A = x;  // NOLINT
   Tensor& B = W;  // NOLINT
@@ -210,10 +209,10 @@ Tensor dot<Provider::kIntgemm>(Tensor& x, Tensor& W, float a_quant,
   bias.fill_in_place(0.0F);
 
   Tensor prepared_bias(Type::f32, bias.shape(), "prepared_bias");
-  float a_alpha = 127.0F / a_quant;
-  float b_alpha = 127.0F / b_quant;
+  float a_alpha = kInt8Maxf / a_quant;
+  float b_alpha = kInt8Maxf / b_quant;
 
-  float bias_unquant_multiplier = (-1.0F * (a_alpha * b_alpha)) / 127.0F;
+  float bias_unquant_multiplier = (-1.0F * (a_alpha * b_alpha)) / kInt8Maxf;
   auto prepare_bias_callback = intgemm::callbacks::UnquantizeAndAddBiasAndWrite(
       bias_unquant_multiplier, bias.data<float>(),  //
       prepared_bias.data<float>()                   //
@@ -247,18 +246,19 @@ Tensor dot<Provider::kIntgemm>(Tensor& x, Tensor& W, float a_quant,
 }
 
 template <>
-void PrepareBTransposed<Provider::kIntgemm>(const float* weights,
-                                            int8_t* prepared,
-                                            float quantization_multiplier,
-                                            size_t cols, size_t rows) {
+void prepare_weight_transposed<Provider::Intgemm>(const float* weights,
+                                                  int8_t* prepared,
+                                                  float quantization_multiplier,
+                                                  size_t cols, size_t rows) {
   intgemm::Int8::PrepareBTransposed(weights, prepared, quantization_multiplier,
                                     cols, rows);
 }
 
 template <>
-void PrepareBQuantizedTransposed<Provider::kIntgemm>(const int8_t* input,
-                                                     int8_t* output,
-                                                     size_t rows, size_t cols) {
+void prepare_weight_quantized_transposed<Provider::Intgemm>(const int8_t* input,
+                                                            int8_t* output,
+                                                            size_t rows,
+                                                            size_t cols) {
   intgemm::Int8::PrepareBQuantizedTransposed(input, output, rows, cols);
 }
 
@@ -278,8 +278,8 @@ void quantize(const float* input, float scale, Index rows, Index width,
 
     // Since float can store bigger values, we threshold anything that's gone
     // higher and can't fit in int8.
-    value = std::max<float>(-127.0F, value);
-    value = std::min<float>(127.0F, value);
+    value = std::max<float>(-kInt8Maxf, value);
+    value = std::min<float>(kInt8Maxf, value);
 
     // Finally a static cast.
     output[i] = static_cast<int8_t>(value);
@@ -320,8 +320,8 @@ void unquantizeAddBias(const int32_t* input, const float* input_bias_prepared,
 
 // Ruy.
 template <>
-Tensor affine<Provider::kRuy>(Tensor& x, Tensor& W, Tensor& b, float a_quant,
-                              float b_quant, const std::string& name) {
+Tensor affine<Provider::Ruy>(Tensor& x, Tensor& W, Tensor& b, float a_quant,
+                             float b_quant, const std::string& name) {
   Tensor& A = x;  // NOLINT
   Tensor& B = W;  // NOLINT
   Tensor& bias = b;
@@ -380,10 +380,10 @@ Tensor affine<Provider::kRuy>(Tensor& x, Tensor& W, Tensor& b, float a_quant,
 }
 
 template <>
-Tensor affine_with_select<Provider::kRuy>(Tensor& x, Tensor& W, Tensor& b,
-                                          float a_quant, float b_quant,
-                                          const std::vector<uint32_t>& indices,
-                                          const std::string& name) {
+Tensor affine_with_select<Provider::Ruy>(Tensor& x, Tensor& W, Tensor& b,
+                                         float a_quant, float b_quant,
+                                         const std::vector<uint32_t>& indices,
+                                         const std::string& name) {
   Tensor& A = x;  // NOLINT
   Tensor& B = W;  // NOLINT
   Tensor& bias = b;
@@ -464,8 +464,8 @@ Tensor affine_with_select<Provider::kRuy>(Tensor& x, Tensor& W, Tensor& b,
 }
 
 template <>
-Tensor dot<Provider::kRuy>(Tensor& x, Tensor& W, float a_quant, float b_quant,
-                           const std::string& name) {
+Tensor dot<Provider::Ruy>(Tensor& x, Tensor& W, float a_quant, float b_quant,
+                          const std::string& name) {
   Tensor& A = x;  // NOLINT
   Tensor& B = W;  // NOLINT
 
@@ -520,16 +520,18 @@ Tensor dot<Provider::kRuy>(Tensor& x, Tensor& W, float a_quant, float b_quant,
 }
 
 template <>
-void PrepareBTransposed<Provider::kRuy>(const float* weights, int8_t* prepared,
-                                        float quantization_multiplier,
-                                        size_t cols, size_t rows) {
+void prepare_weight_transposed<Provider::Ruy>(const float* weights,
+                                              int8_t* prepared,
+                                              float quantization_multiplier,
+                                              size_t cols, size_t rows) {
   detail::quantize(weights, quantization_multiplier, cols, rows, prepared);
 }
 
 template <>
-void PrepareBQuantizedTransposed<Provider::kRuy>(const int8_t* input,
-                                                 int8_t* output, size_t rows,
-                                                 size_t cols) {
+void prepare_weight_quantized_transposed<Provider::Ruy>(const int8_t* input,
+                                                        int8_t* output,
+                                                        size_t rows,
+                                                        size_t cols) {
   std::memcpy(output, input,
               /*count=*/sizeof(int8_t) * (rows * cols));
 }
@@ -537,7 +539,7 @@ void PrepareBQuantizedTransposed<Provider::kRuy>(const int8_t* input,
 
 #ifdef SLIMT_HAS_GEMMOLOGY
 template <>
-Tensor affine_with_select<Provider::kGemmology>(
+Tensor affine_with_select<Provider::Gemmology>(
     Tensor& x, Tensor& W, Tensor& b, float a_quant, float b_quant,
     const std::vector<uint32_t>& indices, const std::string& name) {
   // Naming is to simplify thinking with the gemmology API below.
@@ -566,7 +568,7 @@ Tensor affine_with_select<Provider::kGemmology>(
 
   // Prepare bias
   Tensor prepared_bias(Type::f32, bias.shape(), "prepared_bias");
-  constexpr float kMax8bit = 127.0F;
+  constexpr float kMax8bit = kInt8Maxf;
   float a_alpha = kMax8bit / a_quant;
   float b_alpha = kMax8bit / b_quant;
 
@@ -622,9 +624,9 @@ Tensor affine_with_select<Provider::kGemmology>(
 }
 
 template <>
-Tensor affine<Provider::kGemmology>(Tensor& x, Tensor& W, Tensor& b,
-                                    float a_quant, float b_quant,
-                                    const std::string& name) {
+Tensor affine<Provider::Gemmology>(Tensor& x, Tensor& W, Tensor& b,
+                                   float a_quant, float b_quant,
+                                   const std::string& name) {
   // Naming is to simplify thinking with the gemmology API below.
   Tensor& A = x;  // NOLINT
   Tensor& B = W;  // NOLINT
@@ -652,10 +654,10 @@ Tensor affine<Provider::kGemmology>(Tensor& x, Tensor& W, Tensor& b,
 
   // Prepare bias
   Tensor prepared_bias(Type::f32, bias.shape(), "prepared_bias");
-  float a_alpha = 127.0F / a_quant;
-  float b_alpha = 127.0F / b_quant;
+  float a_alpha = kInt8Maxf / a_quant;
+  float b_alpha = kInt8Maxf / b_quant;
 
-  float bias_unquant_multiplier = (-1.0F * (a_alpha * b_alpha)) / 127.0F;
+  float bias_unquant_multiplier = (-1.0F * (a_alpha * b_alpha)) / kInt8Maxf;
   auto prepare_bias_callback =
       gemmology::callbacks::UnquantizeAndAddBiasAndWrite(
           bias_unquant_multiplier, bias.data<float>(),  //
@@ -689,8 +691,8 @@ Tensor affine<Provider::kGemmology>(Tensor& x, Tensor& W, Tensor& b,
 }
 
 template <>
-Tensor dot<Provider::kGemmology>(Tensor& x, Tensor& W, float a_quant,
-                                 float b_quant, const std::string& name) {
+Tensor dot<Provider::Gemmology>(Tensor& x, Tensor& W, float a_quant,
+                                float b_quant, const std::string& name) {
   // Naming is to simplify thinking with the gemmology API below.
   Tensor& A = x;  // NOLINT
   Tensor& B = W;  // NOLINT
@@ -722,10 +724,10 @@ Tensor dot<Provider::kGemmology>(Tensor& x, Tensor& W, float a_quant,
   bias.fill_in_place(0.0F);
 
   Tensor prepared_bias(Type::f32, bias.shape(), "prepared_bias");
-  float a_alpha = 127.0F / a_quant;
-  float b_alpha = 127.0F / b_quant;
+  float a_alpha = kInt8Maxf / a_quant;
+  float b_alpha = kInt8Maxf / b_quant;
 
-  float bias_unquant_multiplier = (-1.0F * (a_alpha * b_alpha)) / 127.0F;
+  float bias_unquant_multiplier = (-1.0F * (a_alpha * b_alpha)) / kInt8Maxf;
   auto prepare_bias_callback =
       gemmology::callbacks::UnquantizeAndAddBiasAndWrite(
           bias_unquant_multiplier, bias.data<float>(),  //
@@ -760,19 +762,16 @@ Tensor dot<Provider::kGemmology>(Tensor& x, Tensor& W, float a_quant,
 }
 
 template <>
-void PrepareBTransposed<Provider::kGemmology>(const float* weights,
-                                              int8_t* prepared,
-                                              float quantization_multiplier,
-                                              size_t cols, size_t rows) {
+void prepare_weight_transposed<Provider::Gemmology>(
+    const float* weights, int8_t* prepared, float quantization_multiplier,
+    size_t cols, size_t rows) {
   gemmology::PrepareBTransposed(weights, prepared, quantization_multiplier,
                                 cols, rows);
 }
 
 template <>
-void PrepareBQuantizedTransposed<Provider::kGemmology>(const int8_t* input,
-                                                       int8_t* output,
-                                                       size_t rows,
-                                                       size_t cols) {
+void prepare_weight_quantized_transposed<Provider::Gemmology>(
+    const int8_t* input, int8_t* output, size_t rows, size_t cols) {
   gemmology::PrepareBQuantizedTransposed(input, output, rows, cols);
 }
 
@@ -803,19 +802,19 @@ Tensor dot(Tensor& x, Tensor& W, float a_quant, float b_quant,
   return dot<kAutoProvider>(x, W, a_quant, b_quant, name);
 }
 
-void PrepareBTransposed(const float* weights, int8_t* prepared,
-                        float quantization_multiplier, size_t cols,
-                        size_t rows) {
+void prepare_weight_transposed(const float* weights, int8_t* prepared,
+                               float quantization_multiplier, size_t cols,
+                               size_t rows) {
   using detail::kAutoProvider;
-  using detail::PrepareBTransposed;
-  PrepareBTransposed<kAutoProvider>(weights, prepared, quantization_multiplier,
-                                    cols, rows);
+  using detail::prepare_weight_transposed;
+  prepare_weight_transposed<kAutoProvider>(weights, prepared,
+                                           quantization_multiplier, cols, rows);
 }
-void PrepareBQuantizedTransposed(const int8_t* input, int8_t* output,
-                                 size_t rows, size_t cols) {
+void prepare_weight_quantized_transposed(const int8_t* input, int8_t* output,
+                                         size_t rows, size_t cols) {
   using detail::kAutoProvider;
-  using detail::PrepareBQuantizedTransposed;
-  PrepareBQuantizedTransposed<kAutoProvider>(input, output, rows, cols);
+  using detail::prepare_weight_quantized_transposed;
+  prepare_weight_quantized_transposed<kAutoProvider>(input, output, rows, cols);
 }
 
 }  // namespace slimt::qmm

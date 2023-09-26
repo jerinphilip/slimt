@@ -33,6 +33,8 @@ struct Item {
   Type type{Type::f32};
 };
 
+using Items = std::vector<Item>;
+
 void set_item(Item& item, Aligned&& aligned);
 
 std::vector<io::Item> loadItems(void* current);

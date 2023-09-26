@@ -37,6 +37,7 @@ class ShortlistGenerator {
   static constexpr uint64_t kMagic = 0xF11A48D5013417F5;
   static constexpr uint64_t kFrequent = 100;
   static constexpr uint64_t kBest = 100;
+  static constexpr size_t kVExtAlignment = 8;
 
   // construct directly from buffer
   ShortlistGenerator(

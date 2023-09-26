@@ -40,8 +40,14 @@
             "request": "launch",
             "program": "${workspaceFolder}/build/bin/slimt",
             "args": [
-                "/home/jerin/.local/share/bergamot/models/browsermt/ende.student.tiny11/model.intgemm.alphas.bin",
-                "/home/jerin/.local/share/bergamot/models/browsermt/ende.student.tiny11/vocab.deen.spm",
+                "--root",
+                "/home/jerin/.local/share/bergamot/models/browsermt/ende.student.tiny11/",
+                "--model",
+                "model.intgemm.alphas.bin",
+                "--vocabulary",
+                "vocab.deen.spm",
+                "--shortlist",
+                "lex.s2t.bin",
                 "<",
                 "${workspaceFolder}/data/sample.txt"
             ],

@@ -1,14 +1,21 @@
 add_library(
   slimt STATIC
   Aligned.cc
+  Annotation.cc
   Batch.cc
+  Batcher.cc
+  Frontend.cc
   Io.cc
   Model.cc
   Modules.cc
   QMM.cc
+  Request.cc
+  Response.cc
+  ResponseBuilder.cc
   Shortlist.cc
-  TensorOps.cc
+  Splitter.cc
   Tensor.cc
+  TensorOps.cc
   Utils.cc
   Vocabulary.cc)
 
