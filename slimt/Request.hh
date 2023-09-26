@@ -14,20 +14,20 @@ namespace slimt::rd {
 using TranslationCache = slimt::TranslationCache;
 
 /// A Request is an internal representation used to represent a request after
-/// processed by TextProcessor into units constituted by marian::Words.
+/// processed by TextProcessor into segments constituted by marian::Words.
 ///
 /// The batching mechanism (BatchingPool) draws from multiple Requests and
-/// compiles units into a batch. When a batch completes translation (at
+/// compiles segments into a batch. When a batch completes translation (at
 /// BatchTranslator, intended in a different thread), backward propogation
 /// happens through:
 ///
 /// ```cpp
 ///   Batch::completeBatch(...)
-///       -> Unit::complete(..)
+///       -> SegmentRef::complete(..)
 ///          -> Request::complete(...)
 /// ```
 ///
-/// When all units in a Request are completed, responseBuilder is
+/// When all segments in a Request are completed, responseBuilder is
 /// triggered with the compiled Histories, to construct the Response
 /// corresponding to the Request and set value of the promise which triggers
 /// the future at client.
@@ -40,10 +40,10 @@ class Request {
   ///
   /// @param [in] Id: Identifier assigned to Request by Service.
   /// @param [in] model: Model for identifying a unique translation
-  /// unit key (model, words in a unit) for cache.
-  /// @param [in] segments: Each segment is a unit to be translated.
+  /// segment key (model, words in a segment) for cache.
+  /// @param [in] segments: Each segment is a segment to be translated.
   /// @param [in] responseBuilder: Callback function (of ResponseBuilder type)
-  /// to be triggered upon the completion of translation of all units in a
+  /// to be triggered upon the completion of translation of all segments in a
   /// Request.
   /// @param [in] cache: Cache supplied externally to attempt to fetch
   /// translations or store them after completion for reuse later.
@@ -52,7 +52,7 @@ class Request {
           std::optional<TranslationCache> &cache);
 
   /// Obtain the count of tokens in the segment correponding to index. Used to
-  /// insert unit from multiple requests into the corresponding size
+  /// insert segment from multiple requests into the corresponding size
   /// bucket.
   size_t word_count(size_t index) const;
 
@@ -83,10 +83,10 @@ class Request {
 
   /// Multiple translation-workers can concurrently access the same Request.
   /// The following atomic atomically operates on the variable holding
-  /// units remaining to be translated.
+  /// segments remaining to be translated.
   std::atomic<int> counter_;
 
-  /// segments_ hold the units processed into Words which generated from
+  /// segments_ hold the segments processed into Words which generated from
   /// input string.
   Segments segments_;
 
@@ -98,37 +98,37 @@ class Request {
   /// std::vector<Ptr<Vocab const>> *vocabs_;
   ResponseBuilder responseBuilder_;
 
-  /// Cache used to hold unit translations. If nullopt, means no-caching.
+  /// Cache used to hold segment translations. If nullopt, means no-caching.
   std::optional<TranslationCache> &cache_;
 };
 
-/// A Unit provides a view to a unit within a Request. Existence
-/// of this class allows the units and associated information to be kept
+/// A SegmentRef provides a view to a segment within a Request. Existence
+/// of this class allows the segments and associated information to be kept
 /// within Request, while batching mechanism (BatchingPool) compiles Batch
-/// from Unit-s coming from different Requests.
-class Unit {
+/// from SegmentRef-s coming from different Requests.
+class SegmentRef {
  public:
-  Unit(size_t, Ptr<Request>);
+  SegmentRef(size_t, Ptr<Request>);
 
-  /// Number of tokens in the segment this Unit represents. Used to
+  /// Number of tokens in the segment this SegmentRef represents. Used to
   /// order by length in batching.
   size_t size() const;
 
-  /// Accessor to the segment represented by the Unit.
-  Segment getUnderlyingSegment() const;
+  /// Accessor to the segment represented by the SegmentRef.
+  Segment get() const;
 
   /// Forwards history to Request to set history corresponding to this
-  /// Unit.
+  /// SegmentRef.
   void complete(History history);
 
-  friend bool operator<(const Unit &a, const Unit &b);
+  friend bool operator<(const SegmentRef &a, const SegmentRef &b);
 
  private:
   size_t index_;
   Ptr<Request> request_;
 };
 
-using Units = std::vector<Unit>;
+using SegmentRefs = std::vector<SegmentRef>;
 
 // An empty batch is poison.
 class Batch {
@@ -136,22 +136,22 @@ class Batch {
   Batch() = default;
   void clear();
 
-  size_t size() const { return units_.size(); }
-  bool empty() const { return units_.empty(); }
+  size_t size() const { return segment_refs_.size(); }
+  bool empty() const { return segment_refs_.empty(); }
   size_t max_length() const { return max_length_; }
 
-  void add(const Unit &unit);
+  void add(const SegmentRef &segment_ref);
 
   // Accessors to read from a Batch. For use in BatchTranslator (consumer on a
   // PCQueue holding batches).
   //
-  // units() are used to access units to construct marian internal
+  // segment_refs() are used to access segment_refs to construct marian internal
   // batch.
-  const Units &units() { return units_; }
+  const SegmentRefs &segment_refs() { return segment_refs_; }
 
   // On obtaining Histories after translating a batch, completeBatch can be
   // called with Histories , which forwards the call to Request through
-  // Unit and triggers completion, by setting the promised value to
+  // SegmentRef and triggers completion, by setting the promised value to
   // the future given to client.
   void complete(const Histories &histories);
 
@@ -159,7 +159,7 @@ class Batch {
   void log();
 
  private:
-  Units units_;
+  SegmentRefs segment_refs_;
   size_t token_count_ = 0;
   size_t max_length_ = 0;
 };

@@ -11,10 +11,10 @@ namespace slimt {
 namespace {
 
 Batch convert(rd::Batch &rd_batch) {
-  const auto &units = rd_batch.units();
+  const auto &segment_refs = rd_batch.segment_refs();
   Batch batch(rd_batch.size(), rd_batch.max_length(), 0);
-  for (const auto &unit : units) {
-    Segment segment = unit.getUnderlyingSegment();
+  for (const auto &segment_ref : segment_refs) {
+    Segment segment = segment_ref.get();
     batch.add(segment);
   }
 

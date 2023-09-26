@@ -45,7 +45,7 @@ Request::Request(size_t Id, size_t model_id, Segments &&segments,
     if (cache_) {
       // Iterate through segments, see if any can be prefilled from cache. If
       // prefilled, mark the particular segments as complete (non-empty
-      // ProcessedUnit). Also update accounting used elsewhere
+      // ProcessedSegmentRef). Also update accounting used elsewhere
       // (counter_) to reflect one less segment to translate.
       for (size_t idx = 0; idx < segments_.size(); idx++) {
         size_t key = cache_key(model_id_, segment(idx));
@@ -95,27 +95,25 @@ void Request::complete(size_t index, History history) {
 
 // ------------------------------------------------------------------
 
-Unit::Unit(size_t index, Ptr<Request> request)
+SegmentRef::SegmentRef(size_t index, Ptr<Request> request)
     : index_(index), request_(std::move(request)) {}
 
-size_t Unit::size() const { return (request_->word_count(index_)); }
+size_t SegmentRef::size() const { return (request_->word_count(index_)); }
 
-void Unit::complete(History history) {
+void SegmentRef::complete(History history) {
   // Relays complete into request's complete, using index
   // information.
   request_->complete(index_, std::move(history));
 }
 
-Segment Unit::getUnderlyingSegment() const {
-  return request_->segment(index_);
-}
+Segment SegmentRef::get() const { return request_->segment(index_); }
 
 bool operator<(const Request &a, const Request &b) {
   // Among Requests, only sequence id is used for obtaining priority.
   return a.id_ < b.id_;
 }
 
-bool operator<(const Unit &a, const Unit &b) {
+bool operator<(const SegmentRef &a, const SegmentRef &b) {
   // Operator overload for usage in priority-queue / set.
   if (a.request_ == b.request_) {
     return a.index_ < b.index_;
@@ -127,23 +125,24 @@ bool operator<(const Unit &a, const Unit &b) {
 
 void Batch::log() {
   (void)token_count_;
-  LOG(info, "Batch(tokens={}, max-length={}, units_={})", token_count_,
-      max_length_, units_.size());
+  LOG(info, "Batch(tokens={}, max-length={}, segment_refs_={})", token_count_,
+      max_length_, segment_refs_.size());
 }
 
-void Batch::add(const Unit &unit) {
-  units_.push_back(unit);
-  token_count_ += unit.size();
-  max_length_ = std::max(max_length_, static_cast<size_t>(unit.size()));
+void Batch::add(const SegmentRef &segment_ref) {
+  segment_refs_.push_back(segment_ref);
+  token_count_ += segment_ref.size();
+  max_length_ = std::max(max_length_, static_cast<size_t>(segment_ref.size()));
 }
 
 void Batch::complete(const Histories &histories) {
-  for (size_t i = 0; i < units_.size(); i++) {
-    units_[i].complete(histories[i]);
+  for (size_t i = 0; i < segment_refs_.size(); i++) {
+    segment_refs_[i].complete(histories[i]);
   }
 }
+
 void Batch::clear() {
-  units_.clear();
+  segment_refs_.clear();
   token_count_ = 0;
   max_length_ = 0;
 }

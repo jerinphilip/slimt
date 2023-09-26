@@ -19,7 +19,7 @@ class Batcher {
   explicit Batcher(size_t max_words, size_t wrap_length,
                    float tgt_length_limit_factor = 3.0);
 
-  // Unit incorporates (tentative) notions of priority with each
+  // SegmentRef incorporates (tentative) notions of priority with each
   // sentence. This method inserts the sentence into the internal data-structure
   // which maintains priority among sentences from multiple concurrent requests.
   size_t enqueue(const Ptr<Request>& request);
@@ -33,7 +33,7 @@ class Batcher {
 
  private:
   size_t max_words_;
-  std::vector<std::set<Unit>> bucket_;
+  std::vector<std::set<SegmentRef>> bucket_;
   size_t running_bucket_max_size_;
 };
 
