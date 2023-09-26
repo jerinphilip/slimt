@@ -44,17 +44,17 @@ class Annotation {
     gap_.push_back(0);
   }
 
-  size_t numSentences() const { return gap_.size() - 1; }
+  size_t sentence_count() const { return gap_.size() - 1; }
 
   /// Returns number of words in the sentence identified by `sentence_idx`.
-  size_t numWords(size_t sentence_idx) const {
+  size_t word_count(size_t sentence_idx) const {
     return gap_[sentence_idx + 1] - gap_[sentence_idx] - 1 /* minus the gap */;
   }
 
   /// Returns a ByteRange representing `word_idx` in sentence indexed by
   /// `sentence_idx`. `word_idx` follows 0-based indexing, and should be less
   /// than
-  /// `.numWords()` for `sentence_idx` for defined behaviour.
+  /// `.word_count()` for `sentence_idx` for defined behaviour.
   ByteRange word(size_t sentence_idx, size_t word_idx) const {
     size_t token_idx = gap_[sentence_idx] + 1 + word_idx;
     return ByteRange{token_begin_[token_idx], token_begin_[token_idx + 1]};
@@ -62,7 +62,7 @@ class Annotation {
 
   /// Returns a ByteRange representing sentence corresponding to `sentence_idx`.
   /// `sentence_idx` follows 0-based indexing, and behaviour is defined only
-  /// when less than `.numSentences()`.
+  /// when less than `.sentence_count()`.
   ByteRange sentence(size_t sentence_idx) const {
     return ByteRange{
         token_begin_[gap_[sentence_idx] + 1], /*end of whitespace before */
@@ -91,7 +91,7 @@ class Annotation {
   ///   [token_begin_[gap_[s]+1], token_begin_[gap_[s+1]])
   /// A sentence does not include whitespace at the beginning or end.
   ///
-  /// gap_.size() == numSentences() + 1.
+  /// gap_.size() == sentence_count() + 1.
   ///
   /// Example: empty text "" -> just an empty gap.
   /// token_begin_ = {0, 0};
@@ -158,11 +158,11 @@ class AnnotatedText {
       const char *sentence_begin);
 
   /// Returns the number of sentences in the annotation structure.
-  size_t numSentences() const { return annotation.numSentences(); }
+  size_t sentence_count() const { return annotation.sentence_count(); }
 
   /// Returns number of words in the sentece identified by sentence_idx.
-  size_t numWords(size_t sentence_idx) const {
-    return annotation.numWords(sentence_idx);
+  size_t word_count(size_t sentence_idx) const {
+    return annotation.word_count(sentence_idx);
   }
 
   /// Returns a std::string_view representing word_idx in sentence_idx
@@ -179,14 +179,14 @@ class AnnotatedText {
   /// Returns the std::string_view of the gap between two sentences in the
   /// container.
   ///
-  /// More precisely where `i = sentence_idx, N = numSentences()` for brevity:
+  /// More precisely where `i = sentence_idx, N = sentence_count()` for brevity:
   ///
   /// * For `i = 0`: The gap between the start of text and the 0th sentence.
   /// * For `i = 1...N-1`, returns the text comprising of the gap
   ///   between the `i`-th and `i+1`-th sentence.
   /// * For `i = N`, the gap between the last (N-1th) sentence and end of
   ///   text.
-  /// @param sentence_idx: Can be between `[0, numSentences()]`.
+  /// @param sentence_idx: Can be between `[0, sentence_count()]`.
   std::string_view gap(size_t sentence_idx) const {
     return asStringView(annotation.gap(sentence_idx));
   }
@@ -210,7 +210,7 @@ class AnnotatedText {
   AnnotatedText apply(Fun fun) const {
     AnnotatedText out;
 
-    for (size_t sentence_idx = 0; sentence_idx < numSentences();
+    for (size_t sentence_idx = 0; sentence_idx < sentence_count();
          ++sentence_idx) {
       std::string sentence;
       std::vector<ByteRange> tokens;
@@ -218,7 +218,7 @@ class AnnotatedText {
       std::string prefix =
           fun(annotation.gap(sentence_idx), gap(sentence_idx), false);
 
-      for (size_t word_idx = 0; word_idx < numWords(sentence_idx); ++word_idx) {
+      for (size_t word_idx = 0; word_idx < word_count(sentence_idx); ++word_idx) {
         std::string token = fun(wordAsByteRange(sentence_idx, word_idx),
                                 word(sentence_idx, word_idx), false);
         tokens.push_back(
@@ -239,7 +239,7 @@ class AnnotatedText {
     }
 
     out.appendEndingWhitespace(
-        fun(annotation.gap(numSentences()), gap(numSentences()), true));
+        fun(annotation.gap(sentence_count()), gap(sentence_count()), true));
 
     return out;
   }

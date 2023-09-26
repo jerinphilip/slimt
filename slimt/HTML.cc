@@ -156,21 +156,21 @@ bool hasAlignments(Response const &response) {
   // Test for each sentence individually as a sentence may be empty (or there)
   // might be no sentences, so just testing for alignments.empty() would not be
   // sufficient.
-  for (size_t sentence_idx = 0; sentence_idx < response.target.numSentences();
+  for (size_t sentence_idx = 0; sentence_idx < response.target.sentence_count();
        ++sentence_idx) {
     // If response.alignments is just empty, this might catch it.
     if (response.alignments.size() <= sentence_idx ||
         response.alignments[sentence_idx].size() !=
-            response.target.numWords(sentence_idx))
+            response.target.word_count(sentence_idx))
       return false;
 
     // If response.alignments is "empty" because the model did not provide
     // alignments, it still has entries for each target word. But all these
     // entries are empty.
-    for (size_t word_idx = 0; word_idx < response.target.numWords(sentence_idx);
+    for (size_t word_idx = 0; word_idx < response.target.word_count(sentence_idx);
          ++word_idx)
       if (response.alignments[sentence_idx][word_idx].size() !=
-          response.source.numWords(sentence_idx))
+          response.source.word_count(sentence_idx))
         return false;
   }
   return true;
@@ -253,10 +253,10 @@ class TokenFormatter {
 /// running out of sync when creating vectors that describe each token.
 size_t debugCountTokens(AnnotatedText const &text) {
   size_t tokens = 1;  // for the ending gap
-  for (size_t sentence_idx = 0; sentence_idx < text.numSentences();
+  for (size_t sentence_idx = 0; sentence_idx < text.sentence_count();
        ++sentence_idx) {
     tokens +=
-        1 + text.numWords(sentence_idx);  // pre-sentence prefix/gap + each word
+        1 + text.word_count(sentence_idx);  // pre-sentence prefix/gap + each word
   }
   return tokens;
 }
@@ -712,18 +712,18 @@ void HTML::copyTagStack(Response const &response,
 
   // Fill targetTokenSpans based on the alignments we just made up.
   // NOTE: this should match the exact order of Apply()
-  for (size_t sentence_idx = 0; sentence_idx < response.target.numSentences();
+  for (size_t sentence_idx = 0; sentence_idx < response.target.sentence_count();
        ++sentence_idx) {
     targetTokenSpans.push_back(
         source_token_spans[offset]);  // token_tag for sentence ending gap
-    for (size_t t = 0; t < response.target.numWords(sentence_idx); ++t) {
+    for (size_t t = 0; t < response.target.word_count(sentence_idx); ++t) {
       size_t s = alignments[sentence_idx][t];
-      assert(s < response.source.numWords(sentence_idx));
+      assert(s < response.source.word_count(sentence_idx));
       targetTokenSpans.push_back(
           source_token_spans[offset + 1 + s]);  // +1 for prefix gap
     }
 
-    offset += response.source.numWords(sentence_idx) + 1;  // +1 for prefix gap
+    offset += response.source.word_count(sentence_idx) + 1;  // +1 for prefix gap
   }
 
   assert(offset + 1 == source_token_spans.size());
@@ -735,7 +735,7 @@ void HTML::annotateTagStack(Response const &response,
                             std::vector<SpanIterator> const &targetTokenSpans,
                             std::vector<HTML::TagStack> &targetTokenTags) {
   auto span_iterator = targetTokenSpans.begin();
-  for (size_t sentence_idx = 0; sentence_idx < response.target.numSentences();
+  for (size_t sentence_idx = 0; sentence_idx < response.target.sentence_count();
        ++sentence_idx) {
     // Sentence prefix
     targetTokenTags.push_back((*span_iterator)->tags);
@@ -746,7 +746,7 @@ void HTML::annotateTagStack(Response const &response,
     (void)tag_offset;
 
     // Initially, just copy the span's tags to this token
-    for (size_t t = 0; t < response.target.numWords(sentence_idx); ++t) {
+    for (size_t t = 0; t < response.target.word_count(sentence_idx); ++t) {
       targetTokenTags.emplace_back((*span_iterator)->tags);
       span_iterator++;
     }
@@ -780,14 +780,14 @@ void HTML::hardAlignments(Response const &response,
   size_t offset = 0;  // sentence offset in source_token_spans
 
   // For each sentence...
-  for (size_t sentence_idx = 0; sentence_idx < response.target.numSentences();
+  for (size_t sentence_idx = 0; sentence_idx < response.target.sentence_count();
        ++sentence_idx) {
     alignments.emplace_back();
 
     // Hard-align: find for each target token the most prevalent source token
     // Note: only search from 0 to N-1 because token N is end-of-sentence token
     // that can only align with the end-of-sentence token of the target
-    for (size_t t = 0; t + 1 < response.target.numWords(sentence_idx); ++t) {
+    for (size_t t = 0; t + 1 < response.target.word_count(sentence_idx); ++t) {
       alignments.back().push_back(
           std::max_element(response.alignments[sentence_idx][t].begin(),
                            response.alignments[sentence_idx][t].end()) -
@@ -796,7 +796,7 @@ void HTML::hardAlignments(Response const &response,
 
     // Next, we try to smooth out these selected alignments with a few
     // heuristics
-    for (size_t t = 1; t + 1 < response.target.numWords(sentence_idx); ++t) {
+    for (size_t t = 1; t + 1 < response.target.word_count(sentence_idx); ++t) {
       // If this token is a continuation of a previous token, pick the tags from
       // the most prevalent token for the whole word.
       if (isContinuation(response.target.word(sentence_idx, t - 1),
@@ -838,9 +838,9 @@ void HTML::hardAlignments(Response const &response,
     }
 
     // Always align target end with source end
-    alignments.back().push_back(response.source.numWords(sentence_idx) - 1);
+    alignments.back().push_back(response.source.word_count(sentence_idx) - 1);
 
-    offset += response.source.numWords(sentence_idx) + 1;  // +1 for prefix gap
+    offset += response.source.word_count(sentence_idx) + 1;  // +1 for prefix gap
   }
 }
 

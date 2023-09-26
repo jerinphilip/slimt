@@ -160,7 +160,7 @@ void TextProcessor::processFromAnnotation(AnnotatedText &source,
   std::string text = source.text;
   AnnotatedText replacement(std::move(text));
 
-  for (size_t s = 0; s < source.numSentences(); s++) {
+  for (size_t s = 0; s < source.sentence_count(); s++) {
     // This is our sentence_stream
     ByteRange sentence_byte_range = source.sentenceAsByteRange(s);
 

@@ -119,7 +119,7 @@ Alignment transfer_through_characters(
 std::vector<Alignment> remapAlignments(const Response &first,
                                        const Response &second) {
   std::vector<Alignment> alignments;
-  for (size_t sentence_id = 0; sentence_id < first.source.numSentences();
+  for (size_t sentence_id = 0; sentence_id < first.source.sentence_count();
        sentence_id++) {
     const Alignment &source_given_pivots = first.alignments[sentence_id];
     const Alignment &pivot_given_targets = second.alignments[sentence_id];
@@ -130,7 +130,7 @@ std::vector<Alignment> remapAlignments(const Response &first,
     auto extract_word_byte_ranges =
         [](const AnnotatedText &annotatedText,
            size_t sentence_id) -> std::vector<ByteRange> {
-      size_t num_words = annotatedText.numWords(sentence_id);
+      size_t num_words = annotatedText.word_count(sentence_id);
       std::vector<ByteRange> output;
 
       for (size_t i = 0; i < num_words; i++) {
@@ -150,8 +150,8 @@ std::vector<Alignment> remapAlignments(const Response &first,
 
     // Marginalize out q_j.
     // p(s_i | t_k) = \sum_{j} p(s_i | q_j) x p(q_j | t_k)
-    size_t source_token_count = first.source.numWords(sentence_id);
-    size_t target_token_count = second.target.numWords(sentence_id);
+    size_t source_token_count = first.source.word_count(sentence_id);
+    size_t target_token_count = second.target.word_count(sentence_id);
     Alignment output(target_token_count,
                      std::vector<float>(source_token_count, 0.0F));
     for (size_t idt = 0; idt < target_token_count; idt++) {

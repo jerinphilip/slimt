@@ -8,7 +8,7 @@ void ResponseBuilder::operator()(Histories &&histories) {
   // TODO(jerinphilip) load Options into options and turn build
   // functions on or off.
   // options_ is unused, but we can try something here.
-  SLIMT_ABORT_IF(source_.numSentences() != histories.size(),
+  SLIMT_ABORT_IF(source_.sentence_count() != histories.size(),
                  "Mismatch in source and translated sentences");
   Response response;
 
