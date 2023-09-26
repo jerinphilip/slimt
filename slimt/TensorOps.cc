@@ -38,8 +38,8 @@ Tensor index_select(Tensor& x, Tensor& indices,
 void modify_mask_for_pad_tokens_in_attention(float* mask, size_t size) {
   // Adopted from:
   // https://github.com/browsermt/marian-dev/blob/14c9d9b0e732f42674e41ee138571d5a7bf7ad94/src/models/transformer.h#L132
-  float f16_lowest = std::numeric_limits<float>::lowest() / 2.0F;
-  float minus_inf = std::max(f16_lowest, -99999999.0F);
+  float f16_lowest = std::numeric_limits<float>::lowest() / 2.0F;  // NOLINT
+  float minus_inf = std::max(f16_lowest, -99999999.0F);            // NOLINT
   for (size_t i = 0; i < size; i++) {
     float& x = mask[i];
     x = (1.0F - x) * minus_inf;
@@ -272,13 +272,13 @@ void add_positional_embedding(const float* word_embedding,
 
 void softmax(float* logits, size_t batch_size, size_t num_classes, float* out) {
 #ifdef VEXT_W8_AVAILABLE
-  if (num_classes % 8 == 0) {
+  if (num_classes % VDatum<VExt::w8>::kWidth == 0) {
     vext::softmax<VExt::w8>(logits, batch_size, num_classes, out);
     return;
   }
 #endif
 #ifdef VEXT_W4_AVAILABLE
-  if (num_classes % 4 == 0) {
+  if (num_classes % VDatum<VExt::w4>::kWidth == 0) {
     vext::softmax<VExt::w4>(logits, batch_size, num_classes, out);
     return;
   }
