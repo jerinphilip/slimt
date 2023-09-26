@@ -10,7 +10,7 @@ namespace slimt {
 
 namespace {
 ug::ssplit::SentenceStream::splitmode string2splitmode(const std::string &m) {
-  typedef ug::ssplit::SentenceStream::splitmode splitmode;
+  using splitmode = ug::ssplit::SentenceStream::splitmode;
   if (m == "sentence") {
     return splitmode::one_sentence_per_line;
   }
