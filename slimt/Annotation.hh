@@ -46,27 +46,27 @@ class Annotation {
 
   size_t sentence_count() const { return gap_.size() - 1; }
 
-  /// Returns number of words in the sentence identified by `sentence_idx`.
-  size_t word_count(size_t sentence_idx) const {
-    return gap_[sentence_idx + 1] - gap_[sentence_idx] - 1 /* minus the gap */;
+  /// Returns number of words in the sentence identified by `sentence_id`.
+  size_t word_count(size_t sentence_id) const {
+    return gap_[sentence_id + 1] - gap_[sentence_id] - 1 /* minus the gap */;
   }
 
-  /// Returns a ByteRange representing `word_idx` in sentence indexed by
-  /// `sentence_idx`. `word_idx` follows 0-based indexing, and should be less
+  /// Returns a ByteRange representing `word_id` in sentence indexed by
+  /// `sentence_id`. `word_id` follows 0-based indexing, and should be less
   /// than
-  /// `.word_count()` for `sentence_idx` for defined behaviour.
-  ByteRange word(size_t sentence_idx, size_t word_idx) const {
-    size_t token_idx = gap_[sentence_idx] + 1 + word_idx;
+  /// `.word_count()` for `sentence_id` for defined behaviour.
+  ByteRange word(size_t sentence_id, size_t word_id) const {
+    size_t token_idx = gap_[sentence_id] + 1 + word_id;
     return ByteRange{token_begin_[token_idx], token_begin_[token_idx + 1]};
   }
 
-  /// Returns a ByteRange representing sentence corresponding to `sentence_idx`.
-  /// `sentence_idx` follows 0-based indexing, and behaviour is defined only
+  /// Returns a ByteRange representing sentence corresponding to `sentence_id`.
+  /// `sentence_id` follows 0-based indexing, and behaviour is defined only
   /// when less than `.sentence_count()`.
-  ByteRange sentence(size_t sentence_idx) const {
+  ByteRange sentence(size_t sentence_id) const {
     return ByteRange{
-        token_begin_[gap_[sentence_idx] + 1], /*end of whitespace before */
-        token_begin_[gap_[sentence_idx + 1]]  /*beginning of whitespace after */
+        token_begin_[gap_[sentence_id] + 1], /*end of whitespace before */
+        token_begin_[gap_[sentence_id + 1]]  /*beginning of whitespace after */
     };
   }
 
@@ -160,45 +160,45 @@ class AnnotatedText {
   /// Returns the number of sentences in the annotation structure.
   size_t sentence_count() const { return annotation.sentence_count(); }
 
-  /// Returns number of words in the sentece identified by sentence_idx.
-  size_t word_count(size_t sentence_idx) const {
-    return annotation.word_count(sentence_idx);
+  /// Returns number of words in the sentece identified by sentence_id.
+  size_t word_count(size_t sentence_id) const {
+    return annotation.word_count(sentence_id);
   }
 
-  /// Returns a std::string_view representing word_idx in sentence_idx
-  std::string_view word(size_t sentence_idx, size_t word_idx) const {
-    return asStringView(annotation.word(sentence_idx, word_idx));
+  /// Returns a std::string_view representing word_id in sentence_id
+  std::string_view word(size_t sentence_id, size_t word_id) const {
+    return asStringView(annotation.word(sentence_id, word_id));
   }
 
   /// Returns a std::string_view representing sentence corresponding to
-  /// sentence_idx.
-  std::string_view sentence(size_t sentence_idx) const {
-    return asStringView(annotation.sentence(sentence_idx));
+  /// sentence_id.
+  std::string_view sentence(size_t sentence_id) const {
+    return asStringView(annotation.sentence(sentence_id));
   }
 
   /// Returns the std::string_view of the gap between two sentences in the
   /// container.
   ///
-  /// More precisely where `i = sentence_idx, N = sentence_count()` for brevity:
+  /// More precisely where `i = sentence_id, N = sentence_count()` for brevity:
   ///
   /// * For `i = 0`: The gap between the start of text and the 0th sentence.
   /// * For `i = 1...N-1`, returns the text comprising of the gap
   ///   between the `i`-th and `i+1`-th sentence.
   /// * For `i = N`, the gap between the last (N-1th) sentence and end of
   ///   text.
-  /// @param sentence_idx: Can be between `[0, sentence_count()]`.
-  std::string_view gap(size_t sentence_idx) const {
-    return asStringView(annotation.gap(sentence_idx));
+  /// @param sentence_id: Can be between `[0, sentence_count()]`.
+  std::string_view gap(size_t sentence_id) const {
+    return asStringView(annotation.gap(sentence_id));
   }
 
-  /// Returns a ByteRange representing word_idx in sentence_idx
-  ByteRange wordAsByteRange(size_t sentence_idx, size_t word_idx) const {
-    return annotation.word(sentence_idx, word_idx);
+  /// Returns a ByteRange representing word_id in sentence_id
+  ByteRange wordAsByteRange(size_t sentence_id, size_t word_id) const {
+    return annotation.word(sentence_id, word_id);
   }
 
-  /// Returns a ByteRange representing sentence corresponding to sentence_idx.
-  ByteRange sentenceAsByteRange(size_t sentence_idx) const {
-    return annotation.sentence(sentence_idx);
+  /// Returns a ByteRange representing sentence corresponding to sentence_id.
+  ByteRange sentenceAsByteRange(size_t sentence_id) const {
+    return annotation.sentence(sentence_id);
   }
 
   /// Utility function to call `fun` on each word (subword token effectively) in
@@ -210,17 +210,17 @@ class AnnotatedText {
   AnnotatedText apply(Fun fun) const {
     AnnotatedText out;
 
-    for (size_t sentence_idx = 0; sentence_idx < sentence_count();
-         ++sentence_idx) {
+    for (size_t sentence_id = 0; sentence_id < sentence_count();
+         ++sentence_id) {
       std::string sentence;
       std::vector<ByteRange> tokens;
 
       std::string prefix =
-          fun(annotation.gap(sentence_idx), gap(sentence_idx), false);
+          fun(annotation.gap(sentence_id), gap(sentence_id), false);
 
-      for (size_t word_idx = 0; word_idx < word_count(sentence_idx); ++word_idx) {
-        std::string token = fun(wordAsByteRange(sentence_idx, word_idx),
-                                word(sentence_idx, word_idx), false);
+      for (size_t word_id = 0; word_id < word_count(sentence_id); ++word_id) {
+        std::string token = fun(wordAsByteRange(sentence_id, word_id),
+                                word(sentence_id, word_id), false);
         tokens.push_back(
             ByteRange{sentence.size(), sentence.size() + token.size()});
         sentence += token;

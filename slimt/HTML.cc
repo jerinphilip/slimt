@@ -156,21 +156,21 @@ bool hasAlignments(Response const &response) {
   // Test for each sentence individually as a sentence may be empty (or there)
   // might be no sentences, so just testing for alignments.empty() would not be
   // sufficient.
-  for (size_t sentence_idx = 0; sentence_idx < response.target.sentence_count();
-       ++sentence_idx) {
+  for (size_t sentence_id = 0; sentence_id < response.target.sentence_count();
+       ++sentence_id) {
     // If response.alignments is just empty, this might catch it.
-    if (response.alignments.size() <= sentence_idx ||
-        response.alignments[sentence_idx].size() !=
-            response.target.word_count(sentence_idx))
+    if (response.alignments.size() <= sentence_id ||
+        response.alignments[sentence_id].size() !=
+            response.target.word_count(sentence_id))
       return false;
 
     // If response.alignments is "empty" because the model did not provide
     // alignments, it still has entries for each target word. But all these
     // entries are empty.
-    for (size_t word_idx = 0; word_idx < response.target.word_count(sentence_idx);
-         ++word_idx)
-      if (response.alignments[sentence_idx][word_idx].size() !=
-          response.source.word_count(sentence_idx))
+    for (size_t word_id = 0; word_id < response.target.word_count(sentence_id);
+         ++word_id)
+      if (response.alignments[sentence_id][word_id].size() !=
+          response.source.word_count(sentence_id))
         return false;
   }
   return true;
@@ -253,10 +253,10 @@ class TokenFormatter {
 /// running out of sync when creating vectors that describe each token.
 size_t debugCountTokens(AnnotatedText const &text) {
   size_t tokens = 1;  // for the ending gap
-  for (size_t sentence_idx = 0; sentence_idx < text.sentence_count();
-       ++sentence_idx) {
+  for (size_t sentence_id = 0; sentence_id < text.sentence_count();
+       ++sentence_id) {
     tokens +=
-        1 + text.word_count(sentence_idx);  // pre-sentence prefix/gap + each word
+        1 + text.word_count(sentence_id);  // pre-sentence prefix/gap + each word
   }
   return tokens;
 }
@@ -712,18 +712,18 @@ void HTML::copyTagStack(Response const &response,
 
   // Fill targetTokenSpans based on the alignments we just made up.
   // NOTE: this should match the exact order of Apply()
-  for (size_t sentence_idx = 0; sentence_idx < response.target.sentence_count();
-       ++sentence_idx) {
+  for (size_t sentence_id = 0; sentence_id < response.target.sentence_count();
+       ++sentence_id) {
     targetTokenSpans.push_back(
         source_token_spans[offset]);  // token_tag for sentence ending gap
-    for (size_t t = 0; t < response.target.word_count(sentence_idx); ++t) {
-      size_t s = alignments[sentence_idx][t];
-      assert(s < response.source.word_count(sentence_idx));
+    for (size_t t = 0; t < response.target.word_count(sentence_id); ++t) {
+      size_t s = alignments[sentence_id][t];
+      assert(s < response.source.word_count(sentence_id));
       targetTokenSpans.push_back(
           source_token_spans[offset + 1 + s]);  // +1 for prefix gap
     }
 
-    offset += response.source.word_count(sentence_idx) + 1;  // +1 for prefix gap
+    offset += response.source.word_count(sentence_id) + 1;  // +1 for prefix gap
   }
 
   assert(offset + 1 == source_token_spans.size());
@@ -735,8 +735,8 @@ void HTML::annotateTagStack(Response const &response,
                             std::vector<SpanIterator> const &targetTokenSpans,
                             std::vector<HTML::TagStack> &targetTokenTags) {
   auto span_iterator = targetTokenSpans.begin();
-  for (size_t sentence_idx = 0; sentence_idx < response.target.sentence_count();
-       ++sentence_idx) {
+  for (size_t sentence_id = 0; sentence_id < response.target.sentence_count();
+       ++sentence_id) {
     // Sentence prefix
     targetTokenTags.push_back((*span_iterator)->tags);
     span_iterator++;
@@ -746,7 +746,7 @@ void HTML::annotateTagStack(Response const &response,
     (void)tag_offset;
 
     // Initially, just copy the span's tags to this token
-    for (size_t t = 0; t < response.target.word_count(sentence_idx); ++t) {
+    for (size_t t = 0; t < response.target.word_count(sentence_id); ++t) {
       targetTokenTags.emplace_back((*span_iterator)->tags);
       span_iterator++;
     }
@@ -780,40 +780,40 @@ void HTML::hardAlignments(Response const &response,
   size_t offset = 0;  // sentence offset in source_token_spans
 
   // For each sentence...
-  for (size_t sentence_idx = 0; sentence_idx < response.target.sentence_count();
-       ++sentence_idx) {
+  for (size_t sentence_id = 0; sentence_id < response.target.sentence_count();
+       ++sentence_id) {
     alignments.emplace_back();
 
     // Hard-align: find for each target token the most prevalent source token
     // Note: only search from 0 to N-1 because token N is end-of-sentence token
     // that can only align with the end-of-sentence token of the target
-    for (size_t t = 0; t + 1 < response.target.word_count(sentence_idx); ++t) {
+    for (size_t t = 0; t + 1 < response.target.word_count(sentence_id); ++t) {
       alignments.back().push_back(
-          std::max_element(response.alignments[sentence_idx][t].begin(),
-                           response.alignments[sentence_idx][t].end()) -
-          response.alignments[sentence_idx][t].begin());
+          std::max_element(response.alignments[sentence_id][t].begin(),
+                           response.alignments[sentence_id][t].end()) -
+          response.alignments[sentence_id][t].begin());
     }
 
     // Next, we try to smooth out these selected alignments with a few
     // heuristics
-    for (size_t t = 1; t + 1 < response.target.word_count(sentence_idx); ++t) {
+    for (size_t t = 1; t + 1 < response.target.word_count(sentence_id); ++t) {
       // If this token is a continuation of a previous token, pick the tags from
       // the most prevalent token for the whole word.
-      if (isContinuation(response.target.word(sentence_idx, t - 1),
-                         response.target.word(sentence_idx, t))) {
+      if (isContinuation(response.target.word(sentence_id, t - 1),
+                         response.target.word(sentence_id, t))) {
         // Note: only looking at the previous token since that will already
         // have this treatment applied to it.
-        size_t current_sentence_idx = alignments.back()[t];
-        size_t previous_sentence_idx = alignments.back()[t - 1];
+        size_t current_sentence_id = alignments.back()[t];
+        size_t previous_sentence_id = alignments.back()[t - 1];
         float current_score =
-            response.alignments[sentence_idx][t][current_sentence_idx];
+            response.alignments[sentence_id][t][current_sentence_id];
         float previous_score =
-            response.alignments[sentence_idx][t - 1][previous_sentence_idx];
+            response.alignments[sentence_id][t - 1][previous_sentence_id];
 
         TagStack const &current_tag_stack =
-            source_token_spans[offset + 1 + current_sentence_idx]->tags;
+            source_token_spans[offset + 1 + current_sentence_id]->tags;
         TagStack const &previous_tag_stack =
-            source_token_spans[offset + 1 + previous_sentence_idx]->tags;
+            source_token_spans[offset + 1 + previous_sentence_id]->tags;
 
         // If this token has more markup, or a better score than the previous
         // token (and they together are part of a word-ish thing) then mark
@@ -823,24 +823,24 @@ void HTML::hardAlignments(Response const &response,
             current_score >= previous_score) {
           // Apply this to all previous tokens in the word
           for (size_t i = t;; --i) {
-            alignments.back()[i] = current_sentence_idx;
+            alignments.back()[i] = current_sentence_id;
 
             // Stop if this was the first token or the beginning of the word
             if (i == 0 ||
-                !isContinuation(response.target.word(sentence_idx, i - 1),
-                                response.target.word(sentence_idx, i)))
+                !isContinuation(response.target.word(sentence_id, i - 1),
+                                response.target.word(sentence_id, i)))
               break;
           }
         } else {
-          alignments.back()[t] = previous_sentence_idx;
+          alignments.back()[t] = previous_sentence_id;
         }
       }
     }
 
     // Always align target end with source end
-    alignments.back().push_back(response.source.word_count(sentence_idx) - 1);
+    alignments.back().push_back(response.source.word_count(sentence_id) - 1);
 
-    offset += response.source.word_count(sentence_idx) + 1;  // +1 for prefix gap
+    offset += response.source.word_count(sentence_id) + 1;  // +1 for prefix gap
   }
 }
 
