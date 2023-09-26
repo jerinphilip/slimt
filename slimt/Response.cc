@@ -12,7 +12,7 @@ namespace slimt {
 // The matrix p(q'_j' | t_k) is rewritten into p(q_j | t_k) by means of
 // spreading the probability in the former over bytes and collecting it at the
 // ranges specified by latter, using a two pointer accumulation strategy.
-Alignment transferThroughCharacters(
+Alignment transfer_through_characters(
     const std::vector<ByteRange> &source_side_pivots,
     const std::vector<ByteRange> &target_side_pivots,
     const Alignment &pivot_given_targets) {
@@ -145,7 +145,7 @@ std::vector<Alignment> remapAlignments(const Response &first,
         extract_word_byte_ranges(second.source, sentence_id);
 
     // Reintrepret probability p(q'_j' | t_k) as p(q_j | t_k)
-    Alignment remapped_pivot_given_targets = transferThroughCharacters(
+    Alignment remapped_pivot_given_targets = transfer_through_characters(
         source_side_pivots, target_side_pivots, pivot_given_targets);
 
     // Marginalize out q_j.
@@ -175,7 +175,7 @@ Response combine(Response &&first, Response &&second) {
 
   // Compute alignment first using internal matrices and mappings.
   if (!first.alignments.empty()) {
-    combined.alignments = remapAlignments(first, second);
+    combined.alignments = remap_alignments(first, second);
   }
 
   combined.source = std::move(first.source);

@@ -43,8 +43,8 @@ struct Options {
   bool HTML{false};       ///< Remove HTML tags from text and insert in output.
 };
 
-std::vector<Alignment> remapAlignments(const Response &first,
-                                       const Response &second);
+std::vector<Alignment> remap_alignments(const Response &first,
+                                        const Response &second);
 
 // Combines two responses with first.target == second.source mapping alignments
 // etc accordingly. There are several constraints which are matched by only the
