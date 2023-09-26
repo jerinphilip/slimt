@@ -133,7 +133,7 @@ std::vector<Alignment> remap_alignments(const Response &first,
       std::vector<Range> output;
 
       for (size_t i = 0; i < num_words; i++) {
-        output.push_back(annotatedText.wordAsRange(sentence_id, i));
+        output.push_back(annotatedText.word_as_range(sentence_id, i));
       }
       return output;
     };

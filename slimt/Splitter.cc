@@ -162,7 +162,7 @@ void TextProcessor::processFromAnnotation(AnnotatedText &source,
 
   for (size_t s = 0; s < source.sentence_count(); s++) {
     // This is our sentence_stream
-    Range sentence_range = source.sentenceAsRange(s);
+    Range sentence_range = source.sentence_as_range(s);
 
     // Fool tokenization using Ranges into looking at replacement. They're
     // same, so okay.

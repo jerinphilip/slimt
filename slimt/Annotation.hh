@@ -167,13 +167,13 @@ class AnnotatedText {
 
   /// Returns a std::string_view representing word_id in sentence_id
   std::string_view word(size_t sentence_id, size_t word_id) const {
-    return asStringView(annotation.word(sentence_id, word_id));
+    return as_view(annotation.word(sentence_id, word_id));
   }
 
   /// Returns a std::string_view representing sentence corresponding to
   /// sentence_id.
   std::string_view sentence(size_t sentence_id) const {
-    return asStringView(annotation.sentence(sentence_id));
+    return as_view(annotation.sentence(sentence_id));
   }
 
   /// Returns the std::string_view of the gap between two sentences in the
@@ -188,16 +188,16 @@ class AnnotatedText {
   ///   text.
   /// @param sentence_id: Can be between `[0, sentence_count()]`.
   std::string_view gap(size_t sentence_id) const {
-    return asStringView(annotation.gap(sentence_id));
+    return as_view(annotation.gap(sentence_id));
   }
 
   /// Returns a Range representing word_id in sentence_id
-  Range wordAsRange(size_t sentence_id, size_t word_id) const {
+  Range word_as_range(size_t sentence_id, size_t word_id) const {
     return annotation.word(sentence_id, word_id);
   }
 
   /// Returns a Range representing sentence corresponding to sentence_id.
-  Range sentenceAsRange(size_t sentence_id) const {
+  Range sentence_as_range(size_t sentence_id) const {
     return annotation.sentence(sentence_id);
   }
 
@@ -219,7 +219,7 @@ class AnnotatedText {
           fun(annotation.gap(sentence_id), gap(sentence_id), false);
 
       for (size_t word_id = 0; word_id < word_count(sentence_id); ++word_id) {
-        std::string token = fun(wordAsRange(sentence_id, word_id),
+        std::string token = fun(word_as_range(sentence_id, word_id),
                                 word(sentence_id, word_id), false);
         tokens.push_back(
             Range{sentence.size(), sentence.size() + token.size()});
@@ -245,8 +245,8 @@ class AnnotatedText {
   }
 
  private:
-  std::string_view asStringView(const Range &byteRange) const {
-    return std::string_view(text.data() + byteRange.begin, byteRange.size());
+  std::string_view as_view(const Range &range) const {
+    return std::string_view(text.data() + range.begin, range.size());
   }
 };
 
