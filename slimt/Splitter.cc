@@ -25,7 +25,7 @@ ug::ssplit::SentenceStream::splitmode string2splitmode(const std::string &m) {
       "{sentence,paragraph,wrapped_text}");
 }
 
-ug::ssplit::SentenceSplitter loadSplitter(const std::string &prefix_path) {
+ug::ssplit::SentenceSplitter load_splitter(const std::string &prefix_path) {
   // Temporarily supports empty, will be removed when mozilla passes
   // prefix_path
   ug::ssplit::SentenceSplitter splitter;
@@ -41,7 +41,7 @@ ug::ssplit::SentenceSplitter loadSplitter(const std::string &prefix_path) {
   return splitter;
 }
 
-ug::ssplit::SentenceSplitter loadSplitter(const Aligned &memory) {
+ug::ssplit::SentenceSplitter load_splitter(const Aligned &memory) {
   // Temporarily supports empty, will be removed when mozilla passes memory
   ug::ssplit::SentenceSplitter splitter;
   if (!memory.empty()) {
@@ -69,7 +69,7 @@ TextProcessor::TextProcessor(size_t wrap_length, const std::string &mode,
     : wrap_length_(wrap_length),
       ssplit_mode_(string2splitmode(mode)),
       vocabulary_(vocabulary),
-      ssplit_(loadSplitter(prefix_path)) {}
+      ssplit_(load_splitter(prefix_path)) {}
 
 TextProcessor::TextProcessor(size_t wrap_length, const std::string &mode,
                              const Vocabulary &vocabulary,
@@ -89,7 +89,7 @@ TextProcessor::TextProcessor(size_t wrap_length, const std::string &mode,
 
   SLIMT_ABORT_IF(memory.empty(),
                  "ssplit: Empty blob supplied for initialization.");
-  ssplit_ = loadSplitter(memory);
+  ssplit_ = load_splitter(memory);
 }
 
 std::tuple<AnnotatedText, Segments> TextProcessor::process(
