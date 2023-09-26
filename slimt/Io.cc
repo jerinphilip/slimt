@@ -206,7 +206,7 @@ std::vector<io::Item> loadItems(void* current) {
             sizeof(float);
         Aligned embedding_aligned(/*alignment=*/64, prepared_size);
         auto* prepared = reinterpret_cast<int8_t*>(embedding_aligned.data());
-        qmm::PrepareBTransposed(weights, prepared, quantization_multiplier,
+        qmm::prepare_B_transposed(weights, prepared, quantization_multiplier,
                                 cols, rows);
 
         // Save quantization multiplier.
@@ -225,7 +225,7 @@ std::vector<io::Item> loadItems(void* current) {
         Aligned aligned(/*alignment=*/64, rows * cols + sizeof(float));
 
         auto* output = reinterpret_cast<int8_t*>(aligned.data());
-        qmm::PrepareBQuantizedTransposed(input, output, rows, cols);
+        qmm::prepare_B_quantized_transposed(input, output, rows, cols);
 
         // Set b_quant at end.
         auto* output_end = reinterpret_cast<float*>(output + rows * cols);
