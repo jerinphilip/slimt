@@ -29,9 +29,9 @@ struct Response {
   std::vector<std::vector<std::vector<float>>> alignments;
 
   /// Convenience function to obtain number of units translated. Same as
-  /// `.source.sentence_count()` and `.target.sentence_count().` The processing of a
-  /// text of into sentences are handled internally, and this information can be
-  /// used to iterate through meaningful units of translation for which
+  /// `.source.sentence_count()` and `.target.sentence_count().` The processing
+  /// of a text of into sentences are handled internally, and this information
+  /// can be used to iterate through meaningful units of translation for which
   /// alignment and quality information are available.
   size_t size() const { return source.sentence_count(); }
 };

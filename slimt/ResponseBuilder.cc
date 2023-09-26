@@ -18,8 +18,7 @@ void ResponseBuilder::operator()(Histories &&histories) {
   // thing to do to avoid reallocations.
   response.target.text.reserve(response.source.text.size());
 
-  for (size_t sentence_id = 0; sentence_id < histories.size();
-       sentence_id++) {
+  for (size_t sentence_id = 0; sentence_id < histories.size(); sentence_id++) {
     Words words = histories[sentence_id]->target;
     std::string decoded;
     auto views = vocabulary_.decode(words, decoded, /*ignore_eos=*/false);

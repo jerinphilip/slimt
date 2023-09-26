@@ -255,8 +255,8 @@ size_t debugCountTokens(AnnotatedText const &text) {
   size_t tokens = 1;  // for the ending gap
   for (size_t sentence_id = 0; sentence_id < text.sentence_count();
        ++sentence_id) {
-    tokens +=
-        1 + text.word_count(sentence_id);  // pre-sentence prefix/gap + each word
+    tokens += 1 + text.word_count(
+                      sentence_id);  // pre-sentence prefix/gap + each word
   }
   return tokens;
 }
