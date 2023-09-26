@@ -71,7 +71,7 @@ class Request {
   /// compiled from requests.
   void complete(size_t index, History history);
 
-  bool cacheHitPrefilled(size_t index) const {
+  bool is_prefilled_from_cache(size_t index) const {
     return histories_[index] != nullptr;
   }
 

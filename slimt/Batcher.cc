@@ -55,7 +55,7 @@ Batch Batcher::generate() {
 size_t Batcher::enqueue(const Ptr<Request>& request) {
   size_t to_be_translated = 0;
   for (size_t i = 0; i < request->segment_count(); i++) {
-    if (!request->cacheHitPrefilled(i)) {
+    if (!request->is_prefilled_from_cache(i)) {
       Unit sentence(i, request);
       size_t bucket_id = sentence.numTokens();
 
