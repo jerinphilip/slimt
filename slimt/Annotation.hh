@@ -15,7 +15,7 @@ namespace slimt {
 /// bytes in a string, but does not itself own the string.
 ///
 /// See also AnnotatedText, which owns Annotation and the string. AnnotatedText
-/// wraps these ByteRange functions to provide a std::string_view interface.
+/// wraps these Range functions to provide a std::string_view interface.
 ///
 /// Text is divided into gaps (whitespace between sentences) and sentences like
 /// so:
@@ -51,28 +51,28 @@ class Annotation {
     return gap_[sentence_id + 1] - gap_[sentence_id] - 1 /* minus the gap */;
   }
 
-  /// Returns a ByteRange representing `word_id` in sentence indexed by
+  /// Returns a Range representing `word_id` in sentence indexed by
   /// `sentence_id`. `word_id` follows 0-based indexing, and should be less
   /// than
   /// `.word_count()` for `sentence_id` for defined behaviour.
-  ByteRange word(size_t sentence_id, size_t word_id) const {
+  Range word(size_t sentence_id, size_t word_id) const {
     size_t token_idx = gap_[sentence_id] + 1 + word_id;
-    return ByteRange{token_begin_[token_idx], token_begin_[token_idx + 1]};
+    return Range{token_begin_[token_idx], token_begin_[token_idx + 1]};
   }
 
-  /// Returns a ByteRange representing sentence corresponding to `sentence_id`.
+  /// Returns a Range representing sentence corresponding to `sentence_id`.
   /// `sentence_id` follows 0-based indexing, and behaviour is defined only
   /// when less than `.sentence_count()`.
-  ByteRange sentence(size_t sentence_id) const {
-    return ByteRange{
+  Range sentence(size_t sentence_id) const {
+    return Range{
         token_begin_[gap_[sentence_id] + 1], /*end of whitespace before */
         token_begin_[gap_[sentence_id + 1]]  /*beginning of whitespace after */
     };
   }
 
-  ByteRange gap(size_t gap_idx) const {
+  Range gap(size_t gap_idx) const {
     size_t token_idx = gap_[gap_idx];
-    return ByteRange{token_begin_[token_idx], token_begin_[token_idx + 1]};
+    return Range{token_begin_[token_idx], token_begin_[token_idx + 1]};
   }
 
  private:
@@ -111,9 +111,9 @@ class Annotation {
 /// following additional desiderata.
 ///
 /// 1. Access to processed std::string_views for convenience rather than
-/// ByteRanges (which only provides index information).
+/// Ranges (which only provides index information).
 ///
-/// 2. Transparently convert std::string_views into ByteRanges for the
+/// 2. Transparently convert std::string_views into Ranges for the
 /// Annotation referring to the text bound by this structure.
 ///
 /// 3. Bind the text and annotations together, to move around as a meaningful
@@ -124,9 +124,9 @@ class AnnotatedText {
   Annotation annotation;  ///< sentence and (sub-) word annotations.
 
   /// Construct an empty AnnotatedText. This is useful when the target string or
-  /// ByteRanges are not known yet, but the public members can be used to
+  /// Ranges are not known yet, but the public members can be used to
   /// populate it. One use-case, when translated-text is created decoding from
-  /// histories and the ByteRanges only known after the string has been
+  /// histories and the Ranges only known after the string has been
   /// constructed.
   AnnotatedText() = default;
 
@@ -191,18 +191,18 @@ class AnnotatedText {
     return asStringView(annotation.gap(sentence_id));
   }
 
-  /// Returns a ByteRange representing word_id in sentence_id
-  ByteRange wordAsByteRange(size_t sentence_id, size_t word_id) const {
+  /// Returns a Range representing word_id in sentence_id
+  Range wordAsRange(size_t sentence_id, size_t word_id) const {
     return annotation.word(sentence_id, word_id);
   }
 
-  /// Returns a ByteRange representing sentence corresponding to sentence_id.
-  ByteRange sentenceAsByteRange(size_t sentence_id) const {
+  /// Returns a Range representing sentence corresponding to sentence_id.
+  Range sentenceAsRange(size_t sentence_id) const {
     return annotation.sentence(sentence_id);
   }
 
   /// Utility function to call `fun` on each word (subword token effectively) in
-  /// an `AnnotatedText`. `fun` is called with the `ByteRange`, the
+  /// an `AnnotatedText`. `fun` is called with the `Range`, the
   /// `std::string_view` with the word, and a `bool` to indicate whether it is
   /// the last word in the `AnnotatedText`, which is also the ending whitespace
   /// slot of AnnotatedText.
@@ -213,24 +213,24 @@ class AnnotatedText {
     for (size_t sentence_id = 0; sentence_id < sentence_count();
          ++sentence_id) {
       std::string sentence;
-      std::vector<ByteRange> tokens;
+      std::vector<Range> tokens;
 
       std::string prefix =
           fun(annotation.gap(sentence_id), gap(sentence_id), false);
 
       for (size_t word_id = 0; word_id < word_count(sentence_id); ++word_id) {
-        std::string token = fun(wordAsByteRange(sentence_id, word_id),
+        std::string token = fun(wordAsRange(sentence_id, word_id),
                                 word(sentence_id, word_id), false);
         tokens.push_back(
-            ByteRange{sentence.size(), sentence.size() + token.size()});
+            Range{sentence.size(), sentence.size() + token.size()});
         sentence += token;
       }
 
-      // Convert our ByteRanges to std::string_views since that's what
+      // Convert our Ranges to std::string_views since that's what
       // append_sentence expects
       std::vector<std::string_view> views(tokens.size());
       std::transform(tokens.begin(), tokens.end(), views.begin(),
-                     [&](ByteRange const &range) {
+                     [&](Range const &range) {
                        return std::string_view(sentence.data() + range.begin,
                                                range.size());
                      });
@@ -245,7 +245,7 @@ class AnnotatedText {
   }
 
  private:
-  std::string_view asStringView(const ByteRange &byteRange) const {
+  std::string_view asStringView(const Range &byteRange) const {
     return std::string_view(text.data() + byteRange.begin, byteRange.size());
   }
 };

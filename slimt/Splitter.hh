@@ -15,7 +15,7 @@ class TextProcessor {
   /// contains an instance of sentence-splitter based on ssplit.
   ///
   /// Used in Service to convert an incoming blob of text to a vector of
-  /// sentences (vector of words). In addition, the ByteRanges of the
+  /// sentences (vector of words). In addition, the Ranges of the
   /// source-tokens in unnormalized text are provided as string_views.
  public:
   // There are two ways to construct text-processor, different in a file-system
@@ -27,7 +27,7 @@ class TextProcessor {
   /// @param [in] options: expected to contain `max-length-break`,
   /// `ssplit-mode`.
   /// @param [in] vocabs: Vocabularies used to process text into sentences to
-  /// marian::Words and corresponding ByteRange information in AnnotatedText.
+  /// marian::Words and corresponding Range information in AnnotatedText.
   /// @param [in] ssplit_prefix_file: Path to ssplit-prefix file compatible with
   /// moses-tokenizer.
   TextProcessor(size_t wrap_length, const std::string &mode,

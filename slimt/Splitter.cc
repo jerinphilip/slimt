@@ -162,12 +162,12 @@ void TextProcessor::processFromAnnotation(AnnotatedText &source,
 
   for (size_t s = 0; s < source.sentence_count(); s++) {
     // This is our sentence_stream
-    ByteRange sentence_byte_range = source.sentenceAsByteRange(s);
+    Range sentence_range = source.sentenceAsRange(s);
 
-    // Fool tokenization using ByteRanges into looking at replacement. They're
+    // Fool tokenization using Ranges into looking at replacement. They're
     // same, so okay.
-    std::string_view sentence{&replacement.text[sentence_byte_range.begin],
-                              sentence_byte_range.size()};
+    std::string_view sentence{&replacement.text[sentence_range.begin],
+                              sentence_range.size()};
 
     std::vector<std::string_view> word_ranges;
     Segment segment = tokenize(sentence, word_ranges);

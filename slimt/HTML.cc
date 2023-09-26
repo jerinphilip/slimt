@@ -11,7 +11,7 @@
 namespace {
 
 using slimt::AnnotatedText;
-using slimt::ByteRange;
+using slimt::Range;
 using slimt::HTML;
 using slimt::Response;
 
@@ -128,7 +128,7 @@ void diffTags(HTML::TagStack const &prev, HTML::TagStack const &curr,
   opening.insert(opening.end(), curr.begin() + i, curr.end());
 }
 
-// bool intersects(ByteRange const &range, HTML::Span const &span) {
+// bool intersects(Range const &range, HTML::Span const &span) {
 //   return range.begin <= span.end && range.end >= span.begin;
 // };
 
@@ -603,7 +603,7 @@ AnnotatedText HTML::restoreSource(
                        // and the while-loop below will do the rest
   assert(prevIt == spans_.end() || prevIt->tags.empty());
 
-  return in.apply([&](ByteRange range, std::string_view token, bool last) {
+  return in.apply([&](Range range, std::string_view token, bool last) {
     TokenFormatter formatter(token);
 
     // Potential issue: spans and tokens can intersect, e.g.
@@ -650,7 +650,7 @@ AnnotatedText HTML::restoreTarget(
   auto targetTagIt = targetTokenTags.begin();
 
   AnnotatedText out = in.apply(
-      [&]([[maybe_unused]] ByteRange range, std::string_view token, bool last) {
+      [&]([[maybe_unused]] Range range, std::string_view token, bool last) {
         TokenFormatter formatter(token);
 
         // First we scan through spans_ to catch up to the span assigned to this

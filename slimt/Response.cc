@@ -13,8 +13,8 @@ namespace slimt {
 // spreading the probability in the former over bytes and collecting it at the
 // ranges specified by latter, using a two pointer accumulation strategy.
 Alignment transfer_through_characters(
-    const std::vector<ByteRange> &source_side_pivots,
-    const std::vector<ByteRange> &target_side_pivots,
+    const std::vector<Range> &source_side_pivots,
+    const std::vector<Range> &target_side_pivots,
     const Alignment &pivot_given_targets) {
   // Initialize an empty alignment matrix.
   Alignment remapped(pivot_given_targets.size(),
@@ -125,24 +125,24 @@ std::vector<Alignment> remapAlignments(const Response &first,
     const Alignment &pivot_given_targets = second.alignments[sentence_id];
 
     // TODO(any): Allow range iterators and change algorithm, directly tapping
-    // into AnnotatedText Extracts ByteRanges corresponding to a words
+    // into AnnotatedText Extracts Ranges corresponding to a words
     // constituting a sentence from an annotation.
-    auto extract_word_byte_ranges =
+    auto extract_word_ranges =
         [](const AnnotatedText &annotatedText,
-           size_t sentence_id) -> std::vector<ByteRange> {
+           size_t sentence_id) -> std::vector<Range> {
       size_t num_words = annotatedText.word_count(sentence_id);
-      std::vector<ByteRange> output;
+      std::vector<Range> output;
 
       for (size_t i = 0; i < num_words; i++) {
-        output.push_back(annotatedText.wordAsByteRange(sentence_id, i));
+        output.push_back(annotatedText.wordAsRange(sentence_id, i));
       }
       return output;
     };
 
     auto source_side_pivots =
-        extract_word_byte_ranges(first.target, sentence_id);
+        extract_word_ranges(first.target, sentence_id);
     auto target_side_pivots =
-        extract_word_byte_ranges(second.source, sentence_id);
+        extract_word_ranges(second.source, sentence_id);
 
     // Reintrepret probability p(q'_j' | t_k) as p(q_j | t_k)
     Alignment remapped_pivot_given_targets = transfer_through_characters(
