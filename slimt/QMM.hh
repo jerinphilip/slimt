@@ -33,11 +33,11 @@ Tensor dot(Tensor& x, Tensor& W, float a_quant, float b_quant,
 
 template <enum Provider>
 void prepare_weight_transposed(const float* weights, int8_t* prepared,
-                          float quantization_multiplier, size_t cols,
-                          size_t rows);
+                               float quantization_multiplier, size_t cols,
+                               size_t rows);
 template <enum Provider>
 void prepare_weight_quantized_transposed(const int8_t* input, int8_t* output,
-                                    size_t rows, size_t cols);
+                                         size_t rows, size_t cols);
 
 #ifdef SLIMT_HAS_INTGEMM
 constexpr Provider kAutoProvider = Provider::Intgemm;
@@ -63,9 +63,9 @@ Tensor dot(Tensor& x, Tensor& W, float a_quant, float b_quant,
            const std::string& name = "");
 
 void prepare_weight_transposed(const float* weights, int8_t* prepared,
-                          float quantization_multiplier, size_t cols,
-                          size_t rows);
+                               float quantization_multiplier, size_t cols,
+                               size_t rows);
 void prepare_weight_quantized_transposed(const int8_t* input, int8_t* output,
-                                    size_t rows, size_t cols);
+                                         size_t rows, size_t cols);
 
 }  // namespace slimt::qmm

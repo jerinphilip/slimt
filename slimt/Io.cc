@@ -206,8 +206,8 @@ std::vector<io::Item> loadItems(void* current) {
             sizeof(float);
         Aligned embedding_aligned(/*alignment=*/64, prepared_size);
         auto* prepared = reinterpret_cast<int8_t*>(embedding_aligned.data());
-        qmm::prepare_weight_transposed(weights, prepared, quantization_multiplier,
-                                  cols, rows);
+        qmm::prepare_weight_transposed(weights, prepared,
+                                       quantization_multiplier, cols, rows);
 
         // Save quantization multiplier.
         auto* embedding_quantization_multiplier_addr =
