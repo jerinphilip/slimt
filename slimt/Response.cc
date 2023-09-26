@@ -116,7 +116,7 @@ Alignment transfer_through_characters(
   return remapped;
 }
 
-std::vector<Alignment> remapAlignments(const Response &first,
+std::vector<Alignment> remap_alignments(const Response &first,
                                        const Response &second) {
   std::vector<Alignment> alignments;
   for (size_t sentence_id = 0; sentence_id < first.source.sentence_count();
