@@ -54,14 +54,14 @@ class Request {
   /// Obtain the count of tokens in the segment correponding to index. Used to
   /// insert unit from multiple requests into the corresponding size
   /// bucket.
-  size_t segmentTokens(size_t index) const;
+  size_t word_count(size_t index) const;
 
   /// Obtain number of segments in a request.
-  size_t numSegments() const;
+  size_t segment_count() const;
 
   /// Obtains segment corresponding to index  to create a batch of segments
   /// among several requests.
-  Segment getSegment(size_t index) const;
+  Segment segment(size_t index) const;
 
   /// For notions of priority among requests, used to enable std::set in
   /// BatchingPool.

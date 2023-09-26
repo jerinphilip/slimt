@@ -48,7 +48,7 @@ Request::Request(size_t Id, size_t model_id, Segments &&segments,
       // ProcessedUnit). Also update accounting used elsewhere
       // (counter_) to reflect one less segment to translate.
       for (size_t idx = 0; idx < segments_.size(); idx++) {
-        size_t key = cache_key(model_id_, getSegment(idx));
+        size_t key = cache_key(model_id_, segment(idx));
         auto [found, history] = cache_->find(key);
         if (found) {
           histories_[idx] = history;
@@ -65,13 +65,13 @@ Request::Request(size_t Id, size_t model_id, Segments &&segments,
   }
 }
 
-size_t Request::numSegments() const { return segments_.size(); }
+size_t Request::segment_count() const { return segments_.size(); }
 
-size_t Request::segmentTokens(size_t index) const {
+size_t Request::word_count(size_t index) const {
   return (segments_[index].size());
 }
 
-Segment Request::getSegment(size_t index) const { return segments_[index]; }
+Segment Request::segment(size_t index) const { return segments_[index]; }
 
 void Request::complete(size_t index, History history) {
   // Concurrently called by multiple workers as a history from translation is
@@ -82,7 +82,7 @@ void Request::complete(size_t index, History history) {
   // store the result.
   histories_[index] = std::move(history);
   if (cache_) {
-    size_t key = cache_key(model_id_, getSegment(index));
+    size_t key = cache_key(model_id_, segment(index));
     cache_->store(key, histories_[index]);
   }
 
@@ -98,7 +98,7 @@ void Request::complete(size_t index, History history) {
 Unit::Unit(size_t index, Ptr<Request> request)
     : index_(index), request_(std::move(request)) {}
 
-size_t Unit::numTokens() const { return (request_->segmentTokens(index_)); }
+size_t Unit::numTokens() const { return (request_->word_count(index_)); }
 
 void Unit::complete(History history) {
   // Relays complete into request's complete, using index
@@ -107,7 +107,7 @@ void Unit::complete(History history) {
 }
 
 Segment Unit::getUnderlyingSegment() const {
-  return request_->getSegment(index_);
+  return request_->segment(index_);
 }
 
 bool operator<(const Request &a, const Request &b) {
