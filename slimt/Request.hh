@@ -22,7 +22,7 @@ using TranslationCache = slimt::TranslationCache;
 /// happens through:
 ///
 /// ```cpp
-///   Batch::completeBatch(...)
+///   Batch::complete(...)
 ///       -> SegmentRef::complete(..)
 ///          -> Request::complete(...)
 /// ```
@@ -149,7 +149,7 @@ class Batch {
   // batch.
   const SegmentRefs &segment_refs() { return segment_refs_; }
 
-  // On obtaining Histories after translating a batch, completeBatch can be
+  // On obtaining Histories after translating a batch, complete can be
   // called with Histories , which forwards the call to Request through
   // SegmentRef and triggers completion, by setting the promised value to
   // the future given to client.
