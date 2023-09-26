@@ -56,7 +56,7 @@ Tensor affine_with_select<Provider::Intgemm>(
 
   // Prepare bias
   Tensor prepared_bias(Type::f32, bias.shape(), "prepared_bias");
-  constexpr float kMax8bit = 127.0F;
+  constexpr float kMax8bit = kInt8Maxf;
   float a_alpha = kMax8bit / a_quant;
   float b_alpha = kMax8bit / b_quant;
 
@@ -140,10 +140,10 @@ Tensor affine<Provider::Intgemm>(Tensor& x, Tensor& W, Tensor& b, float a_quant,
 
   // Prepare bias
   Tensor prepared_bias(Type::f32, bias.shape(), "prepared_bias");
-  float a_alpha = 127.0F / a_quant;
-  float b_alpha = 127.0F / b_quant;
+  float a_alpha = kInt8Maxf / a_quant;
+  float b_alpha = kInt8Maxf / b_quant;
 
-  float bias_unquant_multiplier = (-1.0F * (a_alpha * b_alpha)) / 127.0F;
+  float bias_unquant_multiplier = (-1.0F * (a_alpha * b_alpha)) / kInt8Maxf;
   auto prepare_bias_callback = intgemm::callbacks::UnquantizeAndAddBiasAndWrite(
       bias_unquant_multiplier, bias.data<float>(),  //
       prepared_bias.data<float>()                   //
@@ -209,10 +209,10 @@ Tensor dot<Provider::Intgemm>(Tensor& x, Tensor& W, float a_quant,
   bias.fill_in_place(0.0F);
 
   Tensor prepared_bias(Type::f32, bias.shape(), "prepared_bias");
-  float a_alpha = 127.0F / a_quant;
-  float b_alpha = 127.0F / b_quant;
+  float a_alpha = kInt8Maxf / a_quant;
+  float b_alpha = kInt8Maxf / b_quant;
 
-  float bias_unquant_multiplier = (-1.0F * (a_alpha * b_alpha)) / 127.0F;
+  float bias_unquant_multiplier = (-1.0F * (a_alpha * b_alpha)) / kInt8Maxf;
   auto prepare_bias_callback = intgemm::callbacks::UnquantizeAndAddBiasAndWrite(
       bias_unquant_multiplier, bias.data<float>(),  //
       prepared_bias.data<float>()                   //
@@ -278,8 +278,8 @@ void quantize(const float* input, float scale, Index rows, Index width,
 
     // Since float can store bigger values, we threshold anything that's gone
     // higher and can't fit in int8.
-    value = std::max<float>(-127.0F, value);
-    value = std::min<float>(127.0F, value);
+    value = std::max<float>(-kInt8Maxf, value);
+    value = std::min<float>(kInt8Maxf, value);
 
     // Finally a static cast.
     output[i] = static_cast<int8_t>(value);
@@ -566,7 +566,7 @@ Tensor affine_with_select<Provider::Gemmology>(
 
   // Prepare bias
   Tensor prepared_bias(Type::f32, bias.shape(), "prepared_bias");
-  constexpr float kMax8bit = 127.0F;
+  constexpr float kMax8bit = kInt8Maxf;
   float a_alpha = kMax8bit / a_quant;
   float b_alpha = kMax8bit / b_quant;
 
@@ -623,8 +623,8 @@ Tensor affine_with_select<Provider::Gemmology>(
 
 template <>
 Tensor affine<Provider::Gemmology>(Tensor& x, Tensor& W, Tensor& b,
-                                    float a_quant, float b_quant,
-                                    const std::string& name) {
+                                   float a_quant, float b_quant,
+                                   const std::string& name) {
   // Naming is to simplify thinking with the gemmology API below.
   Tensor& A = x;  // NOLINT
   Tensor& B = W;  // NOLINT
@@ -652,10 +652,10 @@ Tensor affine<Provider::Gemmology>(Tensor& x, Tensor& W, Tensor& b,
 
   // Prepare bias
   Tensor prepared_bias(Type::f32, bias.shape(), "prepared_bias");
-  float a_alpha = 127.0F / a_quant;
-  float b_alpha = 127.0F / b_quant;
+  float a_alpha = kInt8Maxf / a_quant;
+  float b_alpha = kInt8Maxf / b_quant;
 
-  float bias_unquant_multiplier = (-1.0F * (a_alpha * b_alpha)) / 127.0F;
+  float bias_unquant_multiplier = (-1.0F * (a_alpha * b_alpha)) / kInt8Maxf;
   auto prepare_bias_callback =
       gemmology::callbacks::UnquantizeAndAddBiasAndWrite(
           bias_unquant_multiplier, bias.data<float>(),  //
@@ -690,7 +690,7 @@ Tensor affine<Provider::Gemmology>(Tensor& x, Tensor& W, Tensor& b,
 
 template <>
 Tensor dot<Provider::Gemmology>(Tensor& x, Tensor& W, float a_quant,
-                                 float b_quant, const std::string& name) {
+                                float b_quant, const std::string& name) {
   // Naming is to simplify thinking with the gemmology API below.
   Tensor& A = x;  // NOLINT
   Tensor& B = W;  // NOLINT
@@ -722,10 +722,10 @@ Tensor dot<Provider::Gemmology>(Tensor& x, Tensor& W, float a_quant,
   bias.fill_in_place(0.0F);
 
   Tensor prepared_bias(Type::f32, bias.shape(), "prepared_bias");
-  float a_alpha = 127.0F / a_quant;
-  float b_alpha = 127.0F / b_quant;
+  float a_alpha = kInt8Maxf / a_quant;
+  float b_alpha = kInt8Maxf / b_quant;
 
-  float bias_unquant_multiplier = (-1.0F * (a_alpha * b_alpha)) / 127.0F;
+  float bias_unquant_multiplier = (-1.0F * (a_alpha * b_alpha)) / kInt8Maxf;
   auto prepare_bias_callback =
       gemmology::callbacks::UnquantizeAndAddBiasAndWrite(
           bias_unquant_multiplier, bias.data<float>(),  //
@@ -761,18 +761,18 @@ Tensor dot<Provider::Gemmology>(Tensor& x, Tensor& W, float a_quant,
 
 template <>
 void prepare_B_transposed<Provider::Gemmology>(const float* weights,
-                                                int8_t* prepared,
-                                                float quantization_multiplier,
-                                                size_t cols, size_t rows) {
+                                               int8_t* prepared,
+                                               float quantization_multiplier,
+                                               size_t cols, size_t rows) {
   gemmology::PrepareBTransposed(weights, prepared, quantization_multiplier,
                                 cols, rows);
 }
 
 template <>
 void prepare_B_quantized_transposed<Provider::Gemmology>(const int8_t* input,
-                                                          int8_t* output,
-                                                          size_t rows,
-                                                          size_t cols) {
+                                                         int8_t* output,
+                                                         size_t rows,
+                                                         size_t cols) {
   gemmology::PrepareBQuantizedTransposed(input, output, rows, cols);
 }
 
