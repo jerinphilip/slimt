@@ -57,7 +57,7 @@ size_t Batcher::enqueue(const Ptr<Request>& request) {
   for (size_t i = 0; i < request->segment_count(); i++) {
     if (!request->is_prefilled_from_cache(i)) {
       Unit sentence(i, request);
-      size_t bucket_id = sentence.numTokens();
+      size_t bucket_id = sentence.size();
 
       // Due to a workaround for pivoting, unless we can discipline the
       // vocabulary to get stronger static requirements, it is difficult to

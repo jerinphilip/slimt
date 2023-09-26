@@ -98,7 +98,7 @@ void Request::complete(size_t index, History history) {
 Unit::Unit(size_t index, Ptr<Request> request)
     : index_(index), request_(std::move(request)) {}
 
-size_t Unit::numTokens() const { return (request_->word_count(index_)); }
+size_t Unit::size() const { return (request_->word_count(index_)); }
 
 void Unit::complete(History history) {
   // Relays complete into request's complete, using index
@@ -133,8 +133,8 @@ void Batch::log() {
 
 void Batch::add(const Unit &unit) {
   units_.push_back(unit);
-  token_count_ += unit.numTokens();
-  max_length_ = std::max(max_length_, static_cast<size_t>(unit.numTokens()));
+  token_count_ += unit.size();
+  max_length_ = std::max(max_length_, static_cast<size_t>(unit.size()));
 }
 
 void Batch::complete(const Histories &histories) {

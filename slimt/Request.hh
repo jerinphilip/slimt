@@ -112,7 +112,7 @@ class Unit {
 
   /// Number of tokens in the segment this Unit represents. Used to
   /// order by length in batching.
-  size_t numTokens() const;
+  size_t size() const;
 
   /// Accessor to the segment represented by the Unit.
   Segment getUnderlyingSegment() const;
@@ -155,7 +155,7 @@ class Batch {
   // the future given to client.
   void complete(const Histories &histories);
 
-  // Convenience function to log batch-statistics. numTokens, max-length.
+  // Convenience function to log batch-statistics. size, max-length.
   void log();
 
  private:
