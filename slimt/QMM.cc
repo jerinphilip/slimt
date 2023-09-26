@@ -27,7 +27,7 @@ namespace detail {
 
 #ifdef SLIMT_HAS_INTGEMM
 template <>
-Tensor affine_with_select<Provider::kIntgemm>(
+Tensor affine_with_select<Provider::Intgemm>(
     Tensor& x, Tensor& W, Tensor& b, float a_quant, float b_quant,
     const std::vector<uint32_t>& indices, const std::string& name) {
   // Naming is to simplify thinking with the intgemm API below.
@@ -111,7 +111,7 @@ Tensor affine_with_select<Provider::kIntgemm>(
 }
 
 template <>
-Tensor affine<Provider::kIntgemm>(Tensor& x, Tensor& W, Tensor& b,
+Tensor affine<Provider::Intgemm>(Tensor& x, Tensor& W, Tensor& b,
                                   float a_quant, float b_quant,
                                   const std::string& name) {
   // Naming is to simplify thinking with the intgemm API below.
@@ -177,7 +177,7 @@ Tensor affine<Provider::kIntgemm>(Tensor& x, Tensor& W, Tensor& b,
 }
 
 template <>
-Tensor dot<Provider::kIntgemm>(Tensor& x, Tensor& W, float a_quant,
+Tensor dot<Provider::Intgemm>(Tensor& x, Tensor& W, float a_quant,
                                float b_quant, const std::string& name) {
   // Naming is to simplify thinking with the intgemm API below.
   Tensor& A = x;  // NOLINT
@@ -247,7 +247,7 @@ Tensor dot<Provider::kIntgemm>(Tensor& x, Tensor& W, float a_quant,
 }
 
 template <>
-void PrepareBTransposed<Provider::kIntgemm>(const float* weights,
+void PrepareBTransposed<Provider::Intgemm>(const float* weights,
                                             int8_t* prepared,
                                             float quantization_multiplier,
                                             size_t cols, size_t rows) {
@@ -256,7 +256,7 @@ void PrepareBTransposed<Provider::kIntgemm>(const float* weights,
 }
 
 template <>
-void PrepareBQuantizedTransposed<Provider::kIntgemm>(const int8_t* input,
+void PrepareBQuantizedTransposed<Provider::Intgemm>(const int8_t* input,
                                                      int8_t* output,
                                                      size_t rows, size_t cols) {
   intgemm::Int8::PrepareBQuantizedTransposed(input, output, rows, cols);
@@ -320,7 +320,7 @@ void unquantizeAddBias(const int32_t* input, const float* input_bias_prepared,
 
 // Ruy.
 template <>
-Tensor affine<Provider::kRuy>(Tensor& x, Tensor& W, Tensor& b, float a_quant,
+Tensor affine<Provider::Ruy>(Tensor& x, Tensor& W, Tensor& b, float a_quant,
                               float b_quant, const std::string& name) {
   Tensor& A = x;  // NOLINT
   Tensor& B = W;  // NOLINT
@@ -380,7 +380,7 @@ Tensor affine<Provider::kRuy>(Tensor& x, Tensor& W, Tensor& b, float a_quant,
 }
 
 template <>
-Tensor affine_with_select<Provider::kRuy>(Tensor& x, Tensor& W, Tensor& b,
+Tensor affine_with_select<Provider::Ruy>(Tensor& x, Tensor& W, Tensor& b,
                                           float a_quant, float b_quant,
                                           const std::vector<uint32_t>& indices,
                                           const std::string& name) {
@@ -464,7 +464,7 @@ Tensor affine_with_select<Provider::kRuy>(Tensor& x, Tensor& W, Tensor& b,
 }
 
 template <>
-Tensor dot<Provider::kRuy>(Tensor& x, Tensor& W, float a_quant, float b_quant,
+Tensor dot<Provider::Ruy>(Tensor& x, Tensor& W, float a_quant, float b_quant,
                            const std::string& name) {
   Tensor& A = x;  // NOLINT
   Tensor& B = W;  // NOLINT
@@ -520,14 +520,14 @@ Tensor dot<Provider::kRuy>(Tensor& x, Tensor& W, float a_quant, float b_quant,
 }
 
 template <>
-void PrepareBTransposed<Provider::kRuy>(const float* weights, int8_t* prepared,
+void PrepareBTransposed<Provider::Ruy>(const float* weights, int8_t* prepared,
                                         float quantization_multiplier,
                                         size_t cols, size_t rows) {
   detail::quantize(weights, quantization_multiplier, cols, rows, prepared);
 }
 
 template <>
-void PrepareBQuantizedTransposed<Provider::kRuy>(const int8_t* input,
+void PrepareBQuantizedTransposed<Provider::Ruy>(const int8_t* input,
                                                  int8_t* output, size_t rows,
                                                  size_t cols) {
   std::memcpy(output, input,

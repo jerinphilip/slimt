@@ -10,9 +10,9 @@ namespace slimt::qmm {
 namespace detail {
 
 enum class Provider {
-  kNone,      //
-  kIntgemm,   //
-  kRuy,       //
+  None,      //
+  Intgemm,   //
+  Ruy,       //
   kGemmology  //
 };
 
@@ -38,11 +38,11 @@ void PrepareBQuantizedTransposed(const int8_t* input, int8_t* output,
                                  size_t rows, size_t cols);
 
 #ifdef SLIMT_HAS_INTGEMM
-constexpr Provider kAutoProvider = Provider::kIntgemm;
+constexpr Provider kAutoProvider = Provider::Intgemm;
 #endif
 
 #ifdef SLIMT_HAS_RUY
-constexpr Provider kAutoProvider = Provider::kRuy;
+constexpr Provider kAutoProvider = Provider::Ruy;
 #endif
 
 #ifdef SLIMT_HAS_GEMMOLOGY
