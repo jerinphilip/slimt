@@ -139,8 +139,8 @@ class AnnotatedText {
   /// append_ending_whitespace.
   /// The std::string_views must not already be in text.
   void append_sentence(std::string_view prefix,
-                      std::vector<std::string_view>::iterator tokens_begin,
-                      std::vector<std::string_view>::iterator tokens_end);
+                       std::vector<std::string_view>::iterator tokens_begin,
+                       std::vector<std::string_view>::iterator tokens_end);
 
   /// Append the whitespace at the end of input. std::string_view must not be in
   /// text.

@@ -151,7 +151,7 @@ void TextProcessor::wrap(Segment &segment,
     partial_word_ranges.emplace_back(end, 0);
     // diff > 0
     source.record_existing_sentence(partial_word_ranges.begin(),
-                                  partial_word_ranges.end(), astart->data());
+                                    partial_word_ranges.end(), astart->data());
   }
 }
 
@@ -189,7 +189,7 @@ void TextProcessor::processFromAnnotation(AnnotatedText &source,
 
     segments.push_back(std::move(segment));
     replacement.record_existing_sentence(word_ranges.begin(), word_ranges.end(),
-                                       word_ranges.begin()->data());
+                                         word_ranges.begin()->data());
   }
 
   source = replacement;

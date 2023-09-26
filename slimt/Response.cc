@@ -127,9 +127,8 @@ std::vector<Alignment> remapAlignments(const Response &first,
     // TODO(any): Allow range iterators and change algorithm, directly tapping
     // into AnnotatedText Extracts Ranges corresponding to a words
     // constituting a sentence from an annotation.
-    auto extract_word_ranges =
-        [](const AnnotatedText &annotatedText,
-           size_t sentence_id) -> std::vector<Range> {
+    auto extract_word_ranges = [](const AnnotatedText &annotatedText,
+                                  size_t sentence_id) -> std::vector<Range> {
       size_t num_words = annotatedText.word_count(sentence_id);
       std::vector<Range> output;
 
@@ -139,10 +138,8 @@ std::vector<Alignment> remapAlignments(const Response &first,
       return output;
     };
 
-    auto source_side_pivots =
-        extract_word_ranges(first.target, sentence_id);
-    auto target_side_pivots =
-        extract_word_ranges(second.source, sentence_id);
+    auto source_side_pivots = extract_word_ranges(first.target, sentence_id);
+    auto target_side_pivots = extract_word_ranges(second.source, sentence_id);
 
     // Reintrepret probability p(q'_j' | t_k) as p(q_j | t_k)
     Alignment remapped_pivot_given_targets = transfer_through_characters(

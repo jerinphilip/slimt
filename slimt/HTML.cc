@@ -11,8 +11,8 @@
 namespace {
 
 using slimt::AnnotatedText;
-using slimt::Range;
 using slimt::HTML;
+using slimt::Range;
 using slimt::Response;
 
 /// Encodes the minimum of HTML entities.
