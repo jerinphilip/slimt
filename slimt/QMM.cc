@@ -246,7 +246,7 @@ Tensor dot<Provider::Intgemm>(Tensor& x, Tensor& W, float a_quant,
 }
 
 template <>
-void prepare_B_transposed<Provider::Intgemm>(const float* weights,
+void prepare_weight_transposed<Provider::Intgemm>(const float* weights,
                                              int8_t* prepared,
                                              float quantization_multiplier,
                                              size_t cols, size_t rows) {
@@ -255,7 +255,7 @@ void prepare_B_transposed<Provider::Intgemm>(const float* weights,
 }
 
 template <>
-void prepare_B_quantized_transposed<Provider::Intgemm>(const int8_t* input,
+void prepare_weight_quantized_transposed<Provider::Intgemm>(const int8_t* input,
                                                        int8_t* output,
                                                        size_t rows,
                                                        size_t cols) {
@@ -520,14 +520,14 @@ Tensor dot<Provider::Ruy>(Tensor& x, Tensor& W, float a_quant, float b_quant,
 }
 
 template <>
-void prepare_B_transposed<Provider::Ruy>(const float* weights, int8_t* prepared,
+void prepare_weight_transposed<Provider::Ruy>(const float* weights, int8_t* prepared,
                                          float quantization_multiplier,
                                          size_t cols, size_t rows) {
   detail::quantize(weights, quantization_multiplier, cols, rows, prepared);
 }
 
 template <>
-void prepare_B_quantized_transposed<Provider::Ruy>(const int8_t* input,
+void prepare_weight_quantized_transposed<Provider::Ruy>(const int8_t* input,
                                                    int8_t* output, size_t rows,
                                                    size_t cols) {
   std::memcpy(output, input,
@@ -760,7 +760,7 @@ Tensor dot<Provider::Gemmology>(Tensor& x, Tensor& W, float a_quant,
 }
 
 template <>
-void prepare_B_transposed<Provider::Gemmology>(const float* weights,
+void prepare_weight_transposed<Provider::Gemmology>(const float* weights,
                                                int8_t* prepared,
                                                float quantization_multiplier,
                                                size_t cols, size_t rows) {
@@ -769,7 +769,7 @@ void prepare_B_transposed<Provider::Gemmology>(const float* weights,
 }
 
 template <>
-void prepare_B_quantized_transposed<Provider::Gemmology>(const int8_t* input,
+void prepare_weight_quantized_transposed<Provider::Gemmology>(const int8_t* input,
                                                          int8_t* output,
                                                          size_t rows,
                                                          size_t cols) {
@@ -803,19 +803,19 @@ Tensor dot(Tensor& x, Tensor& W, float a_quant, float b_quant,
   return dot<kAutoProvider>(x, W, a_quant, b_quant, name);
 }
 
-void prepare_B_transposed(const float* weights, int8_t* prepared,
+void prepare_weight_transposed(const float* weights, int8_t* prepared,
                           float quantization_multiplier, size_t cols,
                           size_t rows) {
   using detail::kAutoProvider;
-  using detail::prepare_B_transposed;
-  prepare_B_transposed<kAutoProvider>(weights, prepared,
+  using detail::prepare_weight_transposed;
+  prepare_weight_transposed<kAutoProvider>(weights, prepared,
                                       quantization_multiplier, cols, rows);
 }
-void prepare_B_quantized_transposed(const int8_t* input, int8_t* output,
+void prepare_weight_quantized_transposed(const int8_t* input, int8_t* output,
                                     size_t rows, size_t cols) {
   using detail::kAutoProvider;
-  using detail::prepare_B_quantized_transposed;
-  prepare_B_quantized_transposed<kAutoProvider>(input, output, rows, cols);
+  using detail::prepare_weight_quantized_transposed;
+  prepare_weight_quantized_transposed<kAutoProvider>(input, output, rows, cols);
 }
 
 }  // namespace slimt::qmm
