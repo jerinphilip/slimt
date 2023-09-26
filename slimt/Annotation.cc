@@ -6,17 +6,17 @@
 namespace slimt {
 
 AnnotatedText::AnnotatedText(std::string &&t) : text(std::move(t)) {
-  // Treat the entire text as a gap that recordExistingSentence will break.
+  // Treat the entire text as a gap that record_existing_sentence will break.
   annotation.token_begin_.back() = text.size();
 }
 
-void AnnotatedText::appendSentence(
+void AnnotatedText::append_sentence(
     std::string_view prefix, std::vector<std::string_view>::iterator begin,
     std::vector<std::string_view>::iterator end) {
   assert(annotation.token_begin_.back() == text.size());
 
   // prefix is just end of the previous one.
-  appendEndingWhitespace(prefix);
+  append_ending_whitespace(prefix);
 
   // Appending sentence text.
   std::size_t offset = text.size();
@@ -30,17 +30,17 @@ void AnnotatedText::appendSentence(
   }
 
   // Add the gap after the sentence.  This is empty for now, but will be
-  // extended with appendEndingWhitespace or another appendSentence.
+  // extended with append_ending_whitespace or another append_sentence.
   annotation.gap_.push_back(annotation.token_begin_.size() - 1);
   annotation.token_begin_.push_back(offset);
 }
 
-void AnnotatedText::appendEndingWhitespace(std::string_view whitespace) {
+void AnnotatedText::append_ending_whitespace(std::string_view whitespace) {
   text.append(whitespace.data(), whitespace.size());
   annotation.token_begin_.back() = text.size();
 }
 
-void AnnotatedText::recordExistingSentence(
+void AnnotatedText::record_existing_sentence(
     std::vector<std::string_view>::iterator begin,
     std::vector<std::string_view>::iterator end, const char *sentence_begin) {
   assert(sentence_begin >= text.data());

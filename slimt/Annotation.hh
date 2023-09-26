@@ -136,15 +136,15 @@ class AnnotatedText {
 
   /// Appends a sentence to the existing text and transparently rebases
   /// std::string_views.  Since this tracks only prefix, remember
-  /// appendEndingWhitespace.
+  /// append_ending_whitespace.
   /// The std::string_views must not already be in text.
-  void appendSentence(std::string_view prefix,
+  void append_sentence(std::string_view prefix,
                       std::vector<std::string_view>::iterator tokens_begin,
                       std::vector<std::string_view>::iterator tokens_end);
 
   /// Append the whitespace at the end of input. std::string_view must not be in
   /// text.
-  void appendEndingWhitespace(std::string_view whitespace);
+  void append_ending_whitespace(std::string_view whitespace);
 
   /// Record the existence of a sentence that is already in text.  The
   /// iterators are over std::string_views for each token that must be in text
@@ -152,7 +152,7 @@ class AnnotatedText {
   /// Normally the beginning of the sentence can be inferred from
   /// tokens_begin->data() but the tokens could be empty, so sentence_begin is
   /// required to know where the sentence is.
-  void recordExistingSentence(
+  void record_existing_sentence(
       std::vector<std::string_view>::iterator tokens_begin,
       std::vector<std::string_view>::iterator tokens_end,
       const char *sentence_begin);
@@ -227,7 +227,7 @@ class AnnotatedText {
       }
 
       // Convert our ByteRanges to std::string_views since that's what
-      // appendSentence expects
+      // append_sentence expects
       std::vector<std::string_view> views(tokens.size());
       std::transform(tokens.begin(), tokens.end(), views.begin(),
                      [&](ByteRange const &range) {
@@ -235,10 +235,10 @@ class AnnotatedText {
                                                range.size());
                      });
 
-      out.appendSentence(prefix, views.begin(), views.end());
+      out.append_sentence(prefix, views.begin(), views.end());
     }
 
-    out.appendEndingWhitespace(
+    out.append_ending_whitespace(
         fun(annotation.gap(sentence_count()), gap(sentence_count()), true));
 
     return out;

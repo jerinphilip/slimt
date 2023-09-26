@@ -26,13 +26,13 @@ void ResponseBuilder::operator()(Histories &&histories) {
     // For each sentence, prepend the filler text between the corresponding
     // source-sentence and the source-sentence before.
     std::string_view pre = response.source.gap(sentence_id);
-    response.target.appendSentence(pre, views.begin(), views.end());
+    response.target.append_sentence(pre, views.begin(), views.end());
 
     // If this is the last history to be decoded and translated-text
     // constructed, append the text till the end, which could be spaces or
     // empty.
     if (sentence_id + 1 == histories.size()) {
-      response.target.appendEndingWhitespace(
+      response.target.append_ending_whitespace(
           response.source.gap(sentence_id + 1));
     }
   }
