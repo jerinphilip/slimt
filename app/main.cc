@@ -23,7 +23,7 @@ struct Record {
 struct Options {
   Record<std::string> translator;
   std::string root;
-  size_t max_tokens_per_batch = 1024;
+  size_t max_tokens_per_batch = 1024;  // NOLINT
 
   template <class App>
   void setup_onto(App &app) {
