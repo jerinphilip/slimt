@@ -239,7 +239,8 @@ void sinusoidal_signal(int start, size_t sequence_length, size_t embed_dim,
   // Imported from:
   // https://github.com/jerinphilip/marian/blob/8c4170fa08c46df1cf4c987e493b7a3772c380b3/src/graph/node_initializers.cpp#L216
   float num_timescales = static_cast<float>(embed_dim) / 2;
-  float log_timescale_increment = std::log(10000.0F) / (num_timescales - 1.0F);
+  float log_timescale_increment =
+      std::log(10000.0F) / (num_timescales - 1.0F);  // NOLINT
 
   for (size_t p = start; p < sequence_length + start; ++p) {
     for (int i = 0; i < num_timescales; ++i) {
