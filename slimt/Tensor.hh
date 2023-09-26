@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "slimt/Aligned.hh"
+#include "slimt/Types.hh"
 
 namespace slimt {
 
@@ -83,7 +84,8 @@ class Tensor {
   Tensor() = default;
   void load(View view, Type type, Shape shape, std::string name);
 
-  static Aligned allocate(Type type, const Shape &shape, size_t alignment = 64);
+  static Aligned allocate(Type type, const Shape &shape,
+                          size_t alignment = kAlignWidth);
 
   template <class Scalar>
   Scalar *data() {

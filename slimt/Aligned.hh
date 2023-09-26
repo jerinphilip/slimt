@@ -4,6 +4,8 @@
 
 namespace slimt {
 
+constexpr size_t kAlignWidth = 64;
+
 class Aligned {
  public:
   Aligned() = default;
