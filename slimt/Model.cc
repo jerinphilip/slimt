@@ -103,9 +103,10 @@ void Decoder::register_parameters(const std::string &prefix,
   }
 }
 
-Tensor Decoder::step(Tensor &encoder_out, Tensor &mask,
-                     std::vector<Tensor> &states, Words &previous_step,
-                     Words &shortlist) {
+std::tuple<Tensor, Tensor> Decoder::step(Tensor &encoder_out, Tensor &mask,
+                                         std::vector<Tensor> &states,
+                                         Words &previous_step,
+                                         Words &shortlist) {
   // Infer batch-size from encoder_out.
   size_t encoder_feature_dim = encoder_out.dim(-1);
   size_t source_sequence_length = encoder_out.dim(-2);
@@ -145,15 +146,15 @@ Tensor Decoder::step(Tensor &encoder_out, Tensor &mask,
   Tensor decoder_embed = from_sentences(previous_step, batch_size);
   transform_embedding(decoder_embed);
 
-  auto [x, attn] =
+  auto [x, guided_alignment] =
       decoder_[0].forward(encoder_out, mask, states[0], decoder_embed);
   for (size_t i = 1; i < decoder_.size(); i++) {
-    auto [y, _attn] = decoder_[i].forward(encoder_out, mask, states[i], x);
+    auto [y, attn] = decoder_[i].forward(encoder_out, mask, states[i], x);
     x = std::move(y);
   }
 
   Tensor logits = affine_with_select(output_, x, shortlist, "logits");
-  return logits;
+  return {std::move(logits), std::move(guided_alignment)};
 }
 
 void Model::load_parameters() {

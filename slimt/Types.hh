@@ -33,7 +33,8 @@ using Sentences = std::vector<Words>;
 template <class T>
 using Ptr = std::shared_ptr<T>;
 
-using Alignment = std::vector<std::vector<float>>;
+using Distribution = std::vector<float>;
+using Alignment = std::vector<Distribution>;
 using Alignments = std::vector<Alignment>;
 
 struct Hypothesis {

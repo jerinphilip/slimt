@@ -21,7 +21,28 @@ Batch convert(rd::Batch &rd_batch) {
   return batch;
 }
 
+void update_alignment(Tensor &batch_alignment, Alignments &alignments) {
+  auto *data = batch_alignment.data<float>();
+  // 2 x 8 x 1 x 6
+  size_t batch_size = batch_alignment.dim(-4);
+  size_t num_heads = batch_alignment.dim(-3);
+  size_t slice = batch_alignment.dim(-2);
+  size_t source_length = batch_alignment.dim(-1);
+
+  // https://github.com/marian-nmt/marian-dev/blob/53b0b0d7c83e71265fee0dd832ab3bcb389c6ec3/src/models/transformer.h#L214-L232
+  for (size_t batch_id = 0; batch_id < batch_size; batch_id++) {
+    // Copy the elements into the particular alignment index.
+    // size_t head_id = 0; (unused)
+    size_t batch_stride = (num_heads * slice * source_length);
+    float *alignment = data + batch_id * batch_stride;
+    Distribution distribution(source_length);
+    std::copy(alignment, alignment + source_length, distribution.data());
+    alignments[batch_id].push_back(std::move(distribution));
+  }
+}
+
 }  // namespace
+
 Translator::Translator(const Config &config, View model, View shortlist,
                        View vocabulary)
     : config_(config),
@@ -60,12 +81,15 @@ Histories Translator::decode(Tensor &encoder_out, Tensor &mask,
 
   // Initialize a first step.
   Sentences sentences(batch_size);
+  Alignments alignments(sentences.size());
 
   Decoder &decoder = model_.decoder();
   Words previous_slice = {};
   std::vector<Tensor> states = decoder.start_states(batch_size);
-  Tensor logits =
+  auto [logits, alignment] =
       decoder.step(encoder_out, mask, states, previous_slice, indices);
+
+  update_alignment(alignment, alignments);
 
   previous_slice = greedy_sample(logits, indices, batch_size);
   record(previous_slice, sentences);
@@ -74,15 +98,14 @@ Histories Translator::decode(Tensor &encoder_out, Tensor &mask,
   size_t max_seq_length =
       config_.tgt_length_limit_factor * source_sequence_length;
   for (size_t i = 1; i < max_seq_length && remaining > 0; i++) {
-    Tensor logits =
+    auto [logits, alignment] =
         decoder.step(encoder_out, mask, states, previous_slice, indices);
-
+    update_alignment(alignment, alignments);
     previous_slice = greedy_sample(logits, indices, batch_size);
     remaining = record(previous_slice, sentences);
   }
 
   Histories histories;
-  Alignments alignments(sentences.size());
   for (size_t i = 0; i < sentences.size(); i++) {
     Hypothesis hypothesis{
         .target = std::move(sentences[i]),     //
