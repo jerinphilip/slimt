@@ -103,9 +103,10 @@ void Decoder::register_parameters(const std::string &prefix,
   }
 }
 
-Tensor Decoder::step(Tensor &encoder_out, Tensor &mask,
-                     std::vector<Tensor> &states, Words &previous_step,
-                     Words &shortlist) {
+std::tuple<Tensor, Tensor> Decoder::step(Tensor &encoder_out, Tensor &mask,
+                                         std::vector<Tensor> &states,
+                                         Words &previous_step,
+                                         Words &shortlist) {
   // Infer batch-size from encoder_out.
   size_t encoder_feature_dim = encoder_out.dim(-1);
   size_t source_sequence_length = encoder_out.dim(-2);
@@ -147,13 +148,20 @@ Tensor Decoder::step(Tensor &encoder_out, Tensor &mask,
 
   auto [x, attn] =
       decoder_[0].forward(encoder_out, mask, states[0], decoder_embed);
+
+  Tensor guided_alignment;
   for (size_t i = 1; i < decoder_.size(); i++) {
     auto [y, _attn] = decoder_[i].forward(encoder_out, mask, states[i], x);
     x = std::move(y);
+    if (i + 1 == decoder_.size()) {
+      // Last decoder layer
+      // https://github.com/marian-nmt/marian-dev/blob/53b0b0d7c83e71265fee0dd832ab3bcb389c6ec3/src/models/transformer.h#L826C31-L826C41
+      guided_alignment = std::move(_attn);
+    }
   }
 
   Tensor logits = affine_with_select(output_, x, shortlist, "logits");
-  return logits;
+  return {std::move(logits), std::move(guided_alignment)};
 }
 
 void Model::load_parameters() {

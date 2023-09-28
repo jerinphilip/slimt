@@ -62,7 +62,7 @@ std::tuple<Tensor, float> quantized_tensor_from_file(const std::string &fpath,
 // std::hash as the hash implementation. Used as a drop-in
 // replacement for boost::hash_combine.
 template <class T, class HashType = std::size_t>
-inline void hash_combine(HashType &seed, T const &v) {
+inline void hash_combine(HashType &seed, const T &v) {
   std::hash<T> hasher;
   seed ^=
       static_cast<HashType>(hasher(v)) + 0x9e3779b9 + (seed << 6) + (seed >> 2);

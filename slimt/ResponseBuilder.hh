@@ -5,6 +5,7 @@
 #include <optional>
 
 #include "slimt/Annotation.hh"
+#include "slimt/HTML.hh"
 #include "slimt/Macros.hh"
 #include "slimt/Response.hh"
 #include "slimt/Types.hh"

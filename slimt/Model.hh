@@ -44,8 +44,9 @@ class Decoder {
   void register_parameters(const std::string &prefix, ParameterMap &parameters);
 
   std::vector<Tensor> start_states(size_t batch_size);
-  Tensor step(Tensor &encoder_out, Tensor &mask, std::vector<Tensor> &states,
-              Words &previous_step, Words &shortlist);
+  std::tuple<Tensor, Tensor> step(Tensor &encoder_out, Tensor &mask,
+                                  std::vector<Tensor> &states,
+                                  Words &previous_step, Words &shortlist);
 
  private:
   Tensor &embedding_;
