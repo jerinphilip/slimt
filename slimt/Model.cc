@@ -149,11 +149,13 @@ std::tuple<Tensor, Tensor> Decoder::step(Tensor &encoder_out, Tensor &mask,
   auto [x, attn] =
       decoder_[0].forward(encoder_out, mask, states[0], decoder_embed);
 
-  Tensor guided_alignment = std::move(attn);
+  Tensor guided_alignment;
   for (size_t i = 1; i < decoder_.size(); i++) {
     auto [y, _attn] = decoder_[i].forward(encoder_out, mask, states[i], x);
     x = std::move(y);
     if (i + 1 == decoder_.size()) {
+      // Last decoder layer
+      // https://github.com/marian-nmt/marian-dev/blob/53b0b0d7c83e71265fee0dd832ab3bcb389c6ec3/src/models/transformer.h#L826C31-L826C41
       guided_alignment = std::move(_attn);
     }
   }
