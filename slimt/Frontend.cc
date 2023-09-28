@@ -140,7 +140,10 @@ Histories Translator::forward(Batch &batch) {
 
 Response Translator::translate(std::string source, const Options &options) {
   // Create a request
-  HTML html(std::move(source), options.HTML);
+  std::optional<HTML> html = std::nullopt;
+  if (options.HTML) {
+    html.emplace(source);
+  }
   auto [annotated_source, segments] = processor_.process(std::move(source));
 
   std::promise<Response> promise;
@@ -171,7 +174,9 @@ Response Translator::translate(std::string source, const Options &options) {
 
   future.wait();
   Response response = future.get();
-  html.restore(response);
+  if (html) {
+    html->restore(response);
+  }
   return response;
 }
 

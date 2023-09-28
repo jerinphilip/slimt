@@ -152,9 +152,8 @@ class HTML {
   /// to only contain the plain text extracted from the HTML. `HTML` instance
   /// retains information about what tags are extracted from where to later
   /// reconstruct the HTML in a `Response` object (both `source` and `target`).
-  explicit HTML(std::string &&source, bool processMarkup)
-      : HTML(std::move(source), processMarkup, HTML::Options{}){};
-  explicit HTML(std::string &&source, bool processMarkup, Options &&options);
+  explicit HTML(std::string &source) : HTML(source, HTML::Options{}){};
+  explicit HTML(std::string &source, Options &&options);
 
   /// It is not save to copy a HTML instance.
   HTML(const HTML &) = delete;

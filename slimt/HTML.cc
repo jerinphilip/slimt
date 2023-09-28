@@ -368,10 +368,8 @@ std::ostream &operator<<(std::ostream &out, const HTML::TagStack &tags) {
   return out;
 }
 
-HTML::HTML(std::string &&source, bool processMarkup, Options &&options)
+HTML::HTML(std::string &source, Options &&options)
     : options_(std::move(options)) {
-  if (!processMarkup) return;
-
   std::string original = std::move(source);
   markup::InStream in(original.data(), original.data() + original.size());
   markup::Scanner scanner(in);
