@@ -85,8 +85,8 @@ class Scanner {
 
   explicit Scanner(InStream &is)
       : value_{nullptr, 0},
-        tagName_{nullptr, 0},
-        attributeName_{nullptr, 0},
+        tag_{nullptr, 0},
+        attribute_{nullptr, 0},
         input_(is),
         scanFun_(&Scanner::scan_body) {}
 
@@ -135,8 +135,8 @@ class Scanner {
   static bool is_whitespace(char c);
 
   StringRef value_;
-  StringRef tagName_;
-  StringRef attributeName_;
+  StringRef tag_;
+  StringRef attribute_;
 
   InStream &input_;
 

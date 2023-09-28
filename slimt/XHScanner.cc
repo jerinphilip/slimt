@@ -58,11 +58,11 @@ std::string_view Scanner::value() const {
 }
 
 std::string_view Scanner::attribute() const {
-  return std::string_view(attributeName_.data, attributeName_.size);
+  return std::string_view(attribute_.data, attribute_.size);
 }
 
 std::string_view Scanner::tag() const {
-  return std::string_view(tagName_.data, tagName_.size);
+  return std::string_view(tag_.data, tag_.size);
 }
 
 Scanner::TokenType Scanner::scan_body() {
@@ -119,14 +119,14 @@ Scanner::TokenType Scanner::scan_attribute() {
       input_.consume();
 
       // Treat some elements as opaque, e.g. <script>, <style>
-      if (/*equals_case_insensitive(tagName_, "title") ||*/
-          equals_case_insensitive(tagName_, "script") ||
-          equals_case_insensitive(tagName_, "style") ||
-          equals_case_insensitive(tagName_, "textarea") ||
-          equals_case_insensitive(tagName_, "iframe") ||
-          equals_case_insensitive(tagName_, "noembed") ||
-          equals_case_insensitive(tagName_, "noscript") ||
-          equals_case_insensitive(tagName_, "noframes")) {
+      if (/*equals_case_insensitive(tag_, "title") ||*/
+          equals_case_insensitive(tag_, "script") ||
+          equals_case_insensitive(tag_, "style") ||
+          equals_case_insensitive(tag_, "textarea") ||
+          equals_case_insensitive(tag_, "iframe") ||
+          equals_case_insensitive(tag_, "noembed") ||
+          equals_case_insensitive(tag_, "noscript") ||
+          equals_case_insensitive(tag_, "noframes")) {
         // script is special because we want to parse the attributes,
         // but not the content
         scanFun_ = &Scanner::scan_special;
@@ -147,7 +147,7 @@ Scanner::TokenType Scanner::scan_attribute() {
       }
   }
 
-  attributeName_ = StringRef{input_.pos(), 0};
+  attribute_ = StringRef{input_.pos(), 0};
   value_ = StringRef{nullptr, 0};
 
   // attribute name...
@@ -170,7 +170,7 @@ Scanner::TokenType Scanner::scan_attribute() {
           }
         }
         input_.consume();
-        ++attributeName_.size;
+        ++attribute_.size;
         break;
     }
   }
@@ -233,7 +233,7 @@ Scanner::TokenType Scanner::scan_tag() {
   bool is_tail = input_.peek() == '/';
   if (is_tail) input_.consume();
 
-  tagName_ = StringRef{input_.pos(), 0};
+  tag_ = StringRef{input_.pos(), 0};
 
   while (input_.peek()) {
     if (skip_whitespace()) break;
@@ -241,14 +241,14 @@ Scanner::TokenType Scanner::scan_tag() {
     if (input_.peek() == '/' || input_.peek() == '>') break;
 
     input_.consume();
-    ++tagName_.size;
+    ++tag_.size;
 
     // Note: these tests are executed at every char, thus eager.
-    // "<?xml" will match on `tagName_ == "?"`.
-    if (tagName_ == "!--") {
+    // "<?xml" will match on `tag_ == "?"`.
+    if (tag_ == "!--") {
       scanFun_ = &Scanner::scan_comment;
       return TT_COMMENT_START;
-    } else if (tagName_ == "?") {  // NOLINT
+    } else if (tag_ == "?") {  // NOLINT
       scanFun_ = &Scanner::scan_processing_instruction;
       return TT_PROCESSING_INSTRUCTION_START;
     }
@@ -399,7 +399,7 @@ Scanner::TokenType Scanner::scan_processing_instruction() {
 
 Scanner::TokenType Scanner::scan_special() {
   if (gotTail_) {
-    start_ = input_.pos() - (tagName_.size + length("</>"));
+    start_ = input_.pos() - (tag_.size + length("</>"));
     scanFun_ = &Scanner::scan_body;
     gotTail_ = false;
     return TT_TAG_END;
@@ -415,9 +415,9 @@ Scanner::TokenType Scanner::scan_special() {
     // Test for </tag>
     // TODO(any): no whitespaces allowed? Is that okay?
     if (value_.data[value_.size - 1] == '>' &&
-        value_.size >= tagName_.size + length("</>")) {
+        value_.size >= tag_.size + length("</>")) {
       // Test for the "</"" bit of "</tag>"
-      size_t tag_start_position = value_.size - tagName_.size - length("</>");
+      size_t tag_start_position = value_.size - tag_.size - length("</>");
       if (std::memcmp(value_.data + tag_start_position, "</", length("</")) !=
           0)
         continue;
@@ -425,13 +425,13 @@ Scanner::TokenType Scanner::scan_special() {
       // Test for the "tag" bit of "</tag>". Doing case insensitive compare
       // because <I>...</i> is okay.
       size_t tag_name_position =
-          value_.size - tagName_.size - length(">");  // end - tag>
-      if (!equals_case_insensitive(value_.data + tag_name_position,
-                                   tagName_.data, tagName_.size))
+          value_.size - tag_.size - length(">");  // end - tag>
+      if (!equals_case_insensitive(value_.data + tag_name_position, tag_.data,
+                                   tag_.size))
         continue;
 
       gotTail_ = true;
-      value_.size -= tagName_.size + length("</>");
+      value_.size -= tag_.size + length("</>");
       break;
     }
   }
