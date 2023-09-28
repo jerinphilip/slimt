@@ -35,6 +35,9 @@ void ResponseBuilder::operator()(Histories &&histories) {
       response.target.append_ending_whitespace(
           response.source.gap(sentence_id + 1));
     }
+
+    Alignment &alignment = histories[sentence_id]->alignment;
+    response.alignments.push_back(std::move(alignment));
   }
 
   promise_.set_value(std::move(response));

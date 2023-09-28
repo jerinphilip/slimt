@@ -140,6 +140,7 @@ Histories Translator::forward(Batch &batch) {
 
 Response Translator::translate(std::string source, const Options &options) {
   // Create a request
+  HTML html(std::move(source), options.HTML);
   auto [annotated_source, segments] = processor_.process(std::move(source));
 
   std::promise<Response> promise;
@@ -169,7 +170,9 @@ Response Translator::translate(std::string source, const Options &options) {
   }
 
   future.wait();
-  return future.get();
+  Response response = future.get();
+  html.restore(response);
+  return response;
 }
 
 }  // namespace slimt

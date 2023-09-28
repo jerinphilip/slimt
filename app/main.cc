@@ -23,6 +23,7 @@ struct Record {
 struct Options {
   Record<std::string> translator;
   std::string root;
+  bool html;
   size_t max_tokens_per_batch = 1024;  // NOLINT
 
   template <class App>
@@ -33,6 +34,7 @@ struct Options {
     app.add_option("--vocabulary", translator.vocabulary, "Path to vocabulary");
     app.add_option("--shortlist", translator.shortlist, "Path to shortlist");
     app.add_option("--max-tokens-per-batch", max_tokens_per_batch, "Path to shortlist");
+    app.add_flag("--html", html, "Whether content is HTML");
     // clang-format on
   }
 };
@@ -73,7 +75,10 @@ void run(const Options &options) {
   Config config;
   Translator translator(config, view.model, view.shortlist, view.vocabulary);
   std::string source = read_from_stdin();
-  slimt::Options opts;
+  slimt::Options opts{
+      .alignment = true,    //
+      .HTML = options.html  //
+  };
   Response response = translator.translate(source, opts);
   fprintf(stdout, "%s\n", response.target.text.c_str());
 
