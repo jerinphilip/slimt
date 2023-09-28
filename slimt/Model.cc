@@ -148,13 +148,18 @@ std::tuple<Tensor, Tensor> Decoder::step(Tensor &encoder_out, Tensor &mask,
 
   auto [x, attn] =
       decoder_[0].forward(encoder_out, mask, states[0], decoder_embed);
+
+  Tensor guided_alignment = std::move(attn);
   for (size_t i = 1; i < decoder_.size(); i++) {
     auto [y, _attn] = decoder_[i].forward(encoder_out, mask, states[i], x);
     x = std::move(y);
+    if (i + 1 == decoder_.size()) {
+      guided_alignment = std::move(_attn);
+    }
   }
 
   Tensor logits = affine_with_select(output_, x, shortlist, "logits");
-  return {std::move(logits), std::move(attn)};
+  return {std::move(logits), std::move(guided_alignment)};
 }
 
 void Model::load_parameters() {

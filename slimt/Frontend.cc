@@ -34,10 +34,11 @@ void update_alignment(const std::vector<size_t> &lengths,
   // https://github.com/marian-nmt/marian-dev/blob/53b0b0d7c83e71265fee0dd832ab3bcb389c6ec3/src/models/transformer.h#L214-L232
   for (size_t id = 0; id < batch_size; id++) {
     // Copy the elements into the particular alignment index.
-    // size_t head_id = 0; (unused)
+    size_t head_id = 0;
     if (!finished[id]) {
       size_t batch_stride = (num_heads * slice * source_length);
-      float *alignment = data + id * batch_stride;
+      size_t head_stride = (slice * source_length);
+      float *alignment = data + id * batch_stride + head_id * head_stride;
       size_t length = lengths[id];
       Distribution distribution(length);
       std::copy(alignment, alignment + length, distribution.data());
