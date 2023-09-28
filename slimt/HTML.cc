@@ -548,8 +548,7 @@ void HTML::restore(Response &response) {
   // translation. If those are not available, no HTML in translations for you.
   SLIMT_ABORT_IF(
       !has_alignments(response),
-      "Response object does not contain alignments. TranslationModel "
-      "or ResponseOptions is misconfigured?");
+      "Response object does not contain alignments. Options misconfigured?");
 
   // Reconstruction of HTML tags:
   // 1. Map each token to a Span
