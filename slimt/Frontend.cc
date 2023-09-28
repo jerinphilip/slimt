@@ -23,7 +23,7 @@ Batch convert(rd::Batch &rd_batch) {
 
 void update_alignment(Tensor &attn, Alignments &alignments) {
   auto *data = attn.data<float>();
-  // 2 x 8 x 1 x 6
+  // B x H x 1 (T) x S
   size_t batch_size = attn.dim(-4);
   size_t num_heads = attn.dim(-3);
   size_t slice = attn.dim(-2);
