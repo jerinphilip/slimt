@@ -21,13 +21,13 @@ Batch convert(rd::Batch &rd_batch) {
   return batch;
 }
 
-void update_alignment(Tensor &batch_alignment, Alignments &alignments) {
-  auto *data = batch_alignment.data<float>();
+void update_alignment(Tensor &attn, Alignments &alignments) {
+  auto *data = attn.data<float>();
   // 2 x 8 x 1 x 6
-  size_t batch_size = batch_alignment.dim(-4);
-  size_t num_heads = batch_alignment.dim(-3);
-  size_t slice = batch_alignment.dim(-2);
-  size_t source_length = batch_alignment.dim(-1);
+  size_t batch_size = attn.dim(-4);
+  size_t num_heads = attn.dim(-3);
+  size_t slice = attn.dim(-2);
+  size_t source_length = attn.dim(-1);
 
   // https://github.com/marian-nmt/marian-dev/blob/53b0b0d7c83e71265fee0dd832ab3bcb389c6ec3/src/models/transformer.h#L214-L232
   for (size_t batch_id = 0; batch_id < batch_size; batch_id++) {
@@ -86,10 +86,10 @@ Histories Translator::decode(Tensor &encoder_out, Tensor &mask,
   Decoder &decoder = model_.decoder();
   Words previous_slice = {};
   std::vector<Tensor> states = decoder.start_states(batch_size);
-  auto [logits, alignment] =
+  auto [logits, attn] =
       decoder.step(encoder_out, mask, states, previous_slice, indices);
 
-  update_alignment(alignment, alignments);
+  update_alignment(attn, alignments);
 
   previous_slice = greedy_sample(logits, indices, batch_size);
   record(previous_slice, sentences);
@@ -98,9 +98,9 @@ Histories Translator::decode(Tensor &encoder_out, Tensor &mask,
   size_t max_seq_length =
       config_.tgt_length_limit_factor * source_sequence_length;
   for (size_t i = 1; i < max_seq_length && remaining > 0; i++) {
-    auto [logits, alignment] =
+    auto [logits, attn] =
         decoder.step(encoder_out, mask, states, previous_slice, indices);
-    update_alignment(alignment, alignments);
+    update_alignment(attn, alignments);
     previous_slice = greedy_sample(logits, indices, batch_size);
     remaining = record(previous_slice, sentences);
   }

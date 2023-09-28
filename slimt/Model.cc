@@ -146,15 +146,15 @@ std::tuple<Tensor, Tensor> Decoder::step(Tensor &encoder_out, Tensor &mask,
   Tensor decoder_embed = from_sentences(previous_step, batch_size);
   transform_embedding(decoder_embed);
 
-  auto [x, guided_alignment] =
+  auto [x, attn] =
       decoder_[0].forward(encoder_out, mask, states[0], decoder_embed);
   for (size_t i = 1; i < decoder_.size(); i++) {
-    auto [y, attn] = decoder_[i].forward(encoder_out, mask, states[i], x);
+    auto [y, _attn] = decoder_[i].forward(encoder_out, mask, states[i], x);
     x = std::move(y);
   }
 
   Tensor logits = affine_with_select(output_, x, shortlist, "logits");
-  return {std::move(logits), std::move(guided_alignment)};
+  return {std::move(logits), std::move(attn)};
 }
 
 void Model::load_parameters() {
