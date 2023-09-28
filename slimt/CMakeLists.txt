@@ -5,6 +5,7 @@ add_library(
   Batch.cc
   Batcher.cc
   Frontend.cc
+  HTML.cc
   Io.cc
   Model.cc
   Modules.cc
@@ -17,7 +18,8 @@ add_library(
   Tensor.cc
   TensorOps.cc
   Utils.cc
-  Vocabulary.cc)
+  Vocabulary.cc
+  XHScanner.cc)
 
 target_compile_options(slimt PRIVATE ${SLIMT_COMPILE_OPTIONS})
 target_compile_definitions(slimt PRIVATE ${SLIMT_COMPILE_DEFINITIONS})

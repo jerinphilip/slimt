@@ -230,7 +230,7 @@ class AnnotatedText {
       // append_sentence expects
       std::vector<std::string_view> views(tokens.size());
       std::transform(tokens.begin(), tokens.end(), views.begin(),
-                     [&](Range const &range) {
+                     [&](const Range &range) {
                        return std::string_view(sentence.data() + range.begin,
                                                range.size());
                      });
