@@ -18,7 +18,8 @@ struct Data {
 class Translator {
  public:
   Translator(const Config &config, View model, View shortlist, View vocabulary);
-  Histories decode(Tensor &encoder_out, Tensor &mask, const Words &source);
+  Histories decode(Tensor &encoder_out, Tensor &mask, const Words &source,
+                   const std::vector<size_t> &lengths);
   Histories forward(Batch &batch);
   Response translate(std::string source, const Options &options);
 
