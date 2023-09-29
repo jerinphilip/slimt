@@ -1,8 +1,9 @@
 #include "slimt/QMM.hh"
 
 #include <cassert>
+#include <cmath>
 
-#include "intgemm/callbacks/configs.h"
+#include "slimt/Utils.hh"
 
 #ifdef SLIMT_HAS_INTGEMM
 #include "3rd-party/intgemm/intgemm/intgemm.h"
@@ -16,7 +17,6 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #include "3rd-party/gemmology/gemmology.h"
-
 #pragma GCC diagnostic pop
 #endif
 

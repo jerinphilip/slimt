@@ -1,20 +1,9 @@
 
 #include "slimt/Frontend.hh"
 
-#include <stdint.h>
-
-#include <algorithm>
-#include <future>
-#include <memory>
-#include <utility>
-
-#include "slimt/Batch.hh"
 #include "slimt/Batcher.hh"
-#include "slimt/HTML.hh"
 #include "slimt/Request.hh"
 #include "slimt/Response.hh"
-#include "slimt/ResponseBuilder.hh"
-#include "slimt/Tensor.hh"
 #include "slimt/TensorOps.hh"
 
 namespace slimt {

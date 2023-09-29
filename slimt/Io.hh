@@ -4,13 +4,10 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include <algorithm>
 #include <cstdint>
-#include <iosfwd>
 #include <string>
 #include <vector>
 
-#include "slimt/Aligned.hh"
 #include "slimt/Tensor.hh"
 
 namespace slimt {

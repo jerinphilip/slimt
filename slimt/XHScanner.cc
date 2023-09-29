@@ -3,6 +3,7 @@
 
 #include "slimt/XHScanner.hh"
 
+#include <cassert>
 #include <cctype>
 #include <cstring>
 

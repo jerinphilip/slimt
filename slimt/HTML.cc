@@ -1,11 +1,6 @@
 #include "slimt/HTML.hh"
 
-#include <assert.h>
-
 #include <algorithm>
-#include <cctype>
-#include <compare>
-#include <iterator>
 #include <sstream>
 
 #include "slimt/Macros.hh"

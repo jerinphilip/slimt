@@ -1,23 +1,13 @@
 
 #pragma once
-#include <stddef.h>
-
 #include <optional>
-#include <string>
-#include <vector>
 
-#include "slimt/Aligned.hh"
 #include "slimt/Model.hh"
 #include "slimt/Response.hh"
-#include "slimt/Shortlist.hh"
 #include "slimt/Splitter.hh"
 #include "slimt/Types.hh"
-#include "slimt/Vocabulary.hh"
 
 namespace slimt {
-class Batch;
-class Tensor;
-struct View;
 
 struct Data {
   Aligned model;

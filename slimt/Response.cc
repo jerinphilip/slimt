@@ -1,9 +1,5 @@
 #include "slimt/Response.hh"
 
-#include <algorithm>
-#include <cassert>
-#include <utility>
-
 #include "slimt/Annotation.hh"
 #include "slimt/Types.hh"
 

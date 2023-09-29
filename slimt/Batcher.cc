@@ -1,10 +1,9 @@
 #include "slimt/Batcher.hh"
 
-#include <algorithm>
 #include <cassert>
 
-#include "slimt/Macros.hh"
-#include "slimt/Utils.hh"
+#include "slimt/Batch.hh"
+#include "slimt/Model.hh"
 
 namespace slimt::rd {
 

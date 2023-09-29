@@ -1,17 +1,11 @@
 #pragma once
-#include <stddef.h>
-
-#include <string>
-#include <tuple>
 #include <unordered_map>
-#include <vector>
 
 #include "slimt/Batch.hh"
 #include "slimt/Io.hh"
 #include "slimt/Modules.hh"
 #include "slimt/Shortlist.hh"
 #include "slimt/Tensor.hh"
-#include "slimt/Types.hh"
 #include "slimt/Vocabulary.hh"
 
 namespace slimt {
