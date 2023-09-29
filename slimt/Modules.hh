@@ -7,12 +7,12 @@ namespace slimt {
 using ParameterMap = std::unordered_map<std::string, Tensor *>;
 
 struct Affine {
-  Tensor W, b;
+  Tensor W, b;  // NOLINT
   Tensor quant;
 };
 
 struct Linear {
-  Tensor W;
+  Tensor W;  // NOLINT
   Tensor quant;
 };
 

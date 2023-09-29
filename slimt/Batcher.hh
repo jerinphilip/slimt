@@ -34,7 +34,7 @@ class Batcher {
  private:
   size_t max_words_;
   std::vector<std::set<SegmentRef>> bucket_;
-  size_t running_bucket_max_size_;
+  size_t running_bucket_max_size_{0};
 };
 
 /// Aggregates request queueing and generation of batches from multiple

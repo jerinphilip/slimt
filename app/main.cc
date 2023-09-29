@@ -77,7 +77,7 @@ void run(const Options &options) {
   std::string source = read_from_stdin();
   slimt::Options opts{
       .alignment = true,    //
-      .HTML = options.html  //
+      .html = options.html  //
   };
   Response response = translator.translate(source, opts);
   fprintf(stdout, "%s\n", response.target.text.c_str());

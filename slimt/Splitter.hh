@@ -54,7 +54,7 @@ class TextProcessor {
 
   std::tuple<AnnotatedText, Segments> process(std::string &&input) const;
 
-  void processFromAnnotation(AnnotatedText &source, Segments &segments) const;
+  void process_from_annotation(AnnotatedText &source, Segments &segments) const;
 
  private:
   /// Tokenizes an input string, returns Words corresponding. Loads the

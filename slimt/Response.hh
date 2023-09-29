@@ -40,7 +40,7 @@ struct Response {
 /// text to be translated.
 struct Options {
   bool alignment{false};  ///< Include alignments or not.
-  bool HTML{false};       ///< Remove HTML tags from text and insert in output.
+  bool html{false};       ///< Remove HTML tags from text and insert in output.
 };
 
 std::vector<Alignment> remap_alignments(const Response &first,

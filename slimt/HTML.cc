@@ -401,7 +401,7 @@ HTML::HTML(std::string &source, Options &&options)
           // If there isn't already a \n\n at the end of source...
           if (source.size() >= 2 &&
               source.substr(source.size() - 2) != "\n\n") {
-            stack.push_back(makeTag({.type = Tag::WHITESPACE}));
+            stack.push_back(make_tag({.type = Tag::WHITESPACE}));
             // Important: span->size() == 0 to make it behave as a void element.
             // Also important: position before the \n\n tokens, not after, to
             // make it easier to remove them later through apply().
@@ -418,8 +418,8 @@ HTML::HTML(std::string &source, Options &&options)
         if (add_word_break) {
           // Only add the space when it would be inside a word. Do not add it if
           // it would be between a word and punctuation.
-          if (options_.substituteInlineTagsWithSpaces &&
-              isContinuation(source, scanner.value())) {
+          if (options_.substitute_inline_tags_with_spaces &&
+              is_continuation(source, scanner.value())) {
             source.push_back(' ');
           }
           add_word_break = false;
@@ -435,9 +435,9 @@ HTML::HTML(std::string &source, Options &&options)
         std::string name = to_lower_case(scanner.tag());
 
         // Tag *tag is used by attribute parsing
-        auto type = contains(options_.voidTags, name) ? Tag::VOID_ELEMENT
+        auto type = contains(options_.void_tags, name) ? Tag::VOID_ELEMENT
                                                       : Tag::ELEMENT;
-        tag = makeTag({.type = type, .name = std::string(scanner.tag())});
+        tag = make_tag({.type = type, .name = std::string(scanner.tag())});
 
         stack.push_back(tag);
 
@@ -451,16 +451,16 @@ HTML::HTML(std::string &source, Options &&options)
 
         // Ignored tags have same semantics as void tags with regards to moving
         // them around with the rest of the content.
-        if (contains(options_.ignoredTags, name)) {
+        if (contains(options_.ignored_tags, name)) {
           consume_ignored_tag(scanner, *tag, name);
           spans_.push_back(Span{source.size(), source.size(), stack});
           stack.pop_back();
         }
 
         // Treat non-inline HTML tags as spaces that break up words.
-        if (!contains(options_.inlineTags, name)) {
+        if (!contains(options_.inline_tags, name)) {
           add_sentence_break = true;
-        } else if (!contains(options_.inWordTags, name)) {
+        } else if (!contains(options_.in_word_tags, name)) {
           add_word_break = true;
         }
       } break;
@@ -469,7 +469,7 @@ HTML::HTML(std::string &source, Options &&options)
         std::string tag_name = to_lower_case(scanner.tag());
         // If this is the closing bit of a void tag, i.e. triggered by the "/>"
         // bit of "<img/>", then completely ignore it.
-        if (contains(options_.voidTags, tag_name)) break;
+        if (contains(options_.void_tags, tag_name)) break;
 
         SLIMT_ABORT_IF(stack.empty(),
                        "Encountered more closing tags ({}) than opening tags",
@@ -489,9 +489,9 @@ HTML::HTML(std::string &source, Options &&options)
         stack.pop_back();
 
         // Add space if necessary
-        if (!contains(options_.inlineTags, tag_name)) {
+        if (!contains(options_.inline_tags, tag_name)) {
           add_sentence_break = true;
-        } else if (!contains(options_.inWordTags, tag_name)) {
+        } else if (!contains(options_.in_word_tags, tag_name)) {
           add_word_break = true;
         }
       } break;
@@ -504,7 +504,7 @@ HTML::HTML(std::string &source, Options &&options)
 
       case markup::Scanner::TT_COMMENT_START:
         // Tag *tag is used when TT_DATA is seen to add the comment's content.
-        tag = makeTag({.type = Tag::COMMENT});
+        tag = make_tag({.type = Tag::COMMENT});
         stack.push_back(tag);
         spans_.push_back(Span{source.size(), source.size(), stack});
         stack.pop_back();
@@ -512,7 +512,7 @@ HTML::HTML(std::string &source, Options &&options)
 
       case markup::Scanner::TT_PROCESSING_INSTRUCTION_START:
         // Tag *tag is used when TT_DATA is seen to add the PI's content.
-        tag = makeTag({.type = Tag::PROCESSING_INSTRUCTION});
+        tag = make_tag({.type = Tag::PROCESSING_INSTRUCTION});
         stack.push_back(tag);
         spans_.push_back(Span{source.size(), source.size(), stack});
         stack.pop_back();
@@ -698,7 +698,7 @@ AnnotatedText HTML::restore_target(
   return out;
 }
 
-HTML::Tag *HTML::makeTag(Tag &&tag) {
+HTML::Tag *HTML::make_tag(Tag &&tag) {
   pool_.emplace_front(std::move(tag));
   return &pool_.front();
 }
@@ -763,11 +763,11 @@ void HTML::annotate_tag_stack(
 // to determine whether we should share the markup, or whether we should see
 // this token as a fresh start. This implementation will treat "hello[world]"
 // as 4 words, assuming its tokenised as something like `h ell o [ wor ld ]`.
-bool HTML::isContinuation(std::string_view prev, std::string_view str) const {
-  if (options_.continuationDelimiters.empty()) return false;
+bool HTML::is_continuation(std::string_view prev, std::string_view str) const {
+  if (options_.continuation_delimiters.empty()) return false;
   if (prev.empty() || str.empty()) return false;
-  return options_.continuationDelimiters.find(str[0]) == std::string::npos &&
-         options_.continuationDelimiters.find(prev.back()) == std::string::npos;
+  return options_.continuation_delimiters.find(str[0]) == std::string::npos &&
+         options_.continuation_delimiters.find(prev.back()) == std::string::npos;
 }
 
 /// Selects for each token in `response.target` a best source token from
@@ -799,7 +799,7 @@ void HTML::hard_align(const Response &response,
     for (size_t t = 1; t + 1 < response.target.word_count(sentence_id); ++t) {
       // If this token is a continuation of a previous token, pick the tags from
       // the most prevalent token for the whole word.
-      if (isContinuation(response.target.word(sentence_id, t - 1),
+      if (is_continuation(response.target.word(sentence_id, t - 1),
                          response.target.word(sentence_id, t))) {
         // Note: only looking at the previous token since that will already
         // have this treatment applied to it.
@@ -827,7 +827,7 @@ void HTML::hard_align(const Response &response,
 
             // Stop if this was the first token or the beginning of the word
             if (i == 0 ||
-                !isContinuation(response.target.word(sentence_id, i - 1),
+                !is_continuation(response.target.word(sentence_id, i - 1),
                                 response.target.word(sentence_id, i)))
               break;
           }
