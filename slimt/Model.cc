@@ -76,7 +76,7 @@ std::vector<Tensor> Decoder::start_states(size_t batch_size) {
 }
 
 Model::Model(const Config &config, View model)
-    : items_(io::loadItems(model.data)),
+    : items_(io::load_items(model.data)),
       encoder_(config),  //
       decoder_(config, embedding_) {
   load_parameters();

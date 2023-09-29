@@ -105,7 +105,7 @@ void set_item(Item& item, Aligned&& aligned) {
   };
 }
 
-std::vector<io::Item> loadItems(void* current) {
+std::vector<io::Item> load_items(void* current) {
   uint64_t binary_file_version = *emit<uint64_t>(current);
   if (binary_file_version != kBinaryFileVersion) {
     std::cerr << "Binary file versions do not match: ";
