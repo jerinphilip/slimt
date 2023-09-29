@@ -436,7 +436,7 @@ HTML::HTML(std::string &source, Options &&options)
 
         // Tag *tag is used by attribute parsing
         auto type = contains(options_.void_tags, name) ? Tag::VOID_ELEMENT
-                                                      : Tag::ELEMENT;
+                                                       : Tag::ELEMENT;
         tag = make_tag({.type = type, .name = std::string(scanner.tag())});
 
         stack.push_back(tag);
@@ -767,7 +767,8 @@ bool HTML::is_continuation(std::string_view prev, std::string_view str) const {
   if (options_.continuation_delimiters.empty()) return false;
   if (prev.empty() || str.empty()) return false;
   return options_.continuation_delimiters.find(str[0]) == std::string::npos &&
-         options_.continuation_delimiters.find(prev.back()) == std::string::npos;
+         options_.continuation_delimiters.find(prev.back()) ==
+             std::string::npos;
 }
 
 /// Selects for each token in `response.target` a best source token from
@@ -800,7 +801,7 @@ void HTML::hard_align(const Response &response,
       // If this token is a continuation of a previous token, pick the tags from
       // the most prevalent token for the whole word.
       if (is_continuation(response.target.word(sentence_id, t - 1),
-                         response.target.word(sentence_id, t))) {
+                          response.target.word(sentence_id, t))) {
         // Note: only looking at the previous token since that will already
         // have this treatment applied to it.
         size_t current_sentence_id = alignments.back()[t];
@@ -828,7 +829,7 @@ void HTML::hard_align(const Response &response,
             // Stop if this was the first token or the beginning of the word
             if (i == 0 ||
                 !is_continuation(response.target.word(sentence_id, i - 1),
-                                response.target.word(sentence_id, i)))
+                                 response.target.word(sentence_id, i)))
               break;
           }
         } else {

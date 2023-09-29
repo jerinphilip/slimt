@@ -69,17 +69,17 @@ class HTML {
     /// More relevant source of this list:
     /// https://searchfox.org/mozilla-central/rev/7d17fd1fe9f0005a2fb19e5d53da4741b06a98ba/dom/base/FragmentOrElement.cpp#1791
     TagNameSet void_tags{"area",   "base",   "basefont", "bgsound", "br",
-                        "col",    "embed",  "frame",    "hr",      "img",
-                        "input",  "keygen", "link",     "meta",    "param",
-                        "source", "track",  "wbr"};
+                         "col",    "embed",  "frame",    "hr",      "img",
+                         "input",  "keygen", "link",     "meta",    "param",
+                         "source", "track",  "wbr"};
 
     /// List of elements that are treated as inline, meaning they do not break
     /// up sentences. Any element *not* in this list will cause the text that
     /// follows its open or close tag to be treated as a separate sentence.
     TagNameSet inline_tags{"abbr", "a",      "b",      "em",  "i",    "kbd",
-                          "mark", "math",   "output", "q",   "ruby", "small",
-                          "span", "strong", "sub",    "sup", "time", "u",
-                          "var",  "wbr",    "ins",    "del", "img"};
+                           "mark", "math",   "output", "q",   "ruby", "small",
+                           "span", "strong", "sub",    "sup", "time", "u",
+                           "var",  "wbr",    "ins",    "del", "img"};
 
     /// List of elements that are, regardless of
     /// `substituteInlineTagsWithSpaces`, not substituted with spaces.
@@ -96,7 +96,7 @@ class HTML {
     /// elements per se. Some tags, like <script>, are ignored at the `Scanner`
     /// level. See `xh_scanner.cpp/Scanner::scan_attribute()`.
     TagNameSet ignored_tags{"code", "kbd",     "samp", "var",
-                           "dir",  "acronym", "math"};
+                            "dir",  "acronym", "math"};
 
     /// List of characters that occur at the start of a token that indicate that
     /// the this token is probably *not* a continuation of a word. This is also
