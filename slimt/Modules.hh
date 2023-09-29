@@ -1,5 +1,11 @@
 #pragma once
+#include <stddef.h>
+#include <stdint.h>
+
+#include <string>
+#include <tuple>
 #include <unordered_map>
+#include <vector>
 
 #include "slimt/Tensor.hh"
 

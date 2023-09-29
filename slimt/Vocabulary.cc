@@ -1,6 +1,13 @@
 #include "slimt/Vocabulary.hh"
 
+#include <stdint.h>
+
 #include <string_view>
+#include <utility>
+#include <vector>
+
+#include "sentencepiece.pb.h"
+#include "src/sentencepiece_processor.h"
 
 namespace slimt {
 

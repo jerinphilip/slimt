@@ -1,7 +1,11 @@
 #pragma once
 
+#include <stddef.h>
+
+#include <atomic>
 #include <cassert>
 #include <future>
+#include <memory>
 #include <optional>
 #include <vector>
 

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stddef.h>
+
 #include <cassert>
 #include <string>
 #include <vector>

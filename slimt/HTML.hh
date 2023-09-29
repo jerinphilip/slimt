@@ -1,10 +1,16 @@
 #pragma once
 
+#include <stddef.h>
+
+#include <algorithm>
 #include <forward_list>
+#include <functional>
 #include <set>
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <utility>
+#include <vector>
 
 #include "slimt/Annotation.hh"
 #include "slimt/Types.hh"

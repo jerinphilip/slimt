@@ -1,5 +1,6 @@
 #include "slimt/Batch.hh"
 
+#include <algorithm>
 #include <cassert>
 
 #include "slimt/Tensor.hh"

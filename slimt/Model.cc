@@ -1,14 +1,14 @@
 #include "slimt/Model.hh"
 
-#include <cassert>
+#include <stdint.h>
+
 #include <cmath>
 #include <iostream>
-#include <numeric>
+#include <unordered_map>
+#include <utility>
 
 #include "slimt/Modules.hh"
-#include "slimt/QMM.hh"
 #include "slimt/TensorOps.hh"
-#include "slimt/Utils.hh"
 
 namespace slimt {
 

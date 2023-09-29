@@ -1,6 +1,14 @@
 #pragma once
 
+#include <assert.h>
+#include <stddef.h>
+
+#include <condition_variable>
+#include <memory>
+#include <mutex>
 #include <set>
+#include <unordered_set>
+#include <utility>
 #include <vector>
 
 #include "slimt/Batch.hh"
@@ -11,6 +19,8 @@
 namespace slimt {
 
 class Model;
+template <class T>
+struct HashPtr;
 
 namespace rd {
 

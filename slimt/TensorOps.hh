@@ -1,4 +1,10 @@
 #pragma once
+#include <stddef.h>
+#include <stdint.h>
+
+#include <string>
+#include <vector>
+
 #include "slimt/Tensor.hh"
 
 namespace slimt {
