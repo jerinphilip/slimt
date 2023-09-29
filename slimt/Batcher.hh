@@ -16,8 +16,11 @@ namespace rd {
 
 class Batcher {
  public:
-  explicit Batcher(size_t max_words, size_t wrap_length,
-                   float tgt_length_limit_factor = 3.0);
+  explicit Batcher(                        //
+      size_t max_words,                    //
+      size_t wrap_length,                  //
+      float tgt_length_limit_factor = 3.0  // NOLINT
+  );
 
   // SegmentRef incorporates (tentative) notions of priority with each
   // sentence. This method inserts the sentence into the internal data-structure
