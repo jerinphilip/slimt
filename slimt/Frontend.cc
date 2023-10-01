@@ -151,6 +151,7 @@ Response Translator::translate(std::string source, const Options &options) {
   if (options.HTML) {
     html.emplace(source);
   }
+  fprintf(stderr, "[slimt] Processing text into words\n");
   auto [annotated_source, segments] = processor_.process(std::move(source));
 
   std::promise<Response> promise;
@@ -159,6 +160,7 @@ Response Translator::translate(std::string source, const Options &options) {
   ResponseBuilder response_builder(options, std::move(annotated_source),
                                    vocabulary_, std::move(promise));
 
+  fprintf(stderr, "[slimt] Making request\n");
   auto request = std::make_shared<rd::Request>(  //
       id_, model_id_,                            //
       std::move(segments),                       //
@@ -166,17 +168,33 @@ Response Translator::translate(std::string source, const Options &options) {
       cache_                                     //
   );
 
+  fprintf(stderr, "[slimt] Batch from request\n");
   rd::Batcher batcher(config_.max_words, config_.wrap_length,
                       config_.tgt_length_limit_factor);
   batcher.enqueue(request);
 
+  fprintf(stderr, "[slimt] Translating batch\n");
+  size_t id = 0;
+  size_t count = 0;
+  AverageMeter<float> wps;
+  AverageMeter<float> occupancy;
   rd::Batch rd_batch = batcher.generate();
   while (!rd_batch.empty()) {
     // convert between batches.
+    Timer timer;
     Batch batch = convert(rd_batch);
     Histories histories = forward(batch);
     rd_batch.complete(histories);
     rd_batch = batcher.generate();
+    count += histories.size();
+
+    auto elapsed = static_cast<float>(timer.elapsed());
+    float batch_wps = batch.words().size() / elapsed;
+    wps.record(batch_wps);
+    occupancy.record(batch.occupancy());
+
+    fprintf(stderr, "[slimt] batch %zu | count %zu | wps %lf | occupancy %lf\n",
+            id++, count, wps.value(), occupancy.value());
   }
 
   future.wait();
