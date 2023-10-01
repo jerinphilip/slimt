@@ -17,6 +17,7 @@ inline void write_to_bin(const std::string &fpath, uint8_t *data, size_t size) {
   size_t count = 1;
   FILE *fp = fopen(fpath.c_str(), "wb");  // w for write, b for binary
   fwrite(data, size, count, fp);          // write 10 bytes from our buffer
+  fclose(fp);
 }
 
 inline void variable_name_transform(std::string &buffer) {

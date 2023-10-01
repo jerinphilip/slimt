@@ -5,26 +5,36 @@
 #include "3rd-party/CLI11.hpp"
 #include "slimt/slimt.hh"
 
+inline std::string read_from_stdin() {
+  // Read a large input text blob from stdin
+  std::ostringstream stream;
+  stream << std::cin.rdbuf();
+  std::string input = stream.str();
+  return input;
+}
+
 template <class Field>
 struct Record {
   Field model;
-  Field vocab;
+  Field vocabulary;
   Field shortlist;
 };
 
 struct Options {
   Record<std::string> translator;
   std::string root;
-  size_t max_tokens_per_batch = 1024;
+  bool html = false;
+  size_t max_tokens_per_batch = 1024;  // NOLINT
 
   template <class App>
   void setup_onto(App &app) {
     // clang-format off
     app.add_option("--root", root, "Path to prefix other filenames to");
     app.add_option("--model", translator.model, "Path to model");
-    app.add_option("--vocab", translator.vocab, "Path to vocab");
+    app.add_option("--vocabulary", translator.vocabulary, "Path to vocabulary");
     app.add_option("--shortlist", translator.shortlist, "Path to shortlist");
     app.add_option("--max-tokens-per-batch", max_tokens_per_batch, "Path to shortlist");
+    app.add_flag("--html", html, "Whether content is HTML");
     // clang-format on
   }
 };
@@ -48,105 +58,43 @@ static SlimtIO sio{
 void run(const Options &options) {
   std::string indent = "  ";
   // clang-format off
-  fprintf(sio.err, "%s model: %s\n", indent.c_str(), options.translator.model.c_str());
-  fprintf(sio.err, "%s vocab: %s\n", indent.c_str(), options.translator.vocab.c_str());
-  fprintf(sio.err, "%s shortlist: %s\n", indent.c_str(), options.translator.shortlist.c_str());
+  fprintf(stdout, "%s model: %s\n", indent.c_str(), options.translator.model.c_str());
+  fprintf(stdout, "%s vocabulary: %s\n", indent.c_str(), options.translator.vocabulary.c_str());
+  fprintf(stdout, "%s shortlist: %s\n", indent.c_str(), options.translator.shortlist.c_str());
   // clang-format on
   //
   using namespace slimt;  // NOLINT
 
   // Adjust paths.
   Record<std::string> adjusted{
-      .model = prefix(options.root, options.translator.model),         //
-      .vocab = prefix(options.root, options.translator.vocab),         //
-      .shortlist = prefix(options.root, options.translator.shortlist)  //
+      .model = prefix(options.root, options.translator.model),            //
+      .vocabulary = prefix(options.root, options.translator.vocabulary),  //
+      .shortlist = prefix(options.root, options.translator.shortlist)     //
   };
 
   Record<io::MmapFile> mmap{
-      .model = io::MmapFile(adjusted.model),          //
-      .vocab = io::MmapFile(adjusted.vocab),          //
-      .shortlist = io::MmapFile(adjusted.shortlist),  //
+      .model = io::MmapFile(adjusted.model),            //
+      .vocabulary = io::MmapFile(adjusted.vocabulary),  //
+      .shortlist = io::MmapFile(adjusted.shortlist),    //
   };
 
-  // Tokenize into numeric-ids using sentencepiece.
-  Vocabulary vocab(mmap.vocab.data(), mmap.vocab.size());
-  ShortlistGenerator shortlist_generator(            //
-      mmap.shortlist.data(), mmap.shortlist.size(),  //
-      vocab, vocab                                   //
-  );
-
-  // Load model
-  auto items = io::loadItems(mmap.model.data());
-  Model model(Tag::tiny11, std::move(items), std::move(shortlist_generator));
-
-  fprintf(sio.err, "%s eos_id: %u\n", indent.c_str(), vocab.eos_id());
-  using Sentences = std::vector<Vocabulary::Words>;
-
-  AverageMeter<float> wps;
-  AverageMeter<float> occupancy;
-
-  auto batch_and_translate = [&vocab, &model, &wps, &occupancy](  //
-                                 size_t line_no,                  //
-                                 Sentences &sentences,            //
-                                 size_t max_sequence_length       //
-                             ) {
-    Timer timer;
-    uint64_t batch_size = sentences.size();
-    Batch batch(batch_size, max_sequence_length, vocab.pad_id());
-    for (auto &sentence : sentences) {
-      batch.add(sentence);
-    }
-
-    auto translated = model.translate(batch);
-    for (auto &sentence : translated) {
-      auto [result, views] = vocab.decode(sentence);
-      fprintf(sio.out, "%s\n", result.c_str());
-    }
-    size_t words_processed = max_sequence_length * sentences.size();
-    float batch_wps = words_processed / timer.elapsed();
-    wps.record(batch_wps);
-    occupancy.record(batch.occupancy());
-    fprintf(sio.err,
-            "line %zu | wps: %f | occupancy: %f | avg-wps: %f | avg-occ: %f\n",
-            line_no, batch_wps, batch.occupancy(), wps.value(),
-            occupancy.value());
+  Record<View> view{
+      .model = {mmap.model.data(), mmap.model.size()},                 //
+      .vocabulary = {mmap.vocabulary.data(), mmap.vocabulary.size()},  //
+      .shortlist = {mmap.shortlist.data(), mmap.shortlist.size()},     //
   };
 
-  std::string line;
-  size_t max_sequence_length = 0;
-  size_t token_count = 0;
-  size_t line_no = 0;
-  Sentences sentences;
-  while (getline(std::cin, line)) {
-    auto [words, views] = vocab.encode(line, /*add_eos =*/true);
-    ++line_no;
-    size_t candidate_max_sequence_length =
-        std::max(words.size(), max_sequence_length);
-    size_t candidate_token_count =
-        candidate_max_sequence_length * (sentences.size() + 1);
+  Config config;
+  Translator translator(config, view.model, view.shortlist, view.vocabulary);
+  std::string source = read_from_stdin();
+  slimt::Options opts{
+      .alignment = true,    //
+      .HTML = options.html  //
+  };
+  Response response = translator.translate(source, opts);
+  fprintf(stdout, "%s\n", response.target.text.c_str());
 
-    if (candidate_token_count > options.max_tokens_per_batch) {
-      // Cleave off a batch.
-      batch_and_translate(line_no, sentences, max_sequence_length);
-      sentences.clear();
-      // New stuff based on words.
-      max_sequence_length = words.size();
-      token_count = words.size();
-      sentences.push_back(std::move(words));
-    } else {
-      max_sequence_length = candidate_max_sequence_length;
-      token_count = candidate_token_count;
-      sentences.push_back(std::move(words));
-    }
-  }
-
-  // Overhang.
-  if (!sentences.empty()) {
-    batch_and_translate(line_no, sentences, max_sequence_length);
-    sentences.clear();
-  }
-
-  fprintf(sio.err, "wps: %f\n", wps.value());
+  // fprintf(stdout, "wps: %f\n", wps.value());
 }
 
 int main(int argc, char *argv[]) {

@@ -3,35 +3,11 @@
 #include <csignal>
 #include <ctime>
 #include <iostream>
+#include <memory>
 #include <sstream>
 #include <string>
 #include <unordered_set>
 #include <vector>
-
-#define SLIMT_BREAK std::raise(SIGTRAP)
-
-#define SLIMT_TRACE(x)                                              \
-  do {                                                              \
-    std::cerr << __FILE__ << ":" << __LINE__;                       \
-    std::cerr << " " << __FUNCTION__ << " ";                        \
-    std::cerr << #x << ": " << std::scientific << (x) << std::endl; \
-  } while (0)
-
-#define SLIMT_TRACE_BLOCK(x)                                        \
-  do {                                                              \
-    std::cerr << __FILE__ << ":" << __LINE__;                       \
-    std::cerr << " " << __FUNCTION__ << " \n\n";                    \
-    std::cerr << #x << ": " << std::scientific << (x) << std::endl; \
-    std::cerr << "\n\n";                                            \
-  } while (0);
-
-#define SLIMT_TRACE2(x, y) \
-  SLIMT_TRACE(x);          \
-  SLIMT_TRACE(y)
-
-#define SLIMT_TRACE3(x, y, z) \
-  SLIMT_TRACE2(x, y);         \
-  SLIMT_TRACE(z);
 
 namespace slimt {
 
@@ -54,7 +30,7 @@ class Verifier {
   std::string blob_path_;
 };
 
-#define VERIFY_MATCH(value, name)                  \
+#define SLIMT_VERIFY_MATCH(value, name)            \
   do {                                             \
     const char *flag = std::getenv("SLIMT_TRACE"); \
     if (flag) {                                    \
@@ -86,7 +62,7 @@ std::tuple<Tensor, float> quantized_tensor_from_file(const std::string &fpath,
 // std::hash as the hash implementation. Used as a drop-in
 // replacement for boost::hash_combine.
 template <class T, class HashType = std::size_t>
-inline void hash_combine(HashType &seed, T const &v) {
+inline void hash_combine(HashType &seed, const T &v) {
   std::hash<T> hasher;
   seed ^=
       static_cast<HashType>(hasher(v)) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
@@ -142,6 +118,19 @@ class AverageMeter {
  private:
   Scalar running_avg_ = 0;
   size_t count_ = 0;
+};
+
+/// Hashes a pointer to an object using the address the pointer points to. If
+/// two pointers point to the same address, they hash to the same value.  Useful
+/// to put widely shared_ptrs of entities (eg: Model, Vocab,
+/// Shortlist) etc into containers which require the members to be hashable
+/// (std::unordered_set, std::unordered_map).
+template <class T>
+struct HashPtr {
+  size_t operator()(const std::shared_ptr<T> &t) const {
+    auto address = reinterpret_cast<size_t>(t.get());
+    return std::hash<size_t>()(address);
+  }
 };
 
 }  // namespace slimt

@@ -14,11 +14,13 @@ class Batch {
   Tensor &indices() { return batch_; }
   Tensor &mask() { return mask_; }
   std::vector<uint32_t> &words() { return words_; }
+  std::vector<size_t> &lengths() { return lengths_; }
   size_t index() const { return index_; }
   float occupancy();
 
  private:
   std::vector<uint32_t> words_;
+  std::vector<size_t> lengths_;
   Tensor batch_;
   Tensor mask_;
   size_t index_ = 0;

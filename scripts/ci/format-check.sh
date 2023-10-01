@@ -39,3 +39,4 @@ slimt-check-clang-format
 slimt-check-python
 slimt-check-sh
 slimt-check-cmake
+slimt-check-clang-tidy

@@ -11,7 +11,7 @@ set -x
 ./build/bin/slimt \
   --root ${PREFIX} \
   --model ${MODEL} \
-  --vocab ${VOCAB} \
+  --vocabulary ${VOCAB} \
   --shortlist ${SHORTLIST} \
   < data/sample.txt
 

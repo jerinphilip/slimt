@@ -1,15 +1,25 @@
 add_library(
   slimt STATIC
   Aligned.cc
-  Vocabulary.cc
-  Io.cc
-  Tensor.cc
-  Model.cc
-  TensorOps.cc
-  QMM.cc
+  Annotation.cc
   Batch.cc
+  Batcher.cc
+  Frontend.cc
+  HTML.cc
+  Io.cc
+  Model.cc
+  Modules.cc
+  QMM.cc
+  Request.cc
+  Response.cc
+  ResponseBuilder.cc
+  Shortlist.cc
+  Splitter.cc
+  Tensor.cc
+  TensorOps.cc
   Utils.cc
-  Shortlist.cc)
+  Vocabulary.cc
+  XHScanner.cc)
 
 target_compile_options(slimt PRIVATE ${SLIMT_COMPILE_OPTIONS})
 target_compile_definitions(slimt PRIVATE ${SLIMT_COMPILE_DEFINITIONS})

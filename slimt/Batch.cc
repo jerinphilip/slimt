@@ -18,6 +18,7 @@ void Batch::add(std::vector<uint32_t> &words) {
 
   (void)batch_size;
   words_.insert(words_.end(), words.begin(), words.end());
+  lengths_.push_back(words.size());
 
   assert(words.size() <= sequence_length);
   assert(index_ < batch_size);

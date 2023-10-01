@@ -28,6 +28,7 @@ struct Ops;
 
 #ifdef __AVX__
 #include "slimt/simd/avx2.h"
+#define VEXT_W8_AVAILABLE
 
 namespace slimt {
 using F32x8 = VDatum<VExt::w8>;
@@ -37,15 +38,20 @@ using F32x8 = VDatum<VExt::w8>;
 
 #ifdef __SSE__
 #include "slimt/simd/sse.h"
+#define VEXT_W4_AVAILABLE
 
 namespace slimt {
 using F32x4 = VDatum<VExt::w4>;
 }
 #endif
 
-// #if defined(__ARM_NEON) || defined(__ARM_NEON__)
-// #include "slimt/simd/neon.h"
-// #endif
+#if defined(__ARM_NEON) || defined(__ARM_NEON__)
+#include "slimt/simd/neon.h"
+#define VEXT_W4_AVAILABLE
+namespace slimt {
+using F32x4 = VDatum<VExt::w4>;
+}
+#endif
 
 namespace slimt::vext {
 

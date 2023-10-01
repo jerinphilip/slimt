@@ -1,7 +1,10 @@
+#pragma once
 #include <cstdint>
 #include <cstdlib>
 
 namespace slimt {
+
+constexpr size_t kAlignWidth = 64;
 
 class Aligned {
  public:
@@ -12,6 +15,11 @@ class Aligned {
 
   void* data() const;
   size_t size() const;
+
+  char* begin() const;
+  char* end() const;
+
+  bool empty() const;
 
   Aligned(const Aligned&) = delete;
   Aligned& operator=(const Aligned&) = delete;

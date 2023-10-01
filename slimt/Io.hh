@@ -33,6 +33,8 @@ struct Item {
   Type type{Type::f32};
 };
 
+using Items = std::vector<Item>;
+
 void set_item(Item& item, Aligned&& aligned);
 
 std::vector<io::Item> loadItems(void* current);
@@ -54,7 +56,14 @@ class MmapFile {
   MmapFile(const MmapFile&) = delete;
   MmapFile& operator=(const MmapFile&) = delete;
 
+  MmapFile(MmapFile&& from) noexcept;
+
+  MmapFile& operator=(MmapFile&& from) noexcept;
+
  private:
+  void consume(MmapFile& from);
+  void reset();
+
   int fd_ = -1;
   void* data_ = nullptr;
   size_t size_ = 0;

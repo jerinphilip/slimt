@@ -1,6 +1,6 @@
 #include "slimt/TensorOps.hh"
 
-#ifdef HAS_BLAS
+#ifdef SLIMT_HAS_BLAS
 #include <cblas.h>
 #else
 #include "3rd-party/ruy/ruy/ruy.h"
@@ -38,11 +38,11 @@ Tensor index_select(Tensor& x, Tensor& indices,
 void modify_mask_for_pad_tokens_in_attention(float* mask, size_t size) {
   // Adopted from:
   // https://github.com/browsermt/marian-dev/blob/14c9d9b0e732f42674e41ee138571d5a7bf7ad94/src/models/transformer.h#L132
-  float f16_lowest = std::numeric_limits<float>::lowest() / 2.0F;
-  float minus_inf = std::max(f16_lowest, -99999999.0F);
+  float f16_lowest = std::numeric_limits<float>::lowest() / 2.0F;  // NOLINT
+  float minus_inf = std::max(f16_lowest, -99999999.0F);            // NOLINT
   for (size_t i = 0; i < size; i++) {
-    float& x = mask[i];
-    x = (1.0F - x) * minus_inf;
+    float* x = mask + i;
+    *x = (1.0F - *x) * minus_inf;
   }
 }
 
@@ -239,7 +239,8 @@ void sinusoidal_signal(int start, size_t sequence_length, size_t embed_dim,
   // Imported from:
   // https://github.com/jerinphilip/marian/blob/8c4170fa08c46df1cf4c987e493b7a3772c380b3/src/graph/node_initializers.cpp#L216
   float num_timescales = static_cast<float>(embed_dim) / 2;
-  float log_timescale_increment = std::log(10000.0F) / (num_timescales - 1.0F);
+  float log_timescale_increment =
+      std::log(10000.0F) / (num_timescales - 1.0F);  // NOLINT
 
   for (size_t p = start; p < sequence_length + start; ++p) {
     for (int i = 0; i < num_timescales; ++i) {
@@ -272,13 +273,13 @@ void add_positional_embedding(const float* word_embedding,
 
 void softmax(float* logits, size_t batch_size, size_t num_classes, float* out) {
 #ifdef VEXT_W8_AVAILABLE
-  if (num_classes % 8 == 0) {
+  if (num_classes % VDatum<VExt::w8>::kWidth == 0) {
     vext::softmax<VExt::w8>(logits, batch_size, num_classes, out);
     return;
   }
 #endif
 #ifdef VEXT_W4_AVAILABLE
-  if (num_classes % 4 == 0) {
+  if (num_classes % VDatum<VExt::w4>::kWidth == 0) {
     vext::softmax<VExt::w4>(logits, batch_size, num_classes, out);
     return;
   }
@@ -323,7 +324,7 @@ void matrix_multiply(              //
     float* C, size_t ldc           //
 );
 
-#ifdef HAS_BLAS
+#ifdef SLIMT_HAS_BLAS
 template <>
 void matrix_multiply<Provider::BLAS>(  //
     bool trans_a, bool trans_b,        //
