@@ -43,18 +43,6 @@ std::string prefix(const std::string &root, const std::string &basename) {
   return root + "/" + basename;
 }
 
-struct SlimtIO {
-  FILE *in;
-  FILE *out;
-  FILE *err;
-};
-
-static SlimtIO sio{
-    .in = stdin,    //
-    .out = stdout,  //
-    .err = stderr   //
-};
-
 void run(const Options &options) {
   std::string indent = "  ";
   // clang-format off
