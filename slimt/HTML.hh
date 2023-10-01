@@ -68,18 +68,18 @@ class HTML {
     /// https://developer.mozilla.org/en-US/docs/Glossary/Empty_element.
     /// More relevant source of this list:
     /// https://searchfox.org/mozilla-central/rev/7d17fd1fe9f0005a2fb19e5d53da4741b06a98ba/dom/base/FragmentOrElement.cpp#1791
-    TagNameSet voidTags{"area",   "base",   "basefont", "bgsound", "br",
-                        "col",    "embed",  "frame",    "hr",      "img",
-                        "input",  "keygen", "link",     "meta",    "param",
-                        "source", "track",  "wbr"};
+    TagNameSet void_tags{"area",   "base",   "basefont", "bgsound", "br",
+                         "col",    "embed",  "frame",    "hr",      "img",
+                         "input",  "keygen", "link",     "meta",    "param",
+                         "source", "track",  "wbr"};
 
     /// List of elements that are treated as inline, meaning they do not break
     /// up sentences. Any element *not* in this list will cause the text that
     /// follows its open or close tag to be treated as a separate sentence.
-    TagNameSet inlineTags{"abbr", "a",      "b",      "em",  "i",    "kbd",
-                          "mark", "math",   "output", "q",   "ruby", "small",
-                          "span", "strong", "sub",    "sup", "time", "u",
-                          "var",  "wbr",    "ins",    "del", "img"};
+    TagNameSet inline_tags{"abbr", "a",      "b",      "em",  "i",    "kbd",
+                           "mark", "math",   "output", "q",   "ruby", "small",
+                           "span", "strong", "sub",    "sup", "time", "u",
+                           "var",  "wbr",    "ins",    "del", "img"};
 
     /// List of elements that are, regardless of
     /// `substituteInlineTagsWithSpaces`, not substituted with spaces.
@@ -88,29 +88,29 @@ class HTML {
     /// limit this set to just that one tag that that can only really be used
     /// *inside* words: `<wbr>`. See also:
     /// https://developer.mozilla.org/en-US/docs/Web/HTML/Element/wbr
-    TagNameSet inWordTags{"wbr"};
+    TagNameSet in_word_tags{"wbr"};
 
     /// List of elements we copy as is, but do parse as if they're HTML because
     /// they could be nested. For <script> we just scan for </script> because
     /// the script tag may not be nested, but that is not the case for these
     /// elements per se. Some tags, like <script>, are ignored at the `Scanner`
     /// level. See `xh_scanner.cpp/Scanner::scan_attribute()`.
-    TagNameSet ignoredTags{"code", "kbd",     "samp", "var",
-                           "dir",  "acronym", "math"};
+    TagNameSet ignored_tags{"code", "kbd",     "samp", "var",
+                            "dir",  "acronym", "math"};
 
     /// List of characters that occur at the start of a token that indicate that
     /// the this token is probably *not* a continuation of a word. This is also
     /// used to determine whether there should be a space after a closing tag
     /// or not. I.e. a `.` after a `</strong>` does not need to be separated by
     /// an extra space.
-    std::string continuationDelimiters = "\n ,.(){}[]";
+    std::string continuation_delimiters = "\n ,.(){}[]";
 
     /// Should we always add spaces to the places where tags used to be? I.e.
     /// `un<u>der</u>line` should become `un der line`? This does help with
     /// retaining tags inside words, or with odd pages that use CSS to add
     /// spacing between a lot of tags. Cases like `<td>` and `<li>` are already
     /// covered by treating them as sentence splitting.
-    bool substituteInlineTagsWithSpaces = true;
+    bool substitute_inline_tags_with_spaces = true;
   };
 
   /// Represents a tag, or markup that is being applied to a string of text.
@@ -189,7 +189,7 @@ class HTML {
   /// Utilities to test whether subword `str` is part of a word together with
   /// the subword `prev`, or a separate word. Basically *does `str` start with
   /// a space, but bit more complex to deal with punctuation.
-  bool isContinuation(std::string_view prev, std::string_view str) const;
+  bool is_continuation(std::string_view prev, std::string_view str) const;
 
   /// Copies span pointers from the subwords/tokens from the source text to the
   /// subwords of the target text in `target_token_spans` using alignment
@@ -217,7 +217,7 @@ class HTML {
   /// Allocates a tag in `pool_` (which then owns it) and gives a pointer to be
   /// used in TagStacks. Pointer is valid as long as this HTML instance lives
   /// on.
-  Tag *makeTag(Tag &&tag);
+  Tag *make_tag(Tag &&tag);
 
   /// HTML options associated with this parse.
   Options options_;

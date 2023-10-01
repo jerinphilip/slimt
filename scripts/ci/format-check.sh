@@ -17,8 +17,8 @@ function slimt-check-clang-tidy {
     -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ \
     ..
   popd
-  run-clang-tidy -p build "$PWD/slimt/.*"
-  run-clang-tidy -p build "$PWD/app/.*"
+  run-clang-tidy -p build -header-filter="$PWD/slimt" "$PWD/slimt/.*"
+  run-clang-tidy -p build -header-filter="$PWD/slimt" "$PWD/app/.*"
 
 }
 

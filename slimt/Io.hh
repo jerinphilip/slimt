@@ -37,7 +37,7 @@ using Items = std::vector<Item>;
 
 void set_item(Item& item, Aligned&& aligned);
 
-std::vector<io::Item> loadItems(void* current);
+std::vector<io::Item> load_items(void* current);
 std::ostream& operator<<(std::ostream& out, const Item& item);
 
 void unquantize_embedding_weights(const int8_t* quantized_weights,

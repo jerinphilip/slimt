@@ -64,8 +64,13 @@ std::tuple<Tensor, float> quantized_tensor_from_file(const std::string &fpath,
 template <class T, class HashType = std::size_t>
 inline void hash_combine(HashType &seed, const T &v) {
   std::hash<T> hasher;
-  seed ^=
-      static_cast<HashType>(hasher(v)) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+  // Constants only appear here, and are taken from some StackOverflow (or
+  // marian).
+  seed ^= (                             //
+      static_cast<HashType>(hasher(v))  //
+      + 0x9e3779b9                      // NOLINT
+      + (seed << 6) + (seed >> 2)       // NOLINT
+  );
 }
 
 // Hash a whole chunk of memory, mostly used for diagnostics

@@ -148,7 +148,7 @@ Histories Translator::forward(Batch &batch) {
 Response Translator::translate(std::string source, const Options &options) {
   // Create a request
   std::optional<HTML> html = std::nullopt;
-  if (options.HTML) {
+  if (options.html) {
     html.emplace(source);
   }
   fprintf(stderr, "[slimt] Processing text into words\n");

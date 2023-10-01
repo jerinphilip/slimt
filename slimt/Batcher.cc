@@ -9,7 +9,7 @@ namespace slimt::rd {
 
 Batcher::Batcher(size_t max_words, size_t wrap_length,
                  float tgt_length_limit_factor)
-    : max_words_(max_words), running_bucket_max_size_(0) {
+    : max_words_(max_words) {
   // For the time being, we add some slack, which only Batcher is aware of.
   // Since the TextProcessor still wraps at first request in, most of the
   // Batches generated will be under max-length break.

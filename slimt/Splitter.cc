@@ -155,8 +155,8 @@ void TextProcessor::wrap(Segment &segment,
   }
 }
 
-void TextProcessor::processFromAnnotation(AnnotatedText &source,
-                                          Segments &segments) const {
+void TextProcessor::process_from_annotation(AnnotatedText &source,
+                                            Segments &segments) const {
   std::string text = source.text;
   AnnotatedText replacement(std::move(text));
 
