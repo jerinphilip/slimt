@@ -2,6 +2,12 @@
 
 #include <string_view>
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#include "3rd-party/sentencepiece/src/builtin_pb/sentencepiece.pb.h"
+#pragma GCC diagnostic pop
+
 namespace slimt {
 
 Vocabulary::Vocabulary(void *data, size_t size) {

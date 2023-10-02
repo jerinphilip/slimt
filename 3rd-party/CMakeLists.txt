@@ -9,7 +9,8 @@ target_link_libraries(spiece_iface INTERFACE sentencepiece-static)
 
 get_target_property(Sentencepiece_INCLUDES sentencepiece-static
                     INCLUDE_DIRECTORIES)
-target_include_directories(spiece_iface INTERFACE ${Sentencepiece_INCLUDES})
+target_include_directories(spiece_iface INTERFACE ${Sentencepiece_INCLUDES}
+                                                  sentencepiece/src/)
 
 target_compile_options(spiece_iface INTERFACE -D_USE_BUILTIN_STRING_VIEW)
 add_library(Sentencepiece::Sentencepiece ALIAS spiece_iface)
