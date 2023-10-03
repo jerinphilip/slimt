@@ -30,14 +30,14 @@ void Splitter::load(const std::string& fname) {
 void Splitter::declare_prefix(std::string_view buffer) {
   // parse a line from a prefix file and interpret it
   static Regex pat("([^#\\s]*)\\s*(?:(#\\s*NUMERIC_ONLY\\s*#))?", PCRE2_UTF);
-  Match M(pat);
-  if (pat.find(buffer, &M) > 0) {
-    auto m1 = M[1];
+  Match match(pat);
+  if (pat.find(buffer, &match) > 0) {
+    auto m1 = match[1];
     if (m1.size()) {
       std::string foo(m1.data(), m1.size());
-      prefix_type_[foo] = M[2].size() ? 2 : 1;
+      prefix_type_[foo] = match[2].size() ? 2 : 1;
       // for debugging:
-      // std::cerr << foo << " " << (M[2].size() ? "N" : "") << std::endl;
+      // std::cerr << foo << " " << (match[2].size() ? "N" : "") << std::endl;
     }
   }
 }
@@ -67,14 +67,15 @@ std::ostream& single_line(
     std::string_view span,  // text span to be printed in a single line
     std::string_view end,   // stuff to put at end of line
     bool validate_utf) {    // do we need to validate UTF8?
-  static Regex P("^\\s*(.*)\\R+\\s*", PCRE2_UTF);
-  thread_local static Match M(P);
-  int success = P.consume(&span, &M, validate_utf ? 0 : PCRE2_NO_UTF_CHECK);
+  static Regex pattern("^\\s*(.*)\\R+\\s*", PCRE2_UTF);
+  thread_local static Match match(pattern);
+  int success =
+      pattern.consume(&span, &match, validate_utf ? 0 : PCRE2_NO_UTF_CHECK);
   while (success > 0) {
-    auto m = M[1];
+    auto m = match[1];
     out.write(m.data(), m.size());
     out.write(" ", 1);
-    success = P.consume(&span, &M, PCRE2_NO_UTF_CHECK);
+    success = pattern.consume(&span, &match, PCRE2_NO_UTF_CHECK);
   }
   out.write(span.data(), span.size());
   out.write(end.data(), end.size());
@@ -88,16 +89,17 @@ std::string& single_line(
     std::string_view span,  // text span to be printed in a single line
     std::string_view end,   // stuff to put at end of line
     bool validate_utf) {    // do we need to validate UTF8?
-  static Regex P("^\\s*(.*)\\R+\\s*", PCRE2_UTF);
-  thread_local static Match M(P);
-  int success = P.consume(&span, &M, validate_utf ? 0 : PCRE2_NO_UTF_CHECK);
+  static Regex pattern("^\\s*(.*)\\R+\\s*", PCRE2_UTF);
+  thread_local static Match match(pattern);
+  int success =
+      pattern.consume(&span, &match, validate_utf ? 0 : PCRE2_NO_UTF_CHECK);
   snt.reserve(span.size());
   snt.clear();
   while (success > 0) {
-    auto m = M[1];
+    auto m = match[1];
     snt.append(m.data(), m.size());
     snt += ' ';
-    success = P.consume(&span, &M, PCRE2_NO_UTF_CHECK);
+    success = pattern.consume(&span, &match, PCRE2_NO_UTF_CHECK);
   }
   snt.append(span.data(), span.size());
   snt.append(end.data(), end.size());
@@ -110,9 +112,9 @@ std::string& single_line(
 // 2: prefix only in front of numbers
 int Splitter::get_prefix_class(std::string_view piece) const {
   static Regex foo(".*\\s([^\\s]*)", PCRE2_DOTALL);
-  static Match M(foo);
-  if (foo.consume(&piece, &M, PCRE2_NO_UTF_CHECK) > 0) {
-    piece = M[1];
+  static Match match(foo);
+  if (foo.consume(&piece, &match, PCRE2_NO_UTF_CHECK) > 0) {
+    piece = match[1];
   }
   auto m = prefix_type_.find(piece);
   // for debugging:
