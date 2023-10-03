@@ -1,6 +1,6 @@
 #include "slimt/Utils.hh"
 
-#include <stdio.h>
+#include <cstdio>
 #include <unistd.h>
 
 #include <algorithm>
