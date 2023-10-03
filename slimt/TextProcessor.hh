@@ -7,8 +7,8 @@
 #include <vector>
 
 #include "slimt/Aligned.hh"
+#include "slimt/Splitter.hh"
 #include "slimt/Types.hh"
-#include "ssplit.h"
 
 namespace slimt {
 class Aligned;
@@ -75,11 +75,11 @@ class TextProcessor {
                         ///< number of tokens
   /// Mode of splitting, can be line ('\n') based, paragraph based, also
   /// supports a wrapped mode.
-  ug::ssplit::SentenceStream::splitmode ssplit_mode_;
+  slimt::SentenceStream::splitmode ssplit_mode_;
 
   const Vocabulary &vocabulary_;  ///< Vocabularies used to tokenize a sentence
   /// SentenceSplitter compatible with moses sentence-splitter
-  ug::ssplit::SentenceSplitter ssplit_;
+  slimt::Splitter ssplit_;
 };
 
 }  // namespace slimt

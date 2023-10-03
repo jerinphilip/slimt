@@ -25,7 +25,7 @@ set(SLIMT_COMPILE_OPTIONS ${SLIMT_COMPILE_OPTIONS}
                           -Wno-missing-field-initializers -Wno-unused-function)
 set(SLIMT_COMPILE_DEFINITIONS "")
 
-set(SLIMT_EXTERNAL_LIBS SentencePiece::SentencePiece Ssplit::Ssplit)
+set(SLIMT_EXTERNAL_LIBS SentencePiece::SentencePiece)
 
 if(WITH_BLAS)
   find_package(BLAS)
