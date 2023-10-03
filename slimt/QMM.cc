@@ -2,10 +2,9 @@
 
 #include <cassert>
 
-#include "intgemm/callbacks/configs.h"
-
 #ifdef SLIMT_HAS_INTGEMM
 #include "3rd-party/intgemm/intgemm/intgemm.h"
+#include "intgemm/callbacks/configs.h"
 #endif
 
 #ifdef SLIMT_HAS_RUY
