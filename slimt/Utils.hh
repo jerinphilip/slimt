@@ -1,11 +1,14 @@
 #pragma once
 #include <chrono>
 #include <csignal>
+#include <cstdint>
 #include <ctime>
+#include <functional>
 #include <iostream>
 #include <memory>
 #include <sstream>
 #include <string>
+#include <tuple>
 #include <unordered_set>
 #include <vector>
 

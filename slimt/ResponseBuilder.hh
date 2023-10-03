@@ -3,6 +3,7 @@
 #include <functional>
 #include <future>
 #include <optional>
+#include <utility>
 
 #include "slimt/Annotation.hh"
 #include "slimt/HTML.hh"
@@ -15,6 +16,7 @@
 // to operate with.
 
 namespace slimt {
+class Vocabulary;
 
 /// ResponseBuilder is a callback functor. It is expected to be bound to a
 /// Request after giving it the context of options, vocabulary and promise to

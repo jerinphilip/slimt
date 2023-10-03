@@ -1,6 +1,10 @@
 #pragma once
 
+#include <algorithm>
+#include <cstddef>
+#include <string>
 #include <string_view>
+#include <tuple>
 
 #include "sentencepiece_processor.h"
 #include "slimt/Types.hh"

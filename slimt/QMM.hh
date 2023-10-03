@@ -1,7 +1,10 @@
 #pragma once
 #include <cstddef>
+#include <cstdint>
 #include <cstdio>
 #include <cstdlib>
+#include <string>
+#include <vector>
 
 #include "slimt/Tensor.hh"
 

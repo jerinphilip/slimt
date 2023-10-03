@@ -1,6 +1,10 @@
 #pragma once
+#include <algorithm>
+#include <cstddef>
 #include <cstdint>
+#include <iterator>
 #include <ostream>
+#include <string>
 #include <vector>
 
 #include "slimt/Aligned.hh"
@@ -27,6 +31,7 @@ size_t size_in_bytes(Type type);
 
 // clang-format off
 template <Type ScalarType> struct DeduceNative;
+
 template <>                struct DeduceNative <Type::f32> { using Type = float;    };
 template <>                struct DeduceNative <Type::i32> { using Type = int32_t;  };
 template <>                struct DeduceNative <Type::u32> { using Type = uint32_t; };
@@ -35,6 +40,7 @@ template <>                struct DeduceNative <Type::ig8> { using Type = int8_t
 
 // NOLINTBEGIN
 template <class Scalar> struct DeduceEnumType;
+
 template <> struct DeduceEnumType<float>      { static constexpr Type value = Type::f32; };
 template <> struct DeduceEnumType<int>        { static constexpr Type value = Type::i32; };
 template <> struct DeduceEnumType<int8_t>     { static constexpr Type value = Type::i8;  };
