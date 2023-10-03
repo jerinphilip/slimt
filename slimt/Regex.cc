@@ -24,7 +24,8 @@ Regex::Regex(const std::string& pattern, uint32_t options, uint32_t jit_options)
 }
 
 std::string Regex::get_error_message() const {
-  PCRE2_UCHAR buffer[256];
+  constexpr size_t kMaxBufferSize = 256;
+  PCRE2_UCHAR buffer[kMaxBufferSize];
   pcre2_get_error_message(error_number_, buffer, sizeof(buffer));
   std::ostringstream msg;
   msg << "PCRE2 compilation failed at offset " << error_offset_ << ": "
@@ -37,19 +38,19 @@ const pcre2_code* Regex::get_pcre2_code() const { return re_; }
 
 int Regex::consume(
     std::string_view* subj,  // the string (view) agains we are matching
-    Match* M,                // where to store the results of the match
+    Match* match,            // where to store the results of the match
     uint32_t options         // search options
 ) const {
-  int success = find(*subj, M, 0, options | PCRE2_ANCHORED);
+  int success = find(*subj, match, 0, options | PCRE2_ANCHORED);
   if (success > 0) {
-    subj->remove_prefix((*M)[0].size());
+    subj->remove_prefix((*match)[0].size());
   }
   return success;
 }
 
 int Regex::find(
     std::string_view subj,  // the string (view) agains we are matching
-    Match* M,               // where to store the results of the match
+    Match* match,           // where to store the results of the match
     size_t start,           // where to start searching in the string
     uint32_t options        // search options
 ) const {
@@ -59,10 +60,10 @@ int Regex::find(
                        subj.size(),             /* the length of the subject */
                        start,                   /* where to start */
                        options,                 /* options */
-                       M->match_data, /* block for storing the result */
-                       nullptr);      /* use default match context */
-  M->data = rc > 0 ? subj.data() : nullptr;
-  M->num_matched_groups = rc;
+                       match->match_data, /* block for storing the result */
+                       nullptr);          /* use default match context */
+  match->data = rc > 0 ? subj.data() : nullptr;
+  match->num_matched_groups = rc;
   return rc;  // returns the number of matched groups
 }
 
