@@ -39,4 +39,4 @@ function cmake-configure {
 }
 
 cmake-configure
-cmake --build build --target all
+VERBOSE=1 cmake --build build --target all
