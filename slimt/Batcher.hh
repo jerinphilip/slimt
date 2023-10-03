@@ -1,9 +1,8 @@
 #pragma once
 
 #include <cassert>
-#include <cstddef>
-
 #include <condition_variable>
+#include <cstddef>
 #include <memory>
 #include <mutex>
 #include <set>

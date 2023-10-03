@@ -1,8 +1,7 @@
 #include "slimt/HTML.hh"
 
-#include <cassert>
-
 #include <algorithm>
+#include <cassert>
 #include <cctype>
 #include <compare>
 #include <iterator>

@@ -1,8 +1,7 @@
 #pragma once
 
-#include <cstddef>
-
 #include <cassert>
+#include <cstddef>
 #include <string>
 #include <vector>
 

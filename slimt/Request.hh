@@ -1,9 +1,8 @@
 #pragma once
 
-#include <cstddef>
-
 #include <atomic>
 #include <cassert>
+#include <cstddef>
 #include <future>
 #include <memory>
 #include <optional>

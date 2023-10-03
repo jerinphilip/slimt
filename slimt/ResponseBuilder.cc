@@ -1,7 +1,6 @@
 #include "slimt/ResponseBuilder.hh"
 
 #include <cstddef>
-
 #include <memory>
 #include <string>
 #include <string_view>

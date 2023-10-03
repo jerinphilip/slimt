@@ -1,8 +1,7 @@
 #pragma once
 
-#include <cstddef>
-
 #include <algorithm>
+#include <cstddef>
 #include <forward_list>
 #include <functional>
 #include <set>
