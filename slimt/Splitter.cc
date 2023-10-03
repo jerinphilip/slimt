@@ -8,146 +8,10 @@
 #define PCRE2_CODE_UNIT_WIDTH 8
 #include <pcre2.h>
 
+#include "slimt/Regex.hh"
 #include "slimt/Splitter.hh"
 
 namespace slimt {
-namespace {
-
-// inspired by https://github.com/luvit/pcre2/blob/master/src/pcre2demo.c
-class Match;
-
-class Regex {
-  std::string pattern_string_;
-  uint32_t option_bits_;
-  uint32_t newline_;
-
-  PCRE2_SPTR pattern_; /* PCRE2_SPTR is a pointer to unsigned code units of
-                        * the appropriate width (8, 16, or 32 bits). */
-  PCRE2_SPTR name_table_;
-
-  PCRE2_SIZE error_offset_;
-  int error_number_;
-  pcre2_code* const re_;
-
- public:
-  ~Regex();
-
-  Regex(std::string pattern,  // pattern to be compiled
-        uint32_t options,     // pcre2 options for regex compilation
-        uint32_t jit_options =
-            PCRE2_JIT_COMPLETE);  // options for jit compilation
-
-  int find(std::string_view subj,  // the string (view) agains we are matching
-           Match* M,               // where to store the results of the match
-           size_t start = 0,       // where to start searching in the string
-           uint32_t options = 0    // search options
-  ) const;
-
-  int consume(
-      std::string_view* subj,  // the string (view) agains we are matching
-      Match* M,                // where to store the results of the match
-      uint32_t options = 0     // search options
-  ) const;
-
-  const pcre2_code* get_pcre2_code() const;  // return compiled regex
-  std::string get_error_message() const;     // return error message
-  bool OK()
-      const;  // return true if pattern compiled successfully, false otherwise
-};
-
-class Match {
- public:
-  pcre2_match_data* const match_data;  // stores matching offsets
-  const char* data{nullptr};           // beginning of subject text span
-  int num_matched_groups{0};
-  std::string_view operator[](int i) const;
-  explicit Match(const pcre2_code* re);
-  explicit Match(const Regex& re);
-  ~Match();
-};
-
-Regex::Regex(std::string pattern, uint32_t options, uint32_t jit_options)
-    : re_(pcre2_compile(PCRE2_SPTR(pattern.c_str()), /* the pattern */
-                        PCRE2_ZERO_TERMINATED, /* pattern is zero-terminated */
-                        options,               /* options */
-                        &error_number_,        /* for error number */
-                        &error_offset_,        /* for error offset */
-                        nullptr))              /* use default compile context */
-{
-  uint32_t have_jit;
-  pcre2_config(PCRE2_CONFIG_JIT, &have_jit);
-  if (have_jit) {
-    pcre2_jit_compile(re_, jit_options);
-  }
-
-  pattern_string_ = pattern;
-  // to do: create name table for named groups
-  // see https://github.com/luvit/pcre2/blob/master/src/pcre2demo.c
-}
-
-std::string Regex::get_error_message() const {
-  PCRE2_UCHAR buffer[256];
-  pcre2_get_error_message(error_number_, buffer, sizeof(buffer));
-  std::ostringstream msg;
-  msg << "PCRE2 compilation failed at offset " << error_offset_ << ": "
-      << buffer;
-  return msg.str();
-}
-
-// return compiled regex
-const pcre2_code* Regex::get_pcre2_code() const { return re_; }
-
-int Regex::consume(
-    std::string_view* subj,  // the string (view) agains we are matching
-    Match* M,                // where to store the results of the match
-    uint32_t options         // search options
-) const {
-  int success = find(*subj, M, 0, options | PCRE2_ANCHORED);
-  if (success > 0) {
-    subj->remove_prefix((*M)[0].size());
-  }
-  return success;
-}
-
-int Regex::find(
-    std::string_view subj,  // the string (view) agains we are matching
-    Match* M,               // where to store the results of the match
-    size_t start,           // where to start searching in the string
-    uint32_t options        // search options
-) const {
-  assert(start <= subj.size());
-  PCRE2_SIZE* ovector;
-  int rc = pcre2_match(re_,                     /* the compiled pattern */
-                       PCRE2_SPTR(subj.data()), /* the subject string */
-                       subj.size(),             /* the length of the subject */
-                       start,                   /* where to start */
-                       options,                 /* options */
-                       M->match_data, /* block for storing the result */
-                       nullptr);      /* use default match context */
-  M->data = rc > 0 ? subj.data() : nullptr;
-  M->num_matched_groups = rc;
-  return rc;  // returns the number of matched groups
-}
-
-bool Regex::OK() const { return re_ != nullptr; }
-
-Regex::~Regex() { pcre2_code_free(re_); }
-
-Match::Match(const Regex& re) : Match(re.get_pcre2_code()) {}
-
-Match::Match(const pcre2_code* re)
-    : match_data(pcre2_match_data_create_from_pattern(re, nullptr)) {}
-
-Match::~Match() { pcre2_match_data_free(match_data); }
-
-std::string_view Match::operator[](int i) const {
-  PCRE2_SIZE* o = pcre2_get_ovector_pointer(match_data);
-  assert(i <= num_matched_groups);
-  i <<= 1;
-  return std::string_view(data + o[i], o[i + 1] - o[i]);
-}
-
-}  // namespace
 
 std::string_view readLine(const char** start, const char* const stop);
 
@@ -178,7 +42,7 @@ void Splitter::declare_prefix(std::string_view buffer) {
   }
 }
 
-void Splitter::loadFromSerialized(const std::string_view buffer) {
+void Splitter::load_from_serialized(const std::string_view buffer) {
   const char* start = buffer.data();
   const char* stop = start + buffer.size();
   for (std::string_view line = readLine(&start, stop); line.data();
@@ -322,7 +186,7 @@ std::string_view Splitter::operator()(std::string_view* rest) const {
     auto punct = Chunker_M[2];             // punctuation
     auto tail = Chunker_M[3];              // trailing punctuation
     auto whitespace_after = Chunker_M[4];  // whitespace after
-    auto inipunct = Chunker_M[5];  // following symbols (not letters/digits)
+    // auto inipunct = Chunker_M[5];  // following symbols (not letters/digits)
     auto following_symbol =
         Chunker_M[6];  // first letter or digit after whitespace
 

@@ -10,6 +10,7 @@ add_library(
   Model.cc
   Modules.cc
   QMM.cc
+  Regex.cc
   Request.cc
   Response.cc
   ResponseBuilder.cc

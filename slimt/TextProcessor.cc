@@ -1,4 +1,4 @@
-#include "slimt/Splitter.hh"
+#include "slimt/TextProcessor.hh"
 
 #include <algorithm>
 #include <iterator>
@@ -9,13 +9,15 @@
 #include "slimt/Aligned.hh"
 #include "slimt/Annotation.hh"
 #include "slimt/Macros.hh"
+#include "slimt/Splitter.hh"
 #include "slimt/Vocabulary.hh"
 
 namespace slimt {
 
 namespace {
-ug::ssplit::SentenceStream::splitmode string2splitmode(const std::string &m) {
-  using splitmode = ug::ssplit::SentenceStream::splitmode;
+using slimt::SentenceStream;
+SentenceStream::splitmode string2splitmode(const std::string &m) {
+  using splitmode = SentenceStream::splitmode;
   if (m == "sentence") {
     return splitmode::one_sentence_per_line;
   }
@@ -30,10 +32,10 @@ ug::ssplit::SentenceStream::splitmode string2splitmode(const std::string &m) {
       "{sentence,paragraph,wrapped_text}");
 }
 
-ug::ssplit::SentenceSplitter load_splitter(const std::string &prefix_path) {
+Splitter load_splitter(const std::string &prefix_path) {
   // Temporarily supports empty, will be removed when mozilla passes
   // prefix_path
-  ug::ssplit::SentenceSplitter splitter;
+  Splitter splitter;
   if (!prefix_path.empty()) {
     LOG(info, "Loading protected prefixes for sentence splitting from {}",
         prefix_path);
@@ -46,12 +48,12 @@ ug::ssplit::SentenceSplitter load_splitter(const std::string &prefix_path) {
   return splitter;
 }
 
-ug::ssplit::SentenceSplitter load_splitter(const Aligned &memory) {
+Splitter load_splitter(const Aligned &memory) {
   // Temporarily supports empty, will be removed when mozilla passes memory
-  ug::ssplit::SentenceSplitter splitter;
+  Splitter splitter;
   if (!memory.empty()) {
     std::string_view serialized(memory.begin(), memory.size());
-    splitter.loadFromSerialized(serialized);
+    splitter.load_from_serialized(serialized);
   }
   return splitter;
 }
@@ -102,8 +104,7 @@ std::tuple<AnnotatedText, Segments> TextProcessor::process(
   AnnotatedText source(std::move(input));
   Segments segments;
   std::string_view input_converted(source.text.data(), source.text.size());
-  auto sentence_stream =
-      ug::ssplit::SentenceStream(input_converted, ssplit_, ssplit_mode_);
+  auto sentence_stream = SentenceStream(input_converted, ssplit_, ssplit_mode_);
 
   std::string_view sentence_string_piece;
 
