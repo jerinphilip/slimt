@@ -8,16 +8,18 @@ find_path(
   PATHS ${PC_SentencePiece_INCLUDE_DIRS}
   PATH_SUFFIXES sentencepiece)
 
+# Find libraries. sentencepiece.so, sentencepiece_train.so
 find_library(
   SentencePiece_TRAIN_LIB
   NAMES sentencepiece_train
   PATHS ${PC_SentencePiece_LIBRARY_DIRS}
-  PATH_SUFFIXES sentenecepiece)
+  PATH_SUFFIXES sentencepiece)
+
 find_library(
   SentencePiece_INFERENCE_LIB
   NAMES sentencepiece
   PATHS ${PC_SentencePiece_LIBRARY_DIRS}
-  PATH_SUFFIXES sentenecepiece)
+  PATH_SUFFIXES sentencepiece)
 
 set(SentencePiece_VERSION ${PC_SentencePiece_VERSION})
 
