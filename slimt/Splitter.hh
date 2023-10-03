@@ -7,9 +7,7 @@
 #include <vector>
 
 #include "slimt/Aligned.hh"
-#include "slimt/Annotation.hh"
 #include "slimt/Types.hh"
-#include "slimt/Vocabulary.hh"
 #include "ssplit.h"
 
 namespace slimt {
