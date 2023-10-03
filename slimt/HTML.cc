@@ -1,6 +1,6 @@
 #include "slimt/HTML.hh"
 
-#include <assert.h>
+#include <cassert>
 
 #include <algorithm>
 #include <cctype>

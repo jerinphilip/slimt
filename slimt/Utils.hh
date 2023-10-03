@@ -1,9 +1,7 @@
 #pragma once
-#include <bits/chrono.h>
-#include <stdint.h>
-
 #include <chrono>
 #include <csignal>
+#include <cstdint>
 #include <ctime>
 #include <functional>
 #include <iostream>

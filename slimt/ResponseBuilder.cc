@@ -1,6 +1,6 @@
 #include "slimt/ResponseBuilder.hh"
 
-#include <stddef.h>
+#include <cstddef>
 
 #include <memory>
 #include <string>
