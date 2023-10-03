@@ -12,7 +12,7 @@ option(WITH_INTGEMM "Use intgemm" ON)
 option(WITH_RUY "Use ruy" OFF)
 option(WITH_GEMMOLOGY "Use gemmology" OFF)
 option(WITH_BLAS "Use BLAS. Otherwise moves to ruy" ON)
-option(USE_SYSTEM_LIBS "Use system-libraries instead of submodules" ON)
+option(USE_SYSTEM_LIBS "Use system-libraries instead of submodules" OFF)
 
 if(USE_SYSTEM_LIBS)
   find_package(SentencePiece REQUIRED)
