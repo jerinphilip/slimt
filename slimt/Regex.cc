@@ -18,9 +18,7 @@ Regex::Regex(const std::string& pattern, uint32_t options, uint32_t jit_options)
     pcre2_jit_compile(re_, jit_options);
   }
 
-  pattern_string_ = pattern;
-  // to do: create name table for named groups
-  // see https://github.com/luvit/pcre2/blob/master/src/pcre2demo.c
+  pattern_ = pattern;
 }
 
 std::string Regex::get_error_message() const {
