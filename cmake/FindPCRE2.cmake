@@ -3,7 +3,7 @@
 # system (when OFF), or downloads and compiles them locally (when ON).
 
 # The following variables are set: PCRE2_FOUND - System has the PCRE library
-# PCRE2_LIBRARIES - The PCRE library file PCRE2_INCLUDE_DIRS - The folder with
+# PCRE2_LIBRARIES - The PCRE library file PCRE2_INCLUDE_DIR - The folder with
 # the PCRE headers
 
 if(SLIMT_USE_INTERNAL_PCRE2)
@@ -70,10 +70,10 @@ if(SLIMT_USE_INTERNAL_PCRE2)
 
   # set include dirs and libraries for PCRE2
   set(PCRE2_LIBRARIES
-      ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}/${CMAKE_STATIC_LIBRARY_PREFIX}pcre2-8${CMAKE_STATIC_LIBRARY_SUFFIX}
+      ${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}/${CMAKE_STATIC_LIBRARY_PREFIX}pcre2-8${CMAKE_STATIC_LIBRARY_SUFFIX}
   )
-  set(PCRE2_INCLUDE_DIRS "${CMAKE_CURRENT_BINARY_DIR}/include")
-  set(PCRE2_FOUND TRUE)
+  set(PCRE2_INCLUDE_DIR "${CMAKE_BINARY_DIR}/include")
+  file(MAKE_DIRECTORY ${PCRE2_INCLUDE_DIR})
 
   # download, configure, compile
   ExternalProject_Add(
@@ -96,16 +96,16 @@ else(SLIMT_USE_INTERNAL_PCRE2)
           pcre2-8-staticd pcre2-posix-staticd # windows?
   )
 
-  find_path(PCRE2_INCLUDE_DIRS pcre2.h)
+  find_path(PCRE2_INCLUDE_DIR pcre2.h)
 
 endif(SLIMT_USE_INTERNAL_PCRE2)
 
-if(PCRE2_LIBRARIES AND PCRE2_INCLUDE_DIRS)
-  mark_as_advanced(PCRE2_FOUND PCRE2_INCLUDE_DIRS PCRE2_LIBRARIES PCRE2_VERSION)
+if(PCRE2_LIBRARIES AND PCRE2_INCLUDE_DIR)
+  mark_as_advanced(PCRE2_FOUND PCRE2_INCLUDE_DIR PCRE2_LIBRARIES PCRE2_VERSION)
   include(FindPackageHandleStandardArgs)
   find_package_handle_standard_args(
     PCRE2
-    REQUIRED_VARS PCRE2_INCLUDE_DIRS PCRE2_LIBRARIES
+    REQUIRED_VARS PCRE2_INCLUDE_DIR PCRE2_LIBRARIES
     VERSION_VAR PCRE2_VERSION)
   set(PCRE2_FOUND TRUE)
 else()
@@ -115,7 +115,6 @@ endif()
 if(PCRE2_FOUND AND NOT TARGET PCRE2::PCRE2)
   add_library(PCRE2::PCRE2 INTERFACE IMPORTED)
   set_target_properties(
-    PCRE2::PCRE2
-    PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "${PCRE2_INCLUDE_DIRS}"
-               INTERFACE_LINK_LIBRARIES "${PCRE2_LIBRARIES}")
+    PCRE2::PCRE2 PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "${PCRE2_INCLUDE_DIR}"
+                            INTERFACE_LINK_LIBRARIES "${PCRE2_LIBRARIES}")
 endif()
