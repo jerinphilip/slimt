@@ -3,18 +3,18 @@
 #include <cassert>
 
 #ifdef SLIMT_HAS_INTGEMM
-#include "3rd-party/intgemm/intgemm/intgemm.h"
 #include "intgemm/callbacks/configs.h"
+#include "intgemm/intgemm.h"
 #endif
 
 #ifdef SLIMT_HAS_RUY
-#include "3rd-party/ruy/ruy/ruy.h"
+#include "ruy.h"
 #endif
 
 #ifdef SLIMT_HAS_GEMMOLOGY
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
-#include "3rd-party/gemmology/gemmology.h"
+#include "gemmology/gemmology.h"
 
 #pragma GCC diagnostic pop
 #endif
