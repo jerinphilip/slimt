@@ -14,7 +14,7 @@ add_library(
   Response.cc
   ResponseBuilder.cc
   Shortlist.cc
-  Splitter.cc
+  TextProcessor.cc
   Tensor.cc
   TensorOps.cc
   Utils.cc
