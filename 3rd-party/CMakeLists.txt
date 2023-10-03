@@ -12,7 +12,6 @@ get_target_property(SentencePiece_INCLUDES sentencepiece-static
 target_include_directories(spiece_iface INTERFACE ${SentencePiece_INCLUDES}
                                                   sentencepiece/src/)
 
-target_compile_options(spiece_iface INTERFACE -D_USE_BUILTIN_STRING_VIEW)
 add_library(SentencePiece::SentencePiece ALIAS spiece_iface)
 
 # intgemm
