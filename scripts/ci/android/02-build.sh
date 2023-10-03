@@ -41,4 +41,4 @@ function cmake-configure {
 }
 
 cmake-configure
-VERBOSE=1 cmake --build build --target all
+cmake --build build --target all
