@@ -20,7 +20,6 @@ else(USE_SYSTEM_LIBS)
   add_subdirectory(3rd-party)
 endif(USE_SYSTEM_LIBS)
 
-set(SLIMT_USE_INTERNAL_PCRE2 ON)
 find_package(PCRE2 REQUIRED)
 
 set(SLIMT_COMPILE_OPTIONS -Wall -Wpedantic -Wextra -Wno-unknown-pragmas -Werror)
@@ -28,7 +27,7 @@ set(SLIMT_COMPILE_OPTIONS ${SLIMT_COMPILE_OPTIONS}
                           -Wno-missing-field-initializers -Wno-unused-function)
 set(SLIMT_COMPILE_DEFINITIONS "")
 
-set(SLIMT_EXTERNAL_LIBS SentencePiece::SentencePiece ${PCRE2_LIBRARIES})
+set(SLIMT_EXTERNAL_LIBS SentencePiece::SentencePiece PCRE2::PCRE2)
 
 if(WITH_BLAS)
   find_package(BLAS)

@@ -73,9 +73,7 @@ if(SLIMT_USE_INTERNAL_PCRE2)
       ${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}/${CMAKE_STATIC_LIBRARY_PREFIX}pcre2-8${CMAKE_STATIC_LIBRARY_SUFFIX}
   )
   set(PCRE2_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/include")
-  set(PCRE2_FOUND
-      TRUE
-      CACHE BOOL "Found PCRE2 libraries" FORCE)
+  set(PCRE2_FOUND TRUE)
 
   # download, configure, compile
   ExternalProject_Add(
@@ -91,24 +89,33 @@ if(SLIMT_USE_INTERNAL_PCRE2)
     BUILD_BYPRODUCTS ${PCRE2_LIBRARIES})
 
 else(SLIMT_USE_INTERNAL_PCRE2)
-
   find_library(
-    PCRE2_LIBRARIES NAMES pcre2 pcre2-8 pcre2-8-static pcre2-posix-static
-                          pcre2-8-staticd pcre2-posix-staticd)
+    PCRE2_LIBRARIES
+    NAMES pcre2 pcre2-8 # shared
+          pcre2-8-static pcre2-posix-static # static
+          pcre2-8-staticd pcre2-posix-staticd # windows?
+  )
+
   find_path(PCRE2_INCLUDE_DIRS pcre2.h)
 
 endif(SLIMT_USE_INTERNAL_PCRE2)
 
 if(PCRE2_LIBRARIES AND PCRE2_INCLUDE_DIRS)
-  # message(STATUS "PCRE2 libs: ${PCRE2_LIBRARIES}") message(STATUS "PCRE2
-  # include directory: ${PCRE2_INCLUDE_DIRS}")
-  set(PCRE2_FOUND
-      TRUE
-      CACHE BOOL "Found PCRE2 libraries" FORCE)
-  # add_custom_target(pcre2)
+  mark_as_advanced(PCRE2_FOUND PCRE2_INCLUDE_DIRS PCRE2_LIBRARIES PCRE2_VERSION)
+  include(FindPackageHandleStandardArgs)
+  find_package_handle_standard_args(
+    PCRE2
+    REQUIRED_VARS PCRE2_INCLUDE_DIRS PCRE2_LIBRARIES
+    VERSION_VAR PCRE2_VERSION)
+  set(PCRE2_FOUND TRUE)
 else()
-  set(PCRE2_FOUND
-      FALSE
-      CACHE BOOL "Found PCRE2 libraries" FORCE)
-  # message(STATUS "PCRE2 library not found.")
+  set(PCRE2_FOUND FALSE)
+endif()
+
+if(PCRE2_FOUND AND NOT TARGET PCRE2::PCRE2)
+  add_library(PCRE2::PCRE2 INTERFACE IMPORTED)
+  set_target_properties(
+    PCRE2::PCRE2
+    PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "${PCRE2_INCLUDE_DIRS}"
+               INTERFACE_LINK_LIBRARIES "${PCRE2_LIBRARIES}")
 endif()
