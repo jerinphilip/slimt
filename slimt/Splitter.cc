@@ -159,7 +159,7 @@ std::string_view Splitter::operator()(std::string_view* rest) const {
 
   // The following patterns are used to make heuristic decisions once a
   // potential split point has been identified.
-  static const Regex lowercase("\\p{M}*\\p{Ll}", PCRE2_NO_UTF_CHECK);
+  static const Regex kLowercase("\\p{M}*\\p{Ll}", PCRE2_NO_UTF_CHECK);
   static Regex uppercase(R"(\p{M}*[\p{Lu}\p{Lt}])", PCRE2_NO_UTF_CHECK);
   static Regex digit("[\\p{Nd}\\p{Nl}]", PCRE2_NO_UTF_CHECK);
   static Regex letterother("\\p{M}*[\\p{Lo}]", PCRE2_NO_UTF_CHECK | PCRE2_UTF);
@@ -167,11 +167,11 @@ std::string_view Splitter::operator()(std::string_view* rest) const {
   // We need these to store match results:
   thread_local static Match whitespace_m(whitespace_re);
   thread_local static Match chunker_m(chunker_re);
-  thread_local static Match lowercase_M(lowercase);
-  thread_local static Match uppercase_M(uppercase);
-  thread_local static Match digit_M(digit);
+  thread_local static Match lowercase_m(kLowercase);
+  thread_local static Match uppercase_m(uppercase);
+  thread_local static Match digit_m(digit);
 
-  thread_local static Match letterother_M(letterother);
+  thread_local static Match letterother_m(letterother);
 
   int success; /* stores the return value of pcre2_match() which is
                 * called in Regex::find() / Regex::consume() */
@@ -205,15 +205,15 @@ std::string_view Splitter::operator()(std::string_view* rest) const {
         !(punct == "。" || punct == "！" || punct == "？")) {
       continue;
     }
-    if (letterother.find(following_symbol, &letterother_M, 0, PCRE2_ANCHORED) >
+    if (letterother.find(following_symbol, &letterother_m, 0, PCRE2_ANCHORED) >
         0) {
       // Finding a letterother is not cause for a non-break; (i.e we omit
       // continue)
-    } else if (lowercase.find(following_symbol, &lowercase_M, 0,
-                              PCRE2_ANCHORED) > 0) {
+    } else if (kLowercase.find(following_symbol, &lowercase_m, 0,
+                               PCRE2_ANCHORED) > 0) {
       // followed by lower case
       continue;
-    } else if (uppercase.find(following_symbol, &uppercase_M, 0,
+    } else if (uppercase.find(following_symbol, &uppercase_m, 0,
                               PCRE2_ANCHORED) > 0) {
       // followed by uppercase
       if (punct == "." &&
@@ -222,7 +222,7 @@ std::string_view Splitter::operator()(std::string_view* rest) const {
       if (punct.size() == 1 &&
           *snt_end == '.')  // preceded by abbreviation a.b.c
         continue;
-    } else if (digit.find(following_symbol, &digit_M, 0, PCRE2_ANCHORED) > 0) {
+    } else if (digit.find(following_symbol, &digit_m, 0, PCRE2_ANCHORED) > 0) {
       // std::cout << "Digit" << std::endl;
       // followed by digit
       if (punct == "." &&
