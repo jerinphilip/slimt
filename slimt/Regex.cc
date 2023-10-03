@@ -66,7 +66,7 @@ int Regex::find(
   return rc;  // returns the number of matched groups
 }
 
-bool Regex::OK() const { return re_ != nullptr; }
+bool Regex::ok() const { return re_ != nullptr; }
 
 Regex::~Regex() { pcre2_code_free(re_); }
 

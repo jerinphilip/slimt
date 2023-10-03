@@ -26,7 +26,7 @@ class Splitter {
   explicit Splitter(const std::string& prefix_file);
 
   void load(const std::string& fname);
-  void load_from_serialized(const std::string_view buffer);
+  void load_from_serialized(std::string_view buffer);
 
   // Find next sentence boundary, return StringPiece for next sentence,
   // advance rest to reflect the rest of the text.
@@ -36,9 +36,9 @@ class Splitter {
 class SentenceStream {
  public:
   enum class splitmode {
-    one_sentence_per_line,
-    one_paragraph_per_line,
-    wrapped_text
+    OneSentencePerLine,
+    OneParagraphPerLine,
+    WrappedText
   };
 
  private:

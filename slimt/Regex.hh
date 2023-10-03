@@ -44,7 +44,7 @@ class Regex {
 
   const pcre2_code* get_pcre2_code() const;  // return compiled regex
   std::string get_error_message() const;     // return error message
-  bool OK()
+  bool ok()
       const;  // return true if pattern compiled successfully, false otherwise
 };
 

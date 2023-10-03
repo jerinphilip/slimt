@@ -13,7 +13,7 @@
 
 namespace slimt {
 
-std::string_view readLine(const char** start, const char* const stop);
+std::string_view read_line(const char** start, const char* stop);
 
 // Load a prefix file
 void Splitter::load(const std::string& fname) {
@@ -29,13 +29,13 @@ void Splitter::load(const std::string& fname) {
 
 void Splitter::declare_prefix(std::string_view buffer) {
   // parse a line from a prefix file and interpret it
-  static Regex pat("([^#\\s]*)\\s*(?:(#\\s*NUMERIC_ONLY\\s*#))?", PCRE2_UTF);
+  static Regex pat(R"(([^#\s]*)\s*(?:(#\s*NUMERIC_ONLY\s*#))?)", PCRE2_UTF);
   Match match(pat);
   if (pat.find(buffer, &match) > 0) {
     auto m1 = match[1];
-    if (m1.size()) {
+    if (!m1.empty()) {
       std::string foo(m1.data(), m1.size());
-      prefix_type_[foo] = match[2].size() ? 2 : 1;
+      prefix_type_[foo] = !match[2].empty() ? 2 : 1;
       // for debugging:
       // std::cerr << foo << " " << (match[2].size() ? "N" : "") << std::endl;
     }
@@ -45,16 +45,16 @@ void Splitter::declare_prefix(std::string_view buffer) {
 void Splitter::load_from_serialized(const std::string_view buffer) {
   const char* start = buffer.data();
   const char* stop = start + buffer.size();
-  for (std::string_view line = readLine(&start, stop); line.data();
-       line = readLine(&start, stop)) {
+  for (std::string_view line = read_line(&start, stop); line.data();
+       line = read_line(&start, stop)) {
     declare_prefix(line);
   }
 }
 
-Splitter::Splitter() {}
+Splitter::Splitter() = default;
 
 Splitter::Splitter(const std::string& prefix_file) : Splitter() {
-  if (prefix_file.size()) {
+  if (!prefix_file.empty()) {
     load(prefix_file);
   }
 }
@@ -67,7 +67,7 @@ std::ostream& single_line(
     std::string_view span,  // text span to be printed in a single line
     std::string_view end,   // stuff to put at end of line
     bool validate_utf) {    // do we need to validate UTF8?
-  static Regex pattern("^\\s*(.*)\\R+\\s*", PCRE2_UTF);
+  static Regex pattern(R"(^\s*(.*)\R+\s*)", PCRE2_UTF);
   thread_local static Match match(pattern);
   int success =
       pattern.consume(&span, &match, validate_utf ? 0 : PCRE2_NO_UTF_CHECK);
@@ -89,7 +89,7 @@ std::string& single_line(
     std::string_view span,  // text span to be printed in a single line
     std::string_view end,   // stuff to put at end of line
     bool validate_utf) {    // do we need to validate UTF8?
-  static Regex pattern("^\\s*(.*)\\R+\\s*", PCRE2_UTF);
+  static Regex pattern(R"(^\s*(.*)\R+\s*)", PCRE2_UTF);
   thread_local static Match match(pattern);
   int success =
       pattern.consume(&span, &match, validate_utf ? 0 : PCRE2_NO_UTF_CHECK);
@@ -129,7 +129,7 @@ std::string_view Splitter::operator()(std::string_view* rest) const {
   // UTF8 validation is infeasible for long strings.
   // cf. http://www.pcre.org/current/doc/html/pcre2unicode.html
 
-  static Regex Whitespace_RE("\\s*",
+  static Regex whitespace_re("\\s*",
                              PCRE2_UTF | PCRE2_DOTALL | PCRE2_NEWLINE_ANY);
 
   // The chunker is the first step in sentence splitting.
@@ -137,7 +137,7 @@ std::string_view Splitter::operator()(std::string_view* rest) const {
   //
   // Regarding \p{} below, see
   // https://www.pcre.org/current/doc/html/pcre2syntax.html#SEC5
-  static Regex Chunker_RE(
+  static Regex chunker_re(
       "\\s*"                      // whitespace
       "[^.?!։。？！]*?"           // non alphanumeric stuff
       "([\\p{L}\\p{Lo}\\p{N}]*)"  // 1: alphanumeric prefix of potential EOS
@@ -160,13 +160,13 @@ std::string_view Splitter::operator()(std::string_view* rest) const {
   // The following patterns are used to make heuristic decisions once a
   // potential split point has been identified.
   static const Regex lowercase("\\p{M}*\\p{Ll}", PCRE2_NO_UTF_CHECK);
-  static Regex uppercase("\\p{M}*[\\p{Lu}\\p{Lt}]", PCRE2_NO_UTF_CHECK);
+  static Regex uppercase(R"(\p{M}*[\p{Lu}\p{Lt}])", PCRE2_NO_UTF_CHECK);
   static Regex digit("[\\p{Nd}\\p{Nl}]", PCRE2_NO_UTF_CHECK);
   static Regex letterother("\\p{M}*[\\p{Lo}]", PCRE2_NO_UTF_CHECK | PCRE2_UTF);
 
   // We need these to store match results:
-  thread_local static Match Whitespace_M(Whitespace_RE);
-  thread_local static Match Chunker_M(Chunker_RE);
+  thread_local static Match whitespace_m(whitespace_re);
+  thread_local static Match chunker_m(chunker_re);
   thread_local static Match lowercase_M(lowercase);
   thread_local static Match uppercase_M(uppercase);
   thread_local static Match digit_M(digit);
@@ -178,19 +178,19 @@ std::string_view Splitter::operator()(std::string_view* rest) const {
 
   std::string_view snt;  // this will eventually be our return value
 
-  Whitespace_RE.consume(rest, &Whitespace_M, PCRE2_NO_UTF_CHECK);
+  whitespace_re.consume(rest, &whitespace_m, PCRE2_NO_UTF_CHECK);
   const char* snt_start = rest->data();
   const char* snt_end = rest->data() + rest->size();
-  while ((success = Chunker_RE.consume(rest, &Chunker_M, PCRE2_NO_UTF_CHECK)) >
+  while ((success = chunker_re.consume(rest, &chunker_m, PCRE2_NO_UTF_CHECK)) >
          0) {
-    auto whole_match = Chunker_M[0];
-    auto prefix = Chunker_M[1];
-    auto punct = Chunker_M[2];             // punctuation
-    auto tail = Chunker_M[3];              // trailing punctuation
-    auto whitespace_after = Chunker_M[4];  // whitespace after
+    auto whole_match = chunker_m[0];
+    auto prefix = chunker_m[1];
+    auto punct = chunker_m[2];             // punctuation
+    auto tail = chunker_m[3];              // trailing punctuation
+    auto whitespace_after = chunker_m[4];  // whitespace after
     // auto inipunct = Chunker_M[5];  // following symbols (not letters/digits)
     auto following_symbol =
-        Chunker_M[6];  // first letter or digit after whitespace
+        chunker_m[6];  // first letter or digit after whitespace
 
     // FOR DEBUGGING
     // std::cerr << "DEBUG\n" << prefix << "|"
@@ -201,10 +201,10 @@ std::string_view Splitter::operator()(std::string_view* rest) const {
     //           << following_symbol << std::endl;
 
     // whitespace not required after ideographic full widths
-    if (whitespace_after.size() == 0 &&
+    if (whitespace_after.empty() &&
         !(punct == "。" || punct == "！" || punct == "？")) {
       continue;
-    } else if (letterother.find(following_symbol, &letterother_M, 0,
+    } if (letterother.find(following_symbol, &letterother_M, 0,
                                 PCRE2_ANCHORED) > 0) {
       // Finding a letterother is not cause for a non-break; (i.e we omit
       // continue)
@@ -242,9 +242,9 @@ std::string_view Splitter::operator()(std::string_view* rest) const {
   if (success < 1) {
     // Remove trailing whitespace:
     static Regex rtrim("(.*[^\\s])\\s*", PCRE2_NO_UTF_CHECK | PCRE2_DOTALL);
-    thread_local static Match M(rtrim);
-    if (rtrim.consume(&snt, &M, PCRE2_NO_UTF_CHECK) > 0) {
-      snt = M[1];
+    thread_local static Match m(rtrim);
+    if (rtrim.consume(&snt, &m, PCRE2_NO_UTF_CHECK) > 0) {
+      snt = m[1];
     }
     *rest = std::string_view();
   }
@@ -264,7 +264,7 @@ std::string_view Splitter::operator()(std::string_view* rest) const {
 // Returns a std::string_view to the line, not including the EOL character!
 // So an empty line returns a std::string_view with size() == 0 and data() !=
 // nullptr, At the end of the buffer, the return value has data() == nullptr.
-std::string_view readLine(const char** start, const char* const stop) {
+std::string_view read_line(const char** start, const char* const stop) {
   std::string_view line;
   if (*start == stop) {  // no more data
     return line;
@@ -283,7 +283,7 @@ std::string_view readLine(const char** start, const char* const stop) {
 // a std::string_view to be able to proccess chunks of data that
 // exceed the size that a std::string_view can store (apparently int32_t).
 // @TODO: verify: this dates back to working with pcrecpp::StringPiece.
-std::string_view readParagraph(const char** start, const char* const stop) {
+std::string_view read_paragraph(const char** start, const char* const stop) {
   std::string_view par;
   if (*start == stop) {  // no more data
     return par;
@@ -312,14 +312,14 @@ SentenceStream::SentenceStream(const char* data, size_t datasize,
                                const Splitter& splitter, splitmode mode,
                                bool verify_utf8)
     : cursor_(data), stop_(data + datasize), mode_(mode), splitter_(splitter) {
-  static Regex R(".*", PCRE2_UTF);
-  thread_local static Match M(R);
+  static Regex r(".*", PCRE2_UTF);
+  thread_local static Match m(r);
 
   if (verify_utf8) {
     // pre-flight verification: make sure it's well-formed UTF8
-    int success = R.find(std::string_view(data, datasize), &M);
+    int success = r.find(std::string_view(data, datasize), &m);
     if (success < 0) {
-      auto offset = pcre2_get_startchar(M.match_data);
+      auto offset = pcre2_get_startchar(m.match_data);
       PCRE2_UCHAR buffer[256];
       pcre2_get_error_message(success, buffer, sizeof(buffer));
       std::ostringstream msg;
@@ -327,10 +327,10 @@ SentenceStream::SentenceStream(const char* data, size_t datasize,
       error_message_ = msg.str();
     }
   }
-  if (mode == splitmode::one_paragraph_per_line) {
-    paragraph_ = readLine(&cursor_, stop_);
-  } else if (mode == splitmode::wrapped_text) {
-    paragraph_ = readParagraph(&cursor_, stop_);
+  if (mode == splitmode::OneParagraphPerLine) {
+    paragraph_ = read_line(&cursor_, stop_);
+  } else if (mode == splitmode::WrappedText) {
+    paragraph_ = read_paragraph(&cursor_, stop_);
   }
 }
 
@@ -339,24 +339,24 @@ const std::string& SentenceStream::error_message() const {
 }
 
 bool SentenceStream::operator>>(std::string_view& snt) {
-  if (error_message_.size()) return false;
+  if (!error_message_.empty()) return false;
 
-  if (paragraph_.size() == 0 && cursor_ == stop_) {
+  if (paragraph_.empty() && cursor_ == stop_) {
     // We have reached the end of the data.
     return false;
   }
 
-  if (mode_ == splitmode::one_sentence_per_line) {
-    snt = readLine(&cursor_, stop_);
-  } else if (paragraph_.size() == 0) {
+  if (mode_ == splitmode::OneSentencePerLine) {
+    snt = read_line(&cursor_, stop_);
+  } else if (paragraph_.empty()) {
     // No more sentences in this paragraph.
     // Read the next paragraph but for this call return
     // and empty sentence to indicate the end of this paragraph.
     snt = std::string_view();
-    if (mode_ == splitmode::one_paragraph_per_line) {
-      paragraph_ = readLine(&cursor_, stop_);
+    if (mode_ == splitmode::OneParagraphPerLine) {
+      paragraph_ = read_line(&cursor_, stop_);
     } else {  // wrapped text
-      paragraph_ = readParagraph(&cursor_, stop_);
+      paragraph_ = read_paragraph(&cursor_, stop_);
     }
   } else {
     snt = splitter_(&paragraph_);

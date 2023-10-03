@@ -19,13 +19,13 @@ using slimt::SentenceStream;
 SentenceStream::splitmode string2splitmode(const std::string &m) {
   using splitmode = SentenceStream::splitmode;
   if (m == "sentence") {
-    return splitmode::one_sentence_per_line;
+    return splitmode::OneSentencePerLine;
   }
   if (m == "paragraph") {
-    return splitmode::one_paragraph_per_line;
+    return splitmode::OneParagraphPerLine;
   }
   if (m == "wrapped_text") {
-    return splitmode::wrapped_text;
+    return splitmode::WrappedText;
   }
   SLIMT_ABORT(
       "Unknown ssplitmode {}, Please choose one of "
