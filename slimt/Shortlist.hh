@@ -1,5 +1,10 @@
 #pragma once
+#include <algorithm>
+#include <cstddef>
 #include <cstdint>
+#include <iterator>
+#include <utility>
+#include <vector>
 
 #include "slimt/Batch.hh"
 #include "slimt/Io.hh"
@@ -7,6 +12,7 @@
 #include "slimt/Vocabulary.hh"
 
 namespace slimt {
+class Vocabulary;
 
 class Shortlist {
  public:

@@ -1,7 +1,10 @@
 #pragma once
 
+#include <atomic>
 #include <cassert>
+#include <cstddef>
 #include <future>
+#include <memory>
 #include <optional>
 #include <vector>
 

@@ -35,6 +35,10 @@ function slimt-check-cmake {
   cmake-format $(find -name "CMakeLists.txt" -not -path "./3rd-party/*") --check
 }
 
+function slimt-check-iwyu {
+  iwyu-tool -p build slimt/* > build/iwyu.out
+}
+
 slimt-check-clang-format
 slimt-check-python
 slimt-check-sh

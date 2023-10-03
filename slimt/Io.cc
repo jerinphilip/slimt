@@ -1,17 +1,19 @@
 #include "slimt/Io.hh"
 
+#include <fcntl.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+
 #include <cassert>
-#include <cinttypes>
-#include <cmath>
 #include <cstdint>
-#include <cstdio>
+#include <cstdlib>
 #include <iostream>
+#include <stdexcept>
+#include <utility>
 #include <vector>
 
 #include "slimt/QMM.hh"
 #include "slimt/Tensor.hh"
-#include "slimt/TensorOps.hh"
-#include "slimt/Utils.hh"
 
 namespace slimt::io {
 

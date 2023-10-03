@@ -1,10 +1,15 @@
 #include "slimt/Splitter.hh"
 
+#include <algorithm>
+#include <iterator>
 #include <string>
+#include <utility>
 #include <vector>
 
+#include "slimt/Aligned.hh"
 #include "slimt/Annotation.hh"
 #include "slimt/Macros.hh"
+#include "slimt/Vocabulary.hh"
 
 namespace slimt {
 

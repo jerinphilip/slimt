@@ -1,8 +1,16 @@
 #include "slimt/Utils.hh"
 
+#include <unistd.h>
+
+#include <algorithm>
+#include <csignal>
 #include <cstdint>
+#include <cstdio>
+#include <cstdlib>
 #include <functional>
 #include <iostream>
+#include <stdexcept>
+#include <utility>
 #include <vector>
 
 #include "slimt/Io.hh"

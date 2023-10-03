@@ -1,14 +1,19 @@
 #pragma once
 
+#include <cstddef>
+#include <string>
+#include <string_view>
+#include <tuple>
 #include <vector>
 
 #include "slimt/Aligned.hh"
-#include "slimt/Annotation.hh"
 #include "slimt/Types.hh"
-#include "slimt/Vocabulary.hh"
 #include "ssplit.h"
 
 namespace slimt {
+class Aligned;
+class AnnotatedText;
+class Vocabulary;
 
 class TextProcessor {
   /// TextProcessor handles loading the sentencepiece vocabulary and also
