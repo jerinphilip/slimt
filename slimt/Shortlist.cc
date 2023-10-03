@@ -2,6 +2,7 @@
 
 #include "slimt/Macros.hh"
 #include "slimt/Utils.hh"
+#include "slimt/Vocabulary.hh"
 
 namespace slimt {
 

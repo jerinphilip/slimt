@@ -2,12 +2,10 @@
 
 #include <cassert>
 #include <cmath>
-#include <iostream>
-#include <numeric>
+#include <utility>
 
 #include "slimt/QMM.hh"
 #include "slimt/TensorOps.hh"
-#include "slimt/Utils.hh"
 
 namespace slimt {
 

@@ -1,17 +1,21 @@
 #include "slimt/TensorOps.hh"
 
+#include "slimt/simd/avx2.h"
+#include "slimt/simd/sse.h"
+
 #ifdef SLIMT_HAS_BLAS
 #include <cblas.h>
 #else
 #include "3rd-party/ruy/ruy/ruy.h"
 #endif
 
+#include <algorithm>
 #include <cassert>
 #include <cmath>
-#include <iostream>
+#include <limits>
+#include <utility>
 
 #include "slimt/Simd.hh"
-#include "slimt/Utils.hh"
 
 namespace slimt {
 
