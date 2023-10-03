@@ -190,7 +190,7 @@ std::string_view Splitter::operator()(std::string_view* rest) const {
     auto whitespace_after = chunker_m[4];  // whitespace after
     // auto inipunct = Chunker_M[5];  // following symbols (not letters/digits)
     auto following_symbol =
-        chunker_m[6];  // first letter or digit after whitespace
+        chunker_m[6];  // first letter or digit after whitespace // NOLINT
 
     // FOR DEBUGGING
     // std::cerr << "DEBUG\n" << prefix << "|"
@@ -321,7 +321,8 @@ SentenceStream::SentenceStream(const char* data, size_t datasize,
     int success = r.find(std::string_view(data, datasize), &m);
     if (success < 0) {
       auto offset = pcre2_get_startchar(m.match_data);
-      PCRE2_UCHAR buffer[256];
+      constexpr size_t kMaxBufferSize = 256;
+      PCRE2_UCHAR buffer[kMaxBufferSize];
       pcre2_get_error_message(success, buffer, sizeof(buffer));
       std::ostringstream msg;
       msg << "Invalid UTF at position " << offset << ": " << buffer;
