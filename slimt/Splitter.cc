@@ -204,8 +204,9 @@ std::string_view Splitter::operator()(std::string_view* rest) const {
     if (whitespace_after.empty() &&
         !(punct == "。" || punct == "！" || punct == "？")) {
       continue;
-    } if (letterother.find(following_symbol, &letterother_M, 0,
-                                PCRE2_ANCHORED) > 0) {
+    }
+    if (letterother.find(following_symbol, &letterother_M, 0, PCRE2_ANCHORED) >
+        0) {
       // Finding a letterother is not cause for a non-break; (i.e we omit
       // continue)
     } else if (lowercase.find(following_symbol, &lowercase_M, 0,

@@ -25,8 +25,8 @@ class Regex {
  public:
   ~Regex();
 
-  Regex(const std::string &pattern,  // pattern to be compiled
-        uint32_t options,     // pcre2 options for regex compilation
+  Regex(const std::string& pattern,  // pattern to be compiled
+        uint32_t options,            // pcre2 options for regex compilation
         uint32_t jit_options =
             PCRE2_JIT_COMPLETE);  // options for jit compilation
 

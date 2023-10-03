@@ -35,11 +35,7 @@ class Splitter {
 
 class SentenceStream {
  public:
-  enum class splitmode {
-    OneSentencePerLine,
-    OneParagraphPerLine,
-    WrappedText
-  };
+  enum class splitmode { OneSentencePerLine, OneParagraphPerLine, WrappedText };
 
  private:
   const char* cursor_;
