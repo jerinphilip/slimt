@@ -1,7 +1,5 @@
 #include "slimt/Tensor.hh"
 
-#include <bits/std_abs.h>
-
 #include <bitset>
 #include <cstdlib>
 #include <cstring>
