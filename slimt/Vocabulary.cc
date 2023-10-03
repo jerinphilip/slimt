@@ -1,7 +1,6 @@
 #include "slimt/Vocabulary.hh"
 
-#include <stdint.h>
-
+#include <cstdint>
 #include <string_view>
 #include <utility>
 #include <vector>

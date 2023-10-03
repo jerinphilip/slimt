@@ -1,7 +1,6 @@
 #pragma once
-#include <stdint.h>
-
 #include <cstddef>
+#include <cstdint>
 #include <string>
 #include <tuple>
 #include <unordered_map>

@@ -1,9 +1,8 @@
 
 #include "slimt/Frontend.hh"
 
-#include <stdint.h>
-
 #include <algorithm>
+#include <cstdint>
 #include <future>
 #include <memory>
 #include <utility>

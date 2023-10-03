@@ -1,8 +1,7 @@
 #include "slimt/Model.hh"
 
-#include <stdint.h>
-
 #include <cmath>
+#include <cstdint>
 #include <iostream>
 #include <unordered_map>
 #include <utility>
