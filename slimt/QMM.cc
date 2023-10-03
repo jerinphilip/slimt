@@ -1,6 +1,7 @@
 #include "slimt/QMM.hh"
 
 #include <cassert>
+#include <cmath>
 
 #ifdef SLIMT_HAS_INTGEMM
 #include "intgemm/callbacks/configs.h"
@@ -8,7 +9,7 @@
 #endif
 
 #ifdef SLIMT_HAS_RUY
-#include "ruy.h"
+#include "ruy/ruy.h"
 #endif
 
 #ifdef SLIMT_HAS_GEMMOLOGY
