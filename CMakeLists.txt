@@ -63,10 +63,15 @@ if(WITH_RUY)
 endif(WITH_RUY)
 
 if(WITH_GEMMOLOGY)
+  find_package(xsimd REQUIRED)
+  add_library(gemmology INTERFACE)
+  target_link_libraries(gemmology INTERFACE xsimd)
+  target_include_directories(gemmology
+                             INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/3rd-party")
+  message(STATUS "gemmology: ${CMAKE_CURRENT_SOURCE_DIR}/3rd-party")
+  set(SLIMT_EXTERNAL_LIBS ${SLIMT_EXTERNAL_LIBS} gemmology)
   set(SLIMT_COMPILE_DEFINITIONS ${SLIMT_COMPILE_DEFINITIONS}
                                 SLIMT_HAS_GEMMOLOGY)
-  find_package(xsimd REQUIRED)
-  set(SLIMT_EXTERNAL_LIBS ${SLIMT_EXTERNAL_LIBS} xsimd)
 endif(WITH_GEMMOLOGY)
 
 # cmake-format: off
