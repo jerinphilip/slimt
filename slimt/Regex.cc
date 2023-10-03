@@ -4,7 +4,7 @@
 
 namespace slimt {
 
-Regex::Regex(std::string pattern, uint32_t options, uint32_t jit_options)
+Regex::Regex(const std::string &pattern, uint32_t options, uint32_t jit_options)
     : re_(pcre2_compile(PCRE2_SPTR(pattern.c_str()), /* the pattern */
                         PCRE2_ZERO_TERMINATED, /* pattern is zero-terminated */
                         options,               /* options */
