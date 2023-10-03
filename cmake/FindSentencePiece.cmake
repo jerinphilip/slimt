@@ -1,6 +1,5 @@
 find_package(PkgConfig REQUIRED)
 
-set(ENV{PKG_CONFIG_PATH} "/usr/local/lib/pkgconfig:$ENV{PKG_CONFIG_PATH}")
 pkg_check_modules(PC_SentencePiece REQUIRED sentencepiece)
 
 find_path(
