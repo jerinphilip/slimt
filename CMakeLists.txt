@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5.1)
+cmake_minimum_required(VERSION 3.5.1...3.27)
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 project(slimt CXX C)
@@ -8,19 +8,24 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 option(WITH_ASAN "Enable AddressSanitizer in builds" OFF)
 option(WITH_TESTS "Enable building tests (requires a few extra libraries)" OFF)
 
-add_subdirectory(3rd-party)
+option(WITH_INTGEMM "Use intgemm" ON)
+option(WITH_RUY "Use ruy" OFF)
+option(WITH_GEMMOLOGY "Use gemmology" OFF)
+option(WITH_BLAS "Use BLAS. Otherwise moves to ruy" ON)
+option(USE_SYSTEM_LIBS "Use system-libraries instead of submodules" ON)
+
+if(USE_SYSTEM_LIBS)
+  find_package(SentencePiece REQUIRED)
+else(USE_SYSTEM_LIBS)
+  add_subdirectory(3rd-party)
+endif(USE_SYSTEM_LIBS)
 
 set(SLIMT_COMPILE_OPTIONS -Wall -Wpedantic -Wextra -Wno-unknown-pragmas -Werror)
 set(SLIMT_COMPILE_OPTIONS ${SLIMT_COMPILE_OPTIONS}
                           -Wno-missing-field-initializers -Wno-unused-function)
 set(SLIMT_COMPILE_DEFINITIONS "")
 
-option(WITH_INTGEMM "Use intgemm" ON)
-option(WITH_RUY "Use ruy" OFF)
-option(WITH_GEMMOLOGY "Use gemmology" OFF)
-option(WITH_BLAS "Use BLAS. Otherwise moves to ruy" ON)
-
-set(SLIMT_EXTERNAL_LIBS Sentencepiece::Sentencepiece Ssplit::Ssplit)
+set(SLIMT_EXTERNAL_LIBS SentencePiece::SentencePiece Ssplit::Ssplit)
 
 if(WITH_BLAS)
   find_package(BLAS)
