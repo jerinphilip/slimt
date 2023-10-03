@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -eo pipefail
+
 function cmake-configure {
   NDK=android-ndk-r23b
   ABI="arm64-v8a"
