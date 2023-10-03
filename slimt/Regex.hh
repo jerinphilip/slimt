@@ -11,14 +11,6 @@ namespace slimt {
 class Match;
 
 class Regex {
-  // TODO(any): create name table for named groups
-  // see https://github.com/luvit/pcre2/blob/master/src/pcre2demo.c
-  std::string pattern_;
-
-  PCRE2_SIZE error_offset_;
-  int error_number_;
-  pcre2_code* const re_;
-
  public:
   Regex(const std::string& pattern,  // pattern to be compiled
         uint32_t options,            // pcre2 options for regex compilation
@@ -42,6 +34,15 @@ class Regex {
   std::string get_error_message() const;     // return error message
   // return true if pattern compiled successfully, false otherwise
   bool ok() const;
+
+ private:
+  // TODO(any): create name table for named groups
+  // see https://github.com/luvit/pcre2/blob/master/src/pcre2demo.c
+  std::string pattern_;
+
+  PCRE2_SIZE error_offset_;
+  int error_number_;
+  pcre2_code* const re_;
 };
 
 class Match {

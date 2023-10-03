@@ -7,8 +7,20 @@
 namespace slimt {
 
 class Splitter {
-  using prefix_map_t = std::map<std::string, int, std::less<>>;
-  prefix_map_t prefix_type_;
+ public:
+  Splitter() = default;
+  explicit Splitter(const std::string& prefix_file);
+
+  void load(const std::string& fname);
+  void load_from_serialized(std::string_view buffer);
+
+  // Find next sentence boundary, return StringPiece for next sentence,
+  // advance rest to reflect the rest of the text.
+  std::string_view operator()(std::string_view* rest) const;
+
+ private:
+  using PrefixMap = std::map<std::string, int, std::less<>>;
+  PrefixMap prefix_type_;
 
   // Return the prefix class of a prefix.
   // 0: not a prefix
@@ -20,18 +32,7 @@ class Splitter {
   void declare_prefix(std::string_view buffer);
 
   explicit Splitter(std::istream& istream);
-
- public:
-  Splitter();
-  explicit Splitter(const std::string& prefix_file);
-
-  void load(const std::string& fname);
-  void load_from_serialized(std::string_view buffer);
-
-  // Find next sentence boundary, return StringPiece for next sentence,
-  // advance rest to reflect the rest of the text.
-  std::string_view operator()(std::string_view* rest) const;
-};  // end of class Splitter
+};
 
 class SentenceStream {
  public:

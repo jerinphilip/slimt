@@ -51,8 +51,6 @@ void Splitter::load_from_serialized(const std::string_view buffer) {
   }
 }
 
-Splitter::Splitter() = default;
-
 Splitter::Splitter(const std::string& prefix_file) : Splitter() {
   if (!prefix_file.empty()) {
     load(prefix_file);
