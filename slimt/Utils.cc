@@ -1,11 +1,11 @@
 #include "slimt/Utils.hh"
 
-#include <cstdio>
 #include <unistd.h>
 
 #include <algorithm>
 #include <csignal>
 #include <cstdint>
+#include <cstdio>
 #include <cstdlib>
 #include <functional>
 #include <iostream>
