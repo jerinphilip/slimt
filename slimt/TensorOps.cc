@@ -1,8 +1,5 @@
 #include "slimt/TensorOps.hh"
 
-#include "slimt/simd/avx2.h"
-#include "slimt/simd/sse.h"
-
 #ifdef SLIMT_HAS_BLAS
 #include <cblas.h>
 #else
