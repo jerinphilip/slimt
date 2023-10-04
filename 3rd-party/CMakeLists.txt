@@ -6,7 +6,6 @@ add_subdirectory(sentencepiece EXCLUDE_FROM_ALL)
 # Create an alias target for SentencePiece
 add_library(spiece_iface INTERFACE)
 target_link_libraries(spiece_iface INTERFACE sentencepiece-static)
-
 get_target_property(SentencePiece_INCLUDES sentencepiece-static
                     INCLUDE_DIRECTORIES)
 target_include_directories(spiece_iface INTERFACE ${SentencePiece_INCLUDES}

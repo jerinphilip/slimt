@@ -12,22 +12,18 @@ option(WITH_INTGEMM "Use intgemm" ON)
 option(WITH_RUY "Use ruy" OFF)
 option(WITH_GEMMOLOGY "Use gemmology" OFF)
 option(WITH_BLAS "Use BLAS. Otherwise moves to ruy" ON)
-option(USE_SYSTEM_LIBS "Use system-libraries instead of submodules" OFF)
-
-if(USE_SYSTEM_LIBS)
-  find_package(SentencePiece REQUIRED)
-else(USE_SYSTEM_LIBS)
-  add_subdirectory(3rd-party)
-endif(USE_SYSTEM_LIBS)
-
-find_package(PCRE2 REQUIRED)
 
 set(SLIMT_COMPILE_OPTIONS -Wall -Wpedantic -Wextra -Wno-unknown-pragmas -Werror)
 set(SLIMT_COMPILE_OPTIONS ${SLIMT_COMPILE_OPTIONS}
                           -Wno-missing-field-initializers -Wno-unused-function)
 set(SLIMT_COMPILE_DEFINITIONS "")
 
-set(SLIMT_EXTERNAL_LIBS SentencePiece::SentencePiece PCRE2::PCRE2)
+add_subdirectory(3rd-party)
+
+find_package(PCRE2 REQUIRED)
+
+
+set(SLIMT_EXTERNAL_LIBS ${SLIMT_EXTERNAL_LIBS} SentencePiece::SentencePiece PCRE2::PCRE2)
 
 if(WITH_BLAS)
   find_package(BLAS)
@@ -66,9 +62,7 @@ if(WITH_GEMMOLOGY)
   find_package(xsimd REQUIRED)
   add_library(gemmology INTERFACE)
   target_link_libraries(gemmology INTERFACE xsimd)
-  target_include_directories(gemmology
-                             INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/3rd-party")
-  message(STATUS "gemmology: ${CMAKE_CURRENT_SOURCE_DIR}/3rd-party")
+  target_include_directories(gemmology INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/3rd-party")
   set(SLIMT_EXTERNAL_LIBS ${SLIMT_EXTERNAL_LIBS} gemmology)
   set(SLIMT_COMPILE_DEFINITIONS ${SLIMT_COMPILE_DEFINITIONS}
                                 SLIMT_HAS_GEMMOLOGY)
