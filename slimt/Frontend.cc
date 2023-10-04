@@ -254,6 +254,7 @@ Response Async::translate(std::string &source, const Options &options) {
   return future.get();
   ;
 }
+
 Histories Async::forward(Batch &batch) {
   Tensor &indices = batch.indices();
   Tensor &mask = batch.mask();
@@ -268,6 +269,7 @@ Histories Async::forward(Batch &batch) {
       decode(encoder_out, mask, batch.words(), batch.lengths());
   return histories;
 }
+
 Histories Async::decode(Tensor &encoder_out, Tensor &mask, const Words &source,
                         const std::vector<size_t> &lengths) {
   // Prepare a shortlist for the entire batch.
