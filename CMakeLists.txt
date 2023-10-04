@@ -23,6 +23,14 @@ set(SLIMT_COMPILE_OPTIONS
     -Wno-unused-function)
 
 set(SLIMT_COMPILE_DEFINITIONS "")
+set(SLIMT_LINK_OPTIONS "")
+
+if(WITH_ASAN)
+  set(SLIMT_COMPILE_OPTIONS ${SLIMT_COMPILE_OPTIONS} -fsanitize=address
+                            -fsanitize=undefined)
+  set(SLIMT_LINK_OPTIONS ${SLIMT_LINK_OPTIONS} -fsanitize=address
+                         -fsanitize=undefined)
+endif(WITH_ASAN)
 
 find_package(PCRE2 REQUIRED)
 add_subdirectory(3rd-party)
