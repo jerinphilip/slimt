@@ -91,6 +91,30 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 add_subdirectory(slimt)
-target_include_directories(slimt PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-target_include_directories(slimt PUBLIC ${CMAKE_BINARY_DIR})
+target_include_directories(slimt-static PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(slimt-static PUBLIC ${CMAKE_BINARY_DIR})
+target_include_directories(slimt-shared PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(slimt-shared PUBLIC ${CMAKE_BINARY_DIR})
 add_subdirectory(app)
+
+# configure_file("${PROJECT_SOURCE_DIR}/slimt.pc.in" "slimt.pc" @ONLY)
+
+if(UNIX)
+  include(GNUInstallDirs)
+
+  if(BUILD_CPACK)
+    # cmake-format: off
+    set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
+    set(CPACK_PACKAGE_CONTACT "Jerin Philip <jerinphilip@live.in>")
+    set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Jerin Philip")
+    set(CPACK_PACKAGE_DIRECTORY ${CMAKE_BINARY_DIR}/deb)
+    set(CPACK_GENERATOR "DEB")
+    set(CPACK_PACKAGE_NAME ${PROJECT_NAME})
+    set(CPACK_PACKAGE_FILE_NAME ${PROJECT_NAME})
+    set(CPACK_DEBIAN_PACKAGE_NAME ${PROJECT_NAME})
+    set(CPACK_DEBIAN_PACKAGE_VERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH})
+    set(CPACK_DEBIAN_PACKAGE_DESCRIPTION "slimt: Inference library for tiny translation models.")
+    # cmake-format: on
+    include(CPack)
+  endif(BUILD_CPACK)
+endif(UNIX)
