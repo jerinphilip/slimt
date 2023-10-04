@@ -14,7 +14,7 @@ class Splitter {
   void load(const std::string& fname);
   void load_from_serialized(std::string_view buffer);
 
-  // Find next sentence boundary, return StringPiece for next sentence,
+  // Find next sentence boundary, return view for next sentence,
   // advance rest to reflect the rest of the text.
   std::string_view operator()(std::string_view* rest) const;
 
@@ -38,15 +38,6 @@ class SentenceStream {
  public:
   enum class splitmode { OneSentencePerLine, OneParagraphPerLine, WrappedText };
 
- private:
-  const char* cursor_;
-  const char* const stop_;
-  std::string_view paragraph_;
-  splitmode mode_;
-  const Splitter& splitter_;
-  std::string error_message_;  // holds error message if UTF8 validation fails
-  int status_;                 // holds prce2 error code
- public:
   // @param text text to be split into sentences
   // @param splitter the actual sentence splitter
   // @param mode the split mode (one sentence/paragraph per line, wrapped text)
@@ -55,19 +46,26 @@ class SentenceStream {
                  splitmode mode, bool verify_utf8 = true);
 
   // @param data start of data
-  // @param datasize size of data
+  // @param size size of data
   // @param splitter the actual sentence splitter
   // @param mode the split mode (one sentence/paragraph per line, wrapped text)
   // @param verify utf8?
-  SentenceStream(const char* data, size_t datasize, const Splitter& splitter,
+  SentenceStream(const char* data, size_t size, const Splitter& splitter,
                  splitmode mode, bool verify_utf8 = true);
 
-  //  bool OK() const; // return true if UTF8 verification succeeded
   int status() const;  // return status (pcre2 error code)
   const std::string& error_message() const;
   bool operator>>(std::string& snt);
-  // bool operator>>(pcrecpp::StringPiece& snt);
   bool operator>>(std::string_view& snt);
+
+ private:
+  const char* cursor_;
+  const char* const stop_;
+  std::string_view paragraph_;
+  splitmode mode_;
+  const Splitter& splitter_;
+  std::string error_message_;  // holds error message if UTF8 validation fails
+  int status_;                 // holds prce2 error code
 };
 
 // Auxiliary function to print a chunk of text as a single line,

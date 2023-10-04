@@ -255,14 +255,15 @@ std::string_view Splitter::operator()(std::string_view* rest) const {
   return snt;
 }
 
-// readLine gets pointers to start and stop of data instead of
-// a std::string_view to be able to proccess chunks of data that
-// exceed the size that a std::string_view can store (apparently int32_t).
-// @TODO: verify: this dates back to working with pcrecpp::StringPiece.
-// Update: apparently not true any more for absl::std::string_view!
-// Returns a std::string_view to the line, not including the EOL character!
-// So an empty line returns a std::string_view with size() == 0 and data() !=
-// nullptr, At the end of the buffer, the return value has data() == nullptr.
+// Gets pointers to start and stop of data instead of a std::string_view to be
+// able to proccess chunks of data that exceed the size that a std::string_view
+// can store (apparently int32_t).  @TODO: verify: this dates back to working
+// with pcrecpp::StringPiece.  Update: apparently not true any more for
+// absl::std::string_view!  Returns a std::string_view to the line, not
+// including the EOL character!  So an empty line returns a std::string_view
+// with size() == 0 and data() != nullptr, At the end of the buffer, the return
+// value has data() == nullptr.
+
 std::string_view read_line(const char** start, const char* const stop) {
   std::string_view line;
   if (*start == stop) {  // no more data
@@ -278,10 +279,9 @@ std::string_view read_line(const char** start, const char* const stop) {
   return line;
 }
 
-// readParagraph gets pointers to start and stop of data instead of
-// a std::string_view to be able to proccess chunks of data that
-// exceed the size that a std::string_view can store (apparently int32_t).
-// @TODO: verify: this dates back to working with pcrecpp::StringPiece.
+// Gets pointers to start and stop of data instead of a std::string_view to be
+// able to proccess chunks of data that exceed the size that a std::string_view
+// can store (apparently int32_t).
 std::string_view read_paragraph(const char** start, const char* const stop) {
   std::string_view par;
   if (*start == stop) {  // no more data
@@ -307,16 +307,16 @@ SentenceStream::SentenceStream(std::string_view text, const Splitter& splitter,
                                splitmode mode, bool verify_utf8)
     : SentenceStream(text.data(), text.size(), splitter, mode, verify_utf8) {}
 
-SentenceStream::SentenceStream(const char* data, size_t datasize,
+SentenceStream::SentenceStream(const char* data, size_t size,
                                const Splitter& splitter, splitmode mode,
                                bool verify_utf8)
-    : cursor_(data), stop_(data + datasize), mode_(mode), splitter_(splitter) {
+    : cursor_(data), stop_(data + size), mode_(mode), splitter_(splitter) {
   static Regex r(".*", PCRE2_UTF);
   thread_local static Match m(r);
 
   if (verify_utf8) {
     // pre-flight verification: make sure it's well-formed UTF8
-    int success = r.find(std::string_view(data, datasize), &m);
+    int success = r.find(std::string_view(data, size), &m);
     if (success < 0) {
       auto offset = pcre2_get_startchar(m.match_data);
       constexpr size_t kMaxBufferSize = 256;

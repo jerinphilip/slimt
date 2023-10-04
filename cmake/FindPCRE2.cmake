@@ -12,7 +12,7 @@ if(SLIMT_USE_INTERNAL_PCRE2)
   set(PCRE2_VERSION "10.39")
   set(PCRE2_FILENAME "pcre2-${PCRE2_VERSION}")
   set(PCRE2_TARBALL "${PCRE2_FILENAME}.tar.gz")
-  set(PCRE2_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src/3rd-party/${PCRE2_FILENAME})
+  set(PCRE2_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/3rd-party/${PCRE2_FILENAME})
 
   # Download tarball only if we don't have the pcre2 source code yet. For the
   # time being, we download and unpack pcre2 into the ssplit source tree. This

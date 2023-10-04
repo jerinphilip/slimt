@@ -13,17 +13,21 @@ option(WITH_RUY "Use ruy" OFF)
 option(WITH_GEMMOLOGY "Use gemmology" OFF)
 option(WITH_BLAS "Use BLAS. Otherwise moves to ruy" ON)
 
-set(SLIMT_COMPILE_OPTIONS -Wall -Wpedantic -Wextra -Wno-unknown-pragmas -Werror)
-set(SLIMT_COMPILE_OPTIONS ${SLIMT_COMPILE_OPTIONS}
-                          -Wno-missing-field-initializers -Wno-unused-function)
+set(SLIMT_COMPILE_OPTIONS
+    -Wall
+    -Wpedantic
+    -Wextra
+    -Wno-unknown-pragmas
+    -Werror
+    -Wno-missing-field-initializers
+    -Wno-unused-function)
+
 set(SLIMT_COMPILE_DEFINITIONS "")
 
+find_package(PCRE2 REQUIRED)
 add_subdirectory(3rd-party)
 
-find_package(PCRE2 REQUIRED)
-
-set(SLIMT_EXTERNAL_LIBS ${SLIMT_EXTERNAL_LIBS} SentencePiece::SentencePiece
-                        PCRE2::PCRE2)
+set(SLIMT_EXTERNAL_LIBS SentencePiece::SentencePiece PCRE2::PCRE2)
 
 if(WITH_BLAS)
   find_package(BLAS)
