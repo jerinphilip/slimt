@@ -14,25 +14,21 @@
 #include "slimt/Vocabulary.hh"
 
 namespace slimt {
+
 class Batch;
 class Tensor;
 struct View;
 
-struct Data {
-  Aligned model;
-  Aligned shortlist;
-  Aligned vocabulary;
-};
-
 class Translator {
  public:
   Translator(const Config &config, View model, View shortlist, View vocabulary);
-  Histories decode(Tensor &encoder_out, Tensor &mask, const Words &source,
-                   const std::vector<size_t> &lengths);
-  Histories forward(Batch &batch);
   Response translate(std::string source, const Options &options);
 
  private:
+  Histories decode(Tensor &encoder_out, Tensor &mask, const Words &source,
+                   const std::vector<size_t> &lengths);
+  Histories forward(Batch &batch);
+
   Config config_;
   Vocabulary vocabulary_;
   TextProcessor processor_;
