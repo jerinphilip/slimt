@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5.1)
+cmake_minimum_required(VERSION 3.5.1...3.27)
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 project(slimt CXX C)
@@ -8,19 +8,26 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 option(WITH_ASAN "Enable AddressSanitizer in builds" OFF)
 option(WITH_TESTS "Enable building tests (requires a few extra libraries)" OFF)
 
-add_subdirectory(3rd-party)
-
-set(SLIMT_COMPILE_OPTIONS -Wall -Wpedantic -Wextra -Wno-unknown-pragmas -Werror)
-set(SLIMT_COMPILE_OPTIONS ${SLIMT_COMPILE_OPTIONS}
-                          -Wno-missing-field-initializers -Wno-unused-function)
-set(SLIMT_COMPILE_DEFINITIONS "")
-
 option(WITH_INTGEMM "Use intgemm" ON)
 option(WITH_RUY "Use ruy" OFF)
 option(WITH_GEMMOLOGY "Use gemmology" OFF)
 option(WITH_BLAS "Use BLAS. Otherwise moves to ruy" ON)
 
-set(SLIMT_EXTERNAL_LIBS Sentencepiece::Sentencepiece Ssplit::Ssplit)
+set(SLIMT_COMPILE_OPTIONS
+    -Wall
+    -Wpedantic
+    -Wextra
+    -Wno-unknown-pragmas
+    -Werror
+    -Wno-missing-field-initializers
+    -Wno-unused-function)
+
+set(SLIMT_COMPILE_DEFINITIONS "")
+
+find_package(PCRE2 REQUIRED)
+add_subdirectory(3rd-party)
+
+set(SLIMT_EXTERNAL_LIBS SentencePiece::SentencePiece PCRE2::PCRE2)
 
 if(WITH_BLAS)
   find_package(BLAS)
@@ -56,10 +63,14 @@ if(WITH_RUY)
 endif(WITH_RUY)
 
 if(WITH_GEMMOLOGY)
+  find_package(xsimd REQUIRED)
+  add_library(gemmology INTERFACE)
+  target_link_libraries(gemmology INTERFACE xsimd)
+  target_include_directories(gemmology
+                             INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/3rd-party")
+  set(SLIMT_EXTERNAL_LIBS ${SLIMT_EXTERNAL_LIBS} gemmology)
   set(SLIMT_COMPILE_DEFINITIONS ${SLIMT_COMPILE_DEFINITIONS}
                                 SLIMT_HAS_GEMMOLOGY)
-  find_package(xsimd REQUIRED)
-  set(SLIMT_EXTERNAL_LIBS ${SLIMT_EXTERNAL_LIBS} xsimd)
 endif(WITH_GEMMOLOGY)
 
 # cmake-format: off

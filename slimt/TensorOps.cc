@@ -6,12 +6,13 @@
 #include "3rd-party/ruy/ruy/ruy.h"
 #endif
 
+#include <algorithm>
 #include <cassert>
 #include <cmath>
-#include <iostream>
+#include <limits>
+#include <utility>
 
 #include "slimt/Simd.hh"
-#include "slimt/Utils.hh"
 
 namespace slimt {
 

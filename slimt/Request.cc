@@ -1,9 +1,11 @@
 #include "slimt/Request.hh"
 
-#include <string>
+#include <algorithm>
+#include <compare>
+#include <utility>
 
-#include "slimt/Annotation.hh"
 #include "slimt/Cache.hh"
+#include "slimt/Macros.hh"
 #include "slimt/Types.hh"
 #include "slimt/Utils.hh"
 

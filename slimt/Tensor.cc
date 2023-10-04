@@ -1,12 +1,11 @@
 #include "slimt/Tensor.hh"
 
 #include <bitset>
-#include <cassert>
 #include <cstdlib>
 #include <cstring>
-#include <functional>
 #include <iostream>
 #include <limits>
+#include <utility>
 
 #include "slimt/Macros.hh"
 #include "slimt/TensorOps.hh"

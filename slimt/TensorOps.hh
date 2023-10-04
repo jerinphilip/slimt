@@ -1,4 +1,9 @@
 #pragma once
+#include <cstddef>
+#include <cstdint>
+#include <string>
+#include <vector>
+
 #include "slimt/Tensor.hh"
 
 namespace slimt {

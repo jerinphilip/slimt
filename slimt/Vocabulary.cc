@@ -1,6 +1,15 @@
 #include "slimt/Vocabulary.hh"
 
+#include <cstdint>
 #include <string_view>
+#include <utility>
+#include <vector>
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#include "sentencepiece.pb.h"
+#pragma GCC diagnostic pop
 
 namespace slimt {
 
