@@ -73,7 +73,8 @@ void run(const Options &options) {
   };
 
   Config config;
-  Translator translator(config, view.model, view.shortlist, view.vocabulary);
+  // Translator translator(config, view.model, view.shortlist, view.vocabulary);
+  Async translator(config, view.model, view.shortlist, view.vocabulary);
   std::string source = read_from_stdin();
   slimt::Options opts{
       .alignment = true,    //

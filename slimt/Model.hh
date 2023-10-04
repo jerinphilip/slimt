@@ -26,6 +26,8 @@ struct Config {
   size_t max_words = 1024;
   size_t wrap_length = 128;
 
+  size_t workers = 1;
+
   std::string prefix_path;
   std::string split_mode = "sentence";
 

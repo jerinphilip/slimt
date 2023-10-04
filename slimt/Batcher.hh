@@ -67,7 +67,7 @@ class Batcher {
 /// parameterized by Model.
 ///
 /// Note: This class is not thread-safe. You may use this class wrapped with
-/// ThreadsafeBatcher for a thread-safe equivalent of this class, if
+/// Threadsafe for a thread-safe equivalent of this class, if
 /// needed.
 class AggregateBatcher {
  public:
@@ -125,25 +125,45 @@ class AggregateBatcher {
 /// to be consumed)
 
 template <class BatcherType>
-class ThreadsafeBatcher {
+class Threadsafe {
  public:
-  template <class... Args>
-  explicit ThreadsafeBatcher(Args&&... args);
-  ~ThreadsafeBatcher();
-
-  template <class... Args>
-  void enqueue(Args&&... args);
-
-  template <class... Args>
-  size_t generate(Args&&... args);
-
-  // Removes any pending requests from the batching pool.
-  void clear();
-
   // Signals shut down of batching pool. After this no new requests can be
   // enqueued, but all enqueued requests will be processed. To prevent this from
   // happening, call `clear()` before `shutdown()`.
-  void shutdown();
+  template <class... Args>
+  explicit Threadsafe(Args&&... args) : backend_(std::forward<Args>(args)...) {}
+
+  ~Threadsafe() { shutdown(); }
+
+  template <class... Args>
+  void enqueue(Args&&... args) {
+    std::unique_lock<std::mutex> lock(mutex_);
+    assert(!shutdown_);
+    enqueued_ += backend_.enqueue(std::forward<Args>(args)...);
+    work_.notify_all();
+  }
+
+  void clear() {
+    std::unique_lock<std::mutex> lock(mutex_);
+    backend_.clear();
+    enqueued_ = 0;
+  }
+
+  void shutdown() {
+    std::unique_lock<std::mutex> lock(mutex_);
+    shutdown_ = true;
+    work_.notify_all();
+  }
+
+  template <class... Args>
+  Batch generate(Args&&... args) {
+    std::unique_lock<std::mutex> lock(mutex_);
+    work_.wait(lock, [this]() { return enqueued_ || shutdown_; });
+    Batch batch = backend_.generate(std::forward<Args>(args)...);
+    assert(batch.size() > 0 || shutdown_);
+    enqueued_ -= batch.size();
+    return batch;
+  }
 
  private:
   BatcherType backend_;
@@ -161,49 +181,6 @@ class ThreadsafeBatcher {
   std::condition_variable work_;
 };
 
-template <class BatcherType>
-template <class... Args>
-ThreadsafeBatcher<BatcherType>::ThreadsafeBatcher(Args&&... args)
-    : backend_(std::forward<Args>(args)...) {}
-
-template <class BatcherType>
-ThreadsafeBatcher<BatcherType>::~ThreadsafeBatcher() {
-  shutdown();
-}
-
-template <class BatcherType>
-template <class... Args>
-void ThreadsafeBatcher<BatcherType>::enqueue(Args&&... args) {
-  std::unique_lock<std::mutex> lock(mutex_);
-  assert(!shutdown_);
-  enqueued_ += backend_.enqueue(std::forward<Args>(args)...);
-  work_.notify_all();
-}
-
-template <class BatcherType>
-void ThreadsafeBatcher<BatcherType>::clear() {
-  std::unique_lock<std::mutex> lock(mutex_);
-  backend_.clear();
-  enqueued_ = 0;
-}
-
-template <class BatcherType>
-void ThreadsafeBatcher<BatcherType>::shutdown() {
-  std::unique_lock<std::mutex> lock(mutex_);
-  shutdown_ = true;
-  work_.notify_all();
-}
-
-template <class BatcherType>
-template <class... Args>
-size_t ThreadsafeBatcher<BatcherType>::generate(Args&&... args) {
-  std::unique_lock<std::mutex> lock(mutex_);
-  work_.wait(lock, [this]() { return enqueued_ || shutdown_; });
-  size_t sentences_in_batch = backend_.generate(std::forward<Args>(args)...);
-  assert(sentences_in_batch > 0 || shutdown_);
-  enqueued_ -= sentences_in_batch;
-  return sentences_in_batch;
-}
 }  // namespace rd
 
 }  // namespace slimt

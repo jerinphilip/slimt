@@ -48,22 +48,17 @@ class Translator {
 
 class Async {
  public:
-  Async(const Config &config, View model, View shortlist, View vocabulary,
-        size_t workers);
+  Async(const Config &config, View model, View shortlist, View vocabulary);
   std::future<Response> translate(std::string &source, const Options &options);
 
  private:
-  Config config_;                           // Thread-safe. read only.
-  Vocabulary vocabulary_;                   // Thread-safe, read only
-  TextProcessor processor_;                 // Thread-safe, read only
-  Model model_;                             // Thread-safe, read only.
-  ShortlistGenerator shortlist_generator_;  // Thread-safe, read-only.
-  std::optional<TranslationCache>
-      cache_;  // Not thread-safe, conceptually.
-               // Thread-safe, because implementation is intended to be
-               // thread-safe.
-  // Thread - safe.
-  rd::ThreadsafeBatcher<rd::Batcher> batcher_;
+  Config config_;
+  Vocabulary vocabulary_;
+  TextProcessor processor_;
+  Model model_;
+  ShortlistGenerator shortlist_generator_;
+  std::optional<TranslationCache> cache_;
+  rd::Threadsafe<rd::Batcher> batcher_;
   Histories forward(Batch &batch);
   Histories decode(Tensor &encoder_out, Tensor &mask, const Words &source,
                    const std::vector<size_t> &lengths);
