@@ -5,8 +5,11 @@
 #include <utility>
 #include <vector>
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 #include "sentencepiece.pb.h"
-#include "src/sentencepiece_processor.h"
+#pragma GCC diagnostic pop
 
 namespace slimt {
 

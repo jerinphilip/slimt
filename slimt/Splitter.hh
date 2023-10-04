@@ -1,85 +1,88 @@
 #pragma once
-
-#include <cstddef>
+#include <map>
+#include <memory>
 #include <string>
-#include <string_view>
-#include <tuple>
-#include <vector>
-
-#include "slimt/Aligned.hh"
-#include "slimt/Types.hh"
-#include "ssplit.h"
+#include <unordered_map>
 
 namespace slimt {
-class Aligned;
-class AnnotatedText;
-class Vocabulary;
 
-class TextProcessor {
-  /// TextProcessor handles loading the sentencepiece vocabulary and also
-  /// contains an instance of sentence-splitter based on ssplit.
-  ///
-  /// Used in Service to convert an incoming blob of text to a vector of
-  /// sentences (vector of words). In addition, the Ranges of the
-  /// source-tokens in unnormalized text are provided as string_views.
+class Splitter {
  public:
-  // There are two ways to construct text-processor, different in a file-system
-  // based prefix file load and a memory based prefix file store. @jerinphilip
-  // is not doing magic inference inside to determine file-based or memory
-  // based on one being empty or not.
+  Splitter() = default;
+  explicit Splitter(const std::string& prefix_file);
 
-  /// Construct TextProcessor from options, vocabs and prefix-file.
-  /// @param [in] options: expected to contain `max-length-break`,
-  /// `ssplit-mode`.
-  /// @param [in] vocabs: Vocabularies used to process text into sentences to
-  /// marian::Words and corresponding Range information in AnnotatedText.
-  /// @param [in] ssplit_prefix_file: Path to ssplit-prefix file compatible with
-  /// moses-tokenizer.
-  TextProcessor(size_t wrap_length, const std::string &mode,
-                const Vocabulary &vocabulary, const std::string &prefix_path);
+  void load(const std::string& fname);
+  void load_from_serialized(std::string_view buffer);
 
-  /// Construct TextProcessor from options, vocabs and prefix-file supplied as a
-  /// bytearray. For other parameters, see the path based constructor. Note:
-  /// This falls back to string based loads if memory is null, this behaviour
-  /// will be deprecated in the future.
-  ///
-  /// @param [in] memory: ssplit-prefix-file contents in memory, passed as a
-  /// bytearray.
-  TextProcessor(size_t wrap_length, const std::string &mode,
-                const Vocabulary &vocabulary, const Aligned &memory);
-
-  /// Wrap into sentences of at most maxLengthBreak_ tokens and add to source.
-  /// @param [in] blob: Input blob, will be bound to source and annotations on
-  /// it stored.
-  /// @param [out] source: AnnotatedText instance holding input and annotations
-  /// of sentences and pieces
-  /// @param [out] segments: marian::Word equivalents of the sentences processed
-  /// and stored in AnnotatedText for consumption of marian translation
-  /// pipeline.
-
-  std::tuple<AnnotatedText, Segments> process(std::string &&input) const;
-
-  void process_from_annotation(AnnotatedText &source, Segments &segments) const;
+  // Find next sentence boundary, return view for next sentence,
+  // advance rest to reflect the rest of the text.
+  std::string_view operator()(std::string_view* rest) const;
 
  private:
-  /// Tokenizes an input string, returns Words corresponding. Loads the
-  /// corresponding byte-ranges into word_ranges.
-  Segment tokenize(const std::string_view &segment,
-                   std::vector<std::string_view> &word_ranges) const;
+  using PrefixMap = std::map<std::string, int, std::less<>>;
+  PrefixMap prefix_type_;
 
-  /// Wrap into sentences of at most maxLengthBreak_ tokens and add to source.
-  void wrap(Segment &segment, std::vector<std::string_view> &word_ranges,
-            Segments &segments, AnnotatedText &source) const;
+  // Return the prefix class of a prefix.
+  // 0: not a prefix
+  // 1: prefix
+  // 2: prefix only in front of numbers
+  int get_prefix_class(std::string_view piece) const;
 
-  size_t wrap_length_;  ///< Parameter used to wrap sentences to a maximum
-                        ///< number of tokens
-  /// Mode of splitting, can be line ('\n') based, paragraph based, also
-  /// supports a wrapped mode.
-  ug::ssplit::SentenceStream::splitmode ssplit_mode_;
+  // auxiliary function to declare a prefix from a line in the prefix file
+  void declare_prefix(std::string_view buffer);
 
-  const Vocabulary &vocabulary_;  ///< Vocabularies used to tokenize a sentence
-  /// SentenceSplitter compatible with moses sentence-splitter
-  ug::ssplit::SentenceSplitter ssplit_;
+  explicit Splitter(std::istream& istream);
 };
+
+class SentenceStream {
+ public:
+  enum class splitmode { OneSentencePerLine, OneParagraphPerLine, WrappedText };
+
+  // @param text text to be split into sentences
+  // @param splitter the actual sentence splitter
+  // @param mode the split mode (one sentence/paragraph per line, wrapped text)
+  // @param verify utf8?
+  SentenceStream(std::string_view text, const Splitter& splitter,
+                 splitmode mode, bool verify_utf8 = true);
+
+  // @param data start of data
+  // @param size size of data
+  // @param splitter the actual sentence splitter
+  // @param mode the split mode (one sentence/paragraph per line, wrapped text)
+  // @param verify utf8?
+  SentenceStream(const char* data, size_t size, const Splitter& splitter,
+                 splitmode mode, bool verify_utf8 = true);
+
+  int status() const;  // return status (pcre2 error code)
+  const std::string& error_message() const;
+  bool operator>>(std::string& snt);
+  bool operator>>(std::string_view& snt);
+
+ private:
+  const char* cursor_;
+  const char* const stop_;
+  std::string_view paragraph_;
+  splitmode mode_;
+  const Splitter& splitter_;
+  std::string error_message_;  // holds error message if UTF8 validation fails
+  int status_;                 // holds prce2 error code
+};
+
+// Auxiliary function to print a chunk of text as a single line,
+// replacing line breaks by blanks. This is faster than doing a
+// global replacement in a string first.
+std::ostream& single_line(
+    std::ostream& out,           // destination stream
+    std::string_view span,       // text span to be printed in a single line
+    std::string_view end = "",   // stuff to put at end of line
+    bool validate_utf = false);  // do we need to validate UTF8?
+
+// Auxiliary function to stiore a chunk of text as a single line,
+// replacing line breaks by blanks.
+std::string& single_line(
+    std::string& snt,            // destination stream
+    std::string_view span,       // text span to be printed in a single line
+    std::string_view end = "",   // stuff to put at end of line
+    bool validate_utf = false);  // do we need to validate UTF8?
 
 }  // namespace slimt
