@@ -49,7 +49,7 @@ class Translator {
 class Async {
  public:
   Async(const Config &config, View model, View shortlist, View vocabulary);
-  std::future<Response> translate(std::string &source, const Options &options);
+  Response translate(std::string &source, const Options &options);
 
  private:
   Config config_;

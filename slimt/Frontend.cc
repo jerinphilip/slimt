@@ -227,8 +227,7 @@ Async::Async(const Config &config, View model, View shortlist, View vocabulary)
   }
 }
 
-std::future<Response> Async::translate(std::string &source,
-                                       const Options &options) {
+Response Async::translate(std::string &source, const Options &options) {
   // Create a request
   std::optional<HTML> html = std::nullopt;
   if (options.html) {
@@ -251,7 +250,8 @@ std::future<Response> Async::translate(std::string &source,
 
   batcher_.enqueue(request);
 
-  return future;
+  future.wait();
+  return future.get();
   ;
 }
 Histories Async::forward(Batch &batch) {
