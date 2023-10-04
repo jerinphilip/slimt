@@ -22,8 +22,8 @@ add_subdirectory(3rd-party)
 
 find_package(PCRE2 REQUIRED)
 
-
-set(SLIMT_EXTERNAL_LIBS ${SLIMT_EXTERNAL_LIBS} SentencePiece::SentencePiece PCRE2::PCRE2)
+set(SLIMT_EXTERNAL_LIBS ${SLIMT_EXTERNAL_LIBS} SentencePiece::SentencePiece
+                        PCRE2::PCRE2)
 
 if(WITH_BLAS)
   find_package(BLAS)
@@ -62,7 +62,8 @@ if(WITH_GEMMOLOGY)
   find_package(xsimd REQUIRED)
   add_library(gemmology INTERFACE)
   target_link_libraries(gemmology INTERFACE xsimd)
-  target_include_directories(gemmology INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/3rd-party")
+  target_include_directories(gemmology
+                             INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/3rd-party")
   set(SLIMT_EXTERNAL_LIBS ${SLIMT_EXTERNAL_LIBS} gemmology)
   set(SLIMT_COMPILE_DEFINITIONS ${SLIMT_COMPILE_DEFINITIONS}
                                 SLIMT_HAS_GEMMOLOGY)
