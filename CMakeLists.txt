@@ -4,6 +4,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 project(slimt CXX C)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(POSITION_INDEPENDENT_CODE ON)
 
 option(WITH_ASAN "Enable AddressSanitizer in builds" OFF)
 option(WITH_TESTS "Enable building tests (requires a few extra libraries)" OFF)
