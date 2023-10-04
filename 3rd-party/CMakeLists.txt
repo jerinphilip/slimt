@@ -14,6 +14,7 @@ target_include_directories(spiece_iface INTERFACE ${SentencePiece_INCLUDES}
 add_library(SentencePiece::SentencePiece ALIAS spiece_iface)
 
 # intgemm
+set(POSITION_INDEPENDENT_CODE ON)
 set(INTGEMM_DONT_BUILD_TESTS ON)
 add_subdirectory(intgemm EXCLUDE_FROM_ALL)
 
