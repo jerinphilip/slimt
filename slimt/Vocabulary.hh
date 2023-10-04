@@ -6,16 +6,8 @@
 #include <string_view>
 #include <tuple>
 
+#include "sentencepiece_processor.h"
 #include "slimt/Types.hh"
-
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-#include "3rd-party/sentencepiece/src/builtin_pb/sentencepiece.pb.h"
-#include "3rd-party/sentencepiece/src/sentencepiece_processor.h"
-#include "3rd-party/sentencepiece/src/sentencepiece_trainer.h"
-
-#pragma GCC diagnostic pop
 
 namespace slimt {
 

@@ -9,7 +9,7 @@
 #include "slimt/Model.hh"
 #include "slimt/Response.hh"
 #include "slimt/Shortlist.hh"
-#include "slimt/Splitter.hh"
+#include "slimt/TextProcessor.hh"
 #include "slimt/Types.hh"
 #include "slimt/Vocabulary.hh"
 
