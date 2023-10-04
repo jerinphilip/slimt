@@ -50,6 +50,7 @@ class Async {
  public:
   Async(const Config &config, View model, View shortlist, View vocabulary);
   Response translate(std::string &source, const Options &options);
+  ~Async();
 
  private:
   Config config_;

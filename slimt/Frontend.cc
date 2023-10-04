@@ -331,4 +331,14 @@ Histories Async::decode(Tensor &encoder_out, Tensor &mask, const Words &source,
 
   return histories;
 }
+
+Async::~Async() {
+  batcher_.shutdown();
+  for (std::thread &worker : workers_) {
+    assert(worker.joinable());
+    worker.join();
+  }
+  workers_.clear();
+}
+
 }  // namespace slimt
