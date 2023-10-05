@@ -20,7 +20,7 @@ struct Config {
   size_t encoder_layers = 6;
   size_t decoder_layers = 2;
   size_t feed_forward_depth = 2;
-  size_t tgt_length_limit_factor = 2;
+  float tgt_length_limit_factor = 1.5;
   size_t attention_num_heads = 8;
 
   size_t max_words = 1024;
@@ -30,8 +30,21 @@ struct Config {
 
   std::string prefix_path;
   std::string split_mode = "sentence";
-
   // NOLINTEND
+
+  template <class App>
+  void setup_onto(App &app) {
+    // clang-format off
+    // app.add_option("--encoder-layers", encoder_layers, "Number of encoder layers");
+    // app.add_option("--decoder-layers", decoder_layers, "Number of decoder layers");
+    // app.add_option("--ffn-depth", decoder_layers, "Number of feedforward layers");
+    app.add_option("--limit-tgt", tgt_length_limit_factor, "Max length proportional to source target can have.");
+    app.add_option("--max-words", max_words, "Maximum words in a batch.");
+    app.add_option("--wrap-length", max_words, "Maximum length allowed for a sample, beyond which hard-wrap.");
+    app.add_option("--split-mode", split_mode, "Split mode to go with for sentence-splitter.");
+    app.add_option("--workers", workers, "Number of workers threads to launch for translating.");
+    // clang-format on
+  }
 };
 
 class Encoder {
