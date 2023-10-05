@@ -160,7 +160,7 @@ class Threadsafe {
     std::unique_lock<std::mutex> lock(mutex_);
     work_.wait(lock, [this]() { return enqueued_ || shutdown_; });
     Batch batch = backend_.generate(std::forward<Args>(args)...);
-    assert(batch.size() > 0 || shutdown_);
+    assert(!batch.empty() || shutdown_);
     enqueued_ -= batch.size();
     return batch;
   }
