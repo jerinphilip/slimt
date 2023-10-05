@@ -74,8 +74,7 @@ void run(const Options &options) {
       .shortlist = {mmap.shortlist.data(), mmap.shortlist.size()},     //
   };
 
-  Config config;
-  Async translator(config, view.model, view.shortlist, view.vocabulary);
+  Async translator(options.config, view.model, view.shortlist, view.vocabulary);
   std::string source = read_from_stdin();
   slimt::Options opts{
       .alignment = true,    //
