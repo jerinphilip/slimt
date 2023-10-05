@@ -17,6 +17,19 @@
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #include "gemmology/gemmology.h"
 
+#if defined(USE_AVX2)
+#define GEMMOLOGY_SUPPORTED_ARCHS \
+  xsimd::arch_list<xsimd::avx2, xsimd::ssse3, xsimd::sse2>
+#elif defined(USE_SSSE3)
+#define GEMMOLOGY_SUPPORTED_ARCHS xsimd::arch_list<xsimd::ssse3, xsimd::sse2>
+#elif defined(USE_SSE2)
+#define GEMMOLOGY_SUPPORTED_ARCHS xsimd::arch_list<xsimd::sse2>
+#elif defined(USE_NEON) and defined(XSIMD_WITH_NEON64)
+#define GEMMOLOGY_SUPPORTED_ARCHS xsimd::arch_list<xsimd::neon64>
+#else
+#error no supported architecture
+#endif
+
 #pragma GCC diagnostic pop
 #endif
 
@@ -537,7 +550,80 @@ void prepare_weight_quantized_transposed<Provider::Ruy>(const int8_t* input,
 }
 #endif
 
+}  // namespace detail
+}  // namespace slimt::qmm
+
 #ifdef SLIMT_HAS_GEMMOLOGY
+
+namespace gemmology {
+
+#ifdef USE_AVX2
+template struct Engine<xsimd::avx2>;
+template void Engine<xsimd::avx2>::SelectColumnsB(const int8_t*, int8_t*,
+                                                  size_t, const uint32_t*,
+                                                  const uint32_t*);
+template void Engine<xsimd::avx2>::Shift::Multiply(
+    const uint8_t*, const int8_t*, size_t, size_t, size_t,
+    gemmology::callbacks::UnquantizeAndAddBiasAndWrite);
+template void Engine<xsimd::avx2>::Shift::PrepareBias(
+    const int8_t*, size_t, size_t,
+    gemmology::callbacks::UnquantizeAndAddBiasAndWrite);
+#endif
+
+#ifdef USE_SSE2
+template struct Engine<xsimd::sse2>;
+template void Engine<xsimd::sse2>::SelectColumnsB(const int8_t*, int8_t*,
+                                                  size_t, const uint32_t*,
+                                                  const uint32_t*);
+
+template void Engine<xsimd::sse2>::Shift::Multiply(
+    const uint8_t*, const int8_t*, size_t, size_t, size_t,
+    gemmology::callbacks::UnquantizeAndAddBiasAndWrite);
+template void Engine<xsimd::sse2>::Shift::PrepareBias(
+    const int8_t*, size_t, size_t,
+    gemmology::callbacks::UnquantizeAndAddBiasAndWrite);
+#endif
+
+#ifdef USE_SSSE3
+template struct Engine<xsimd::ssse3>;
+template void Engine<xsimd::ssse3>::SelectColumnsB(const int8_t*, int8_t*,
+                                                   size_t, const uint32_t*,
+                                                   const uint32_t*);
+template void Engine<xsimd::ssse3>::Shift::Multiply(
+    const uint8_t*, const int8_t*, size_t, size_t, size_t,
+    gemmology::callbacks::UnquantizeAndAddBiasAndWrite);
+template void Engine<xsimd::ssse3>::Shift::PrepareBias(
+    const int8_t*, size_t, size_t,
+    gemmology::callbacks::UnquantizeAndAddBiasAndWrite);
+#endif
+
+#ifdef USE_NEON
+template struct Engine<xsimd::neon64>;
+template void Engine<xsimd::neon64>::SelectColumnsB(const int8_t*, int8_t*,
+                                                    size_t, const uint32_t*,
+                                                    const uint32_t*);
+template void Engine<xsimd::neon64>::Shift::Multiply(
+    const uint8_t*, const int8_t*, size_t, size_t, size_t,
+    gemmology::callbacks::UnquantizeAndAddBiasAndWrite);
+template void Engine<xsimd::neon64>::Shift::PrepareBias(
+    const int8_t*, size_t, size_t,
+    gemmology::callbacks::UnquantizeAndAddBiasAndWrite);
+#endif  // USE_NEON
+
+}  // namespace gemmology
+
+// Dispatch *at runtime* based on run-time hardware and compile-time
+// architectures.
+//
+// FIXME: Ideally we would not run the dispatch code at each function call.
+#define GEMMOLOGY_DISPATCH(FUNCTION)                                       \
+  xsimd::dispatch<GEMMOLOGY_SUPPORTED_ARCHS>([](auto arch, auto... args) { \
+    return gemmology::Engine<decltype(arch)>::FUNCTION(args...);           \
+  })
+
+namespace slimt::qmm {
+namespace detail {
+
 template <>
 Tensor affine_with_select<Provider::Gemmology>(
     Tensor& x, Tensor& W, Tensor& b, float a_quant, float b_quant,
@@ -778,7 +864,7 @@ void prepare_weight_quantized_transposed<Provider::Gemmology>(
 #endif
 
 }  // namespace detail
-   //
+
 Tensor affine(Tensor& x, Tensor& W, Tensor& b, float a_quant, float b_quant,
               const std::string& name) {
   using detail::affine;
@@ -810,6 +896,7 @@ void prepare_weight_transposed(const float* weights, int8_t* prepared,
   prepare_weight_transposed<kAutoProvider>(weights, prepared,
                                            quantization_multiplier, cols, rows);
 }
+
 void prepare_weight_quantized_transposed(const int8_t* input, int8_t* output,
                                          size_t rows, size_t cols) {
   using detail::kAutoProvider;
