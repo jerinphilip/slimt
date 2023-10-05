@@ -20,7 +20,7 @@ struct Config {
   size_t encoder_layers = 6;
   size_t decoder_layers = 2;
   size_t feed_forward_depth = 2;
-  float tgt_length_limit_factor = 2;
+  float tgt_length_limit_factor = 1.5;
   size_t attention_num_heads = 8;
 
   size_t max_words = 1024;
