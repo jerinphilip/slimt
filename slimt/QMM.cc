@@ -17,7 +17,10 @@
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #include "gemmology/gemmology.h"
 
-#if defined(USE_AVX2)
+#if defined(AVX512)
+#define GEMMOLOGY_SUPPORTED_ARCHS \
+  xsimd::arch_list<xsimd::avx512bw, xsimd::avx2, xsimd::ssse3, xsimd::sse2>
+#elif defined(USE_AVX2)
 #define GEMMOLOGY_SUPPORTED_ARCHS \
   xsimd::arch_list<xsimd::avx2, xsimd::ssse3, xsimd::sse2>
 #elif defined(USE_SSSE3)
