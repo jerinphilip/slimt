@@ -57,22 +57,21 @@ void update_alignment(const std::vector<size_t> &lengths,
   }
 }
 
-Histories decode(Tensor &encoder_out, Tensor &mask, const Words &source,
-                 const std::vector<size_t> &lengths, const Config &config_,
-                 Model &model_, Vocabulary &vocabulary_,
-                 ShortlistGenerator &shortlist_generator_) {
+Histories decode(Tensor &encoder_out, Batch &batch,
+                 const size_t &tgt_length_limit_factor, Model &model_,
+                 const Word &eos_id, ShortlistGenerator &shortlist_generator_) {
   // Prepare a shortlist for the entire batch.
   size_t batch_size = encoder_out.dim(-3);
   size_t source_sequence_length = encoder_out.dim(-2);
 
-  Shortlist shortlist = shortlist_generator_.generate(source);
+  Shortlist shortlist = shortlist_generator_.generate(batch.words());
   Words indices = shortlist.words();
   // The following can be used to check if shortlist is going wrong.
   // std::vector<uint32_t> indices(vocabulary_.size());
   // std::iota(indices.begin(), indices.end(), 0);
 
   std::vector<bool> complete(batch_size, false);
-  uint32_t eos = vocabulary_.eos_id();
+  uint32_t eos = eos_id;
   auto record = [eos, &complete](Words &step, Sentences &sentences) {
     size_t finished = 0;
     for (size_t i = 0; i < step.size(); i++) {
@@ -93,20 +92,19 @@ Histories decode(Tensor &encoder_out, Tensor &mask, const Words &source,
   Words previous_slice = {};
   std::vector<Tensor> states = decoder.start_states(batch_size);
   auto [logits, attn] =
-      decoder.step(encoder_out, mask, states, previous_slice, indices);
+      decoder.step(encoder_out, batch.mask(), states, previous_slice, indices);
 
   previous_slice = greedy_sample(logits, indices, batch_size);
-  update_alignment(lengths, complete, attn, alignments);
+  update_alignment(batch.lengths(), complete, attn, alignments);
   record(previous_slice, sentences);
 
   size_t remaining = sentences.size();
-  size_t max_seq_length =
-      config_.tgt_length_limit_factor * source_sequence_length;
+  size_t max_seq_length = tgt_length_limit_factor * source_sequence_length;
   for (size_t i = 1; i < max_seq_length && remaining > 0; i++) {
-    auto [logits, attn] =
-        decoder.step(encoder_out, mask, states, previous_slice, indices);
+    auto [logits, attn] = decoder.step(encoder_out, batch.mask(), states,
+                                       previous_slice, indices);
     previous_slice = greedy_sample(logits, indices, batch_size);
-    update_alignment(lengths, complete, attn, alignments);
+    update_alignment(batch.lengths(), complete, attn, alignments);
     remaining = record(previous_slice, sentences);
   }
 
@@ -123,8 +121,8 @@ Histories decode(Tensor &encoder_out, Tensor &mask, const Words &source,
   return histories;
 }
 
-Histories forward(Batch &batch, const Config &config_, Model &model_,
-                  Vocabulary &vocabulary_,
+Histories forward(Batch &batch, const size_t &tgt_length_limit_factor,
+                  Model &model_, const Word &eos_id,
                   ShortlistGenerator &shortlist_generator_) {
   Tensor &indices = batch.indices();
   Tensor &mask = batch.mask();
@@ -141,9 +139,8 @@ Histories forward(Batch &batch, const Config &config_, Model &model_,
   // https://github.com/browsermt/marian-dev/blob/14c9d9b0e732f42674e41ee138571d5a7bf7ad94/src/models/transformer.h#L133
   modify_mask_for_pad_tokens_in_attention(mask.data<float>(), mask.size());
   Tensor encoder_out = model_.encoder().forward(word_embedding, mask);
-  Histories histories =
-      decode(encoder_out, mask, batch.words(), batch.lengths(), config_, model_,
-             vocabulary_, shortlist_generator_);
+  Histories histories = decode(encoder_out, batch, tgt_length_limit_factor,
+                               model_, eos_id, shortlist_generator_);
   return histories;
 }
 
@@ -189,7 +186,8 @@ Response Translator::translate(std::string source, const Options &options) {
     // convert between batches.
     Batch batch = convert(rd_batch);
     Histories histories =
-        forward(batch, config_, model_, vocabulary_, shortlist_generator_);
+        forward(batch, config_.tgt_length_limit_factor, model_,
+                vocabulary_.eos_id(), shortlist_generator_);
     rd_batch.complete(histories);
     rd_batch = batcher.generate();
   }
@@ -220,7 +218,8 @@ Async::Async(const Config &config, View model, View shortlist, View vocabulary)
         // convert between batches.
         Batch batch = convert(rd_batch);
         Histories histories =
-            forward(batch, config_, model_, vocabulary_, shortlist_generator_);
+            forward(batch, config_.tgt_length_limit_factor, model_,
+                    vocabulary_.eos_id(), shortlist_generator_);
         rd_batch.complete(histories);
         rd_batch = batcher_.generate();
       }
