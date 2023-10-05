@@ -184,14 +184,22 @@ Response Translator::translate(std::string source, const Options &options) {
                       config_.tgt_length_limit_factor);
   batcher.enqueue(request);
 
+  AverageMeter<float> wps;
+  AverageMeter<float> occupancy;
   rd::Batch rd_batch = batcher.generate();
   while (!rd_batch.empty()) {
     // convert between batches.
+    Timer timer;
     Batch batch = convert(rd_batch);
     Histories histories =
         forward(batch, config_, model_, vocabulary_, shortlist_generator_);
     rd_batch.complete(histories);
     rd_batch = batcher.generate();
+
+    auto elapsed = static_cast<float>(timer.elapsed());
+    float batch_wps = batch.words().size() / elapsed;
+    wps.record(batch_wps);
+    occupancy.record(batch.occupancy());
   }
 
   future.wait();

@@ -25,6 +25,7 @@ struct Options {
   std::string root;
   bool html = false;
   size_t max_tokens_per_batch = 1024;  // NOLINT
+  slimt::Config config;
 
   template <class App>
   void setup_onto(App &app) {
@@ -35,6 +36,7 @@ struct Options {
     app.add_option("--shortlist", translator.shortlist, "Path to shortlist");
     app.add_option("--max-tokens-per-batch", max_tokens_per_batch, "Path to shortlist");
     app.add_flag("--html", html, "Whether content is HTML");
+    config.setup_onto(app);
     // clang-format on
   }
 };
@@ -73,7 +75,6 @@ void run(const Options &options) {
   };
 
   Config config;
-  // Translator translator(config, view.model, view.shortlist, view.vocabulary);
   Async translator(config, view.model, view.shortlist, view.vocabulary);
   std::string source = read_from_stdin();
   slimt::Options opts{
