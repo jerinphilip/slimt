@@ -29,9 +29,6 @@ struct Data {
 class Translator {
  public:
   Translator(const Config &config, View model, View shortlist, View vocabulary);
-  Histories decode(Tensor &encoder_out, Tensor &mask, const Words &source,
-                   const std::vector<size_t> &lengths);
-  Histories forward(Batch &batch);
   Response translate(std::string source, const Options &options);
 
  private:
@@ -60,9 +57,6 @@ class Async {
   ShortlistGenerator shortlist_generator_;
   std::optional<TranslationCache> cache_;
   rd::Threadsafe<rd::Batcher> batcher_;
-  Histories forward(Batch &batch);
-  Histories decode(Tensor &encoder_out, Tensor &mask, const Words &source,
-                   const std::vector<size_t> &lengths);
   std::vector<std::thread> workers_;
 
   size_t id_ = 0;
