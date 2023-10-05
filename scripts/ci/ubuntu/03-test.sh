@@ -13,6 +13,8 @@ MODEL=model.intgemm.alphas.bin
 VOCAB=vocab.deen.spm
 SHORTLIST=lex.s2t.bin
 
+set -x
+
 ./build/bin/slimt --root ${PREFIX} \
   --model ${MODEL} --vocabulary ${VOCAB} --shortlist ${SHORTLIST} \
   < data/sample.txt

@@ -14,6 +14,12 @@ option(WITH_RUY "Use ruy" OFF)
 option(WITH_GEMMOLOGY "Use gemmology" OFF)
 option(WITH_BLAS "Use BLAS. Otherwise moves to ruy" ON)
 
+option(USE_AVX512 "Use AVX512" OFF)
+option(USE_AVX2 "Use AVX2" OFF)
+option(USE_SSSE3 "Use SSSE3" OFF)
+option(USE_SSE2 "Use SSE2" OFF)
+option(USE_NEON "Use NEON" OFF)
+
 set(SLIMT_COMPILE_OPTIONS
     -Wall
     -Wpedantic
@@ -81,6 +87,31 @@ if(WITH_GEMMOLOGY)
   set(SLIMT_COMPILE_DEFINITIONS ${SLIMT_COMPILE_DEFINITIONS}
                                 SLIMT_HAS_GEMMOLOGY)
 endif(WITH_GEMMOLOGY)
+
+if(USE_AVX512)
+  list(APPEND SLIMT_COMPILE_DEFINITIONS USE_AVX512)
+  list(APPEND SLIMT_COMPILE_OPTIONS -march=skylake-avx512)
+endif(USE_AVX512)
+
+if(USE_AVX2)
+  list(APPEND SLIMT_COMPILE_DEFINITIONS USE_AVX2)
+  list(APPEND SLIMT_COMPILE_OPTIONS -mavx2)
+endif(USE_AVX2)
+
+if(USE_SSE2)
+  list(APPEND SLIMT_COMPILE_DEFINITIONS USE_SSE2)
+  list(APPEND SLIMT_COMPILE_OPTIONS -msse2)
+endif(USE_SSE2)
+
+if(USE_SSSE3)
+  list(APPEND SLIMT_COMPILE_DEFINITIONS USE_SSSE3)
+  list(APPEND SLIMT_COMPILE_OPTIONS -mssse3)
+endif(USE_SSSE3)
+
+if(USE_NEON)
+  list(APPEND SLIMT_COMPILE_DEFINITIONS USE_NEON)
+  list(APPEND SLIMT_COMPILE_OPTIONS -mfpu=neon)
+endif(USE_NEON)
 
 # cmake-format: off
 set(CMAKE_CXX_FLAGS_PROFILE           "${CMAKE_CXX_FLAGS_RELEASE} -pg" CACHE STRING "Flags used by the C++ compiler during profile builds." FORCE)
