@@ -53,6 +53,7 @@ constexpr Provider kAutoProvider = Provider::Ruy;
 #ifdef SLIMT_HAS_GEMMOLOGY
 constexpr Provider kAutoProvider = Provider::Gemmology;
 #endif
+
 }  // namespace detail
 
 Tensor affine(Tensor& x, Tensor& W, Tensor& b, float a_quant, float b_quant,
