@@ -35,10 +35,8 @@
 
 #include "slimt/Tensor.hh"
 
-namespace slimt::qmm {
-namespace detail {
-
 #ifdef SLIMT_HAS_INTGEMM
+namespace slimt::qmm::detail {
 template <>
 Tensor affine_with_select<Provider::Intgemm>(
     Tensor& x, Tensor& W, Tensor& b, float a_quant, float b_quant,
@@ -274,11 +272,12 @@ void prepare_weight_quantized_transposed<Provider::Intgemm>(const int8_t* input,
                                                             size_t cols) {
   intgemm::Int8::PrepareBQuantizedTransposed(input, output, rows, cols);
 }
+}  // namespace slimt::qmm::detail
 
 #endif
 
 #ifdef SLIMT_HAS_RUY
-namespace detail {
+namespace slimt::qmm::detail {
 
 using Index = uint64_t;
 
@@ -328,8 +327,6 @@ void unquantizeAddBias(const int32_t* input, const float* input_bias_prepared,
     }
   }
 }
-
-}  // namespace detail
 
 // Ruy.
 template <>
@@ -548,10 +545,8 @@ void prepare_weight_quantized_transposed<Provider::Ruy>(const int8_t* input,
   std::memcpy(output, input,
               /*count=*/sizeof(int8_t) * (rows * cols));
 }
-#endif
-
-}  // namespace detail
-}  // namespace slimt::qmm
+}  // namespace slimt::qmm::detail
+#endif  // SLIMT_HAS_RUY
 
 #ifdef SLIMT_HAS_GEMMOLOGY
 
@@ -621,8 +616,7 @@ template void Engine<xsimd::neon64>::Shift::PrepareBias(
     return gemmology::Engine<decltype(arch)>::FUNCTION(args...);           \
   })
 
-namespace slimt::qmm {
-namespace detail {
+namespace slimt::qmm::detail {
 
 template <>
 Tensor affine_with_select<Provider::Gemmology>(
@@ -871,10 +865,10 @@ void prepare_weight_quantized_transposed<Provider::Gemmology>(
   GEMMOLOGY_DISPATCH(PrepareBQuantizedTransposed)(input, output, rows, cols);
 }
 
-#endif
+}  // namespace slimt::qmm::detail
+#endif  // SLIMT_HAS_GEMMOLOGY
 
-}  // namespace detail
-
+namespace slimt::qmm {
 Tensor affine(Tensor& x, Tensor& W, Tensor& b, float a_quant, float b_quant,
               const std::string& name) {
   using detail::affine;
