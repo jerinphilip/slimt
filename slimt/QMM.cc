@@ -640,9 +640,9 @@ Tensor affine_with_select<Provider::Gemmology>(
 
   // Prepare Activations (A).
   Tensor prepared_A(Type::i8, A.shape(), "quantized_acts");  // NOLINT
-  auto PrepareA = GEMMOLOGY_DISPATCH(PrepareA);              // NOLINT
+  auto PrepareA = GEMMOLOGY_DISPATCH(Shift::PrepareA);       // NOLINT
   PrepareA(                                                  //
-      A.data<float>(), prepared_A.data<int8_t>(),            //
+      A.data<float>(), prepared_A.data<uint8_t>(),           //
       a_quant,                                               //
       A_rows, width                                          //
   );
@@ -730,9 +730,9 @@ Tensor affine<Provider::Gemmology>(Tensor& x, Tensor& W, Tensor& b,
 
   // Prepare Activations (A).
   Tensor prepared_A(Type::i8, A.shape(), "quantized_acts");  // NOLINT
-  auto PrepareA = GEMMOLOGY_DISPATCH(PrepareA);              // NOLINT
+  auto PrepareA = GEMMOLOGY_DISPATCH(Shift::PrepareA);       // NOLINT
   PrepareA(                                                  //
-      A.data<float>(), prepared_A.data<int8_t>(),            //
+      A.data<float>(), prepared_A.data<uint8_t>(),           //
       a_quant,                                               //
       A_rows, width                                          //
   );
@@ -798,9 +798,9 @@ Tensor dot<Provider::Gemmology>(Tensor& x, Tensor& W, float a_quant,
 
   // Prepare Activations (A).
   Tensor prepared_A(Type::i8, A.shape(), "quantized_acts");  // NOLINT
-  auto PrepareA = GEMMOLOGY_DISPATCH(PrepareA);              // NOLINT
+  auto PrepareA = GEMMOLOGY_DISPATCH(Shift::PrepareA);       // NOLINT
   PrepareA(                                                  //
-      A.data<float>(), prepared_A.data<int8_t>(),            //
+      A.data<float>(), prepared_A.data<uint8_t>(),           //
       a_quant,                                               //
       A_rows, width                                          //
   );
