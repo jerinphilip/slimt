@@ -16,6 +16,7 @@ inline std::string read_from_stdin() {
 struct Options {
   slimt::Record<std::string> translator;
   std::string root;
+  bool async = false;
   bool html = false;
   slimt::Config config;
 
@@ -27,6 +28,7 @@ struct Options {
     app.add_option("--vocabulary", translator.vocabulary, "Path to vocabulary");
     app.add_option("--shortlist", translator.shortlist, "Path to shortlist");
     app.add_flag("--html", html, "Whether content is HTML");
+    app.add_flag("--async", async, "Try async backend");
     config.setup_onto(app);
     // clang-format on
   }
@@ -70,25 +72,23 @@ void run(const Options &options) {
   // There are times when it won't match - EM.
   auto model = std::make_shared<Model>(options.config, view);
 
-  // {
-  //   // Async operation.
-  //   Async service(options.config);
-
-  //   std::string source = read_from_stdin();
-  //   slimt::Options opts{
-  //       .alignment = true,    //
-  //       .html = options.html  //
-  //   };
-
-  //   std::future<Response> future =
-  //       service.translate(model, std::move(source), opts);
-
-  //   Response response = future.get();
-  //   fprintf(stdout, "%s\n", response.target.text.c_str());
-  // }
-
-  {
+  if (options.async) {
     // Async operation.
+    Async service(options.config);
+
+    std::string source = read_from_stdin();
+    slimt::Options opts{
+        .alignment = true,    //
+        .html = options.html  //
+    };
+
+    std::future<Response> future =
+        service.translate(model, std::move(source), opts);
+
+    Response response = future.get();
+    fprintf(stdout, "%s\n", response.target.text.c_str());
+  } else {
+    // Blocking operation.
     Blocking service(options.config);
 
     std::string source = read_from_stdin();

@@ -107,7 +107,6 @@ class AggregateBatcher {
  private:
   std::unordered_set<std::shared_ptr<Model>, HashPtr<Model>> queue_;
   std::unordered_map<size_t, Batcher> batcher_;
-  std::mutex mutex_;
 
   size_t max_words_;               //
   size_t wrap_length_;             //

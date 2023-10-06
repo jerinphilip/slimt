@@ -99,7 +99,6 @@ AggregateBatcher::AggregateBatcher(
 
 size_t AggregateBatcher::enqueue(const Ptr<Model>& model,
                                  const Ptr<Request>& request) {
-  std::lock_guard guard(mutex_);
   auto query = batcher_.find(model->id());
   if (query == batcher_.end()) {
     batcher_.emplace(                        //
@@ -121,7 +120,6 @@ std::tuple<Batch, Ptr<Model>> AggregateBatcher::generate() {
   while (!queue_.empty()) {
     auto model_iterator = queue_.begin();
     Ptr<Model> model = *model_iterator;
-    std::lock_guard guard(mutex_);
     auto query = batcher_.find(model->id());
     Batcher& batcher = query->second;
     Batch batch = batcher.generate();
