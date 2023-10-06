@@ -695,10 +695,11 @@ void ShortlistGen() {
 
   // Load ShortlistGenerator
   io::MmapFile shortlist_file(shortlist_path);
-  ShortlistGenerator shortlist_generator(                  //
-      View(shortlist_file.data(), shortlist_file.size()),  //
-      source, target                                       //
-  );
+  View view{
+      .data = shortlist_file.data(),  //
+      .size = shortlist_file.size()   //
+  };
+  ShortlistGenerator shortlist_generator(view, source, target);
 
   std::string line = "May I try the shortlist on, please?";
   auto [words, views] = vocab.encode(line, /*add_eos=*/true);
