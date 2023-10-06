@@ -17,7 +17,7 @@
 
 namespace slimt {
 
-class FModel;
+class Model;
 template <class T>
 struct HashPtr;
 
@@ -58,13 +58,13 @@ class Batcher {
 /// held here from which batches are generated on demand. Since a queue is
 /// involved, the ordering is first-come first serve on requests except there
 /// are leaks effectively doing priority inversion if an earlier request with
-/// the same FModel is pending to be consumed for translation.
+/// the same Model is pending to be consumed for translation.
 //
 /// Actual storage for the request and batch generation are within the
 /// respective Models, which owns its own Batcher.
 ///
 /// Matches API provided by Batcher except arguments additionally
-/// parameterized by FModel.
+/// parameterized by Model.
 ///
 /// Note: This class is not thread-safe. You may use this class wrapped with
 /// Threadsafe for a thread-safe equivalent of this class, if
@@ -73,26 +73,30 @@ class AggregateBatcher {
  public:
   /// Create an AggregateBatcher with (tentatively) global (across all
   /// Batchers) limits imposed here.
-  AggregateBatcher();
+  AggregateBatcher(                        //
+      size_t max_words,                    //
+      size_t wrap_length,                  //
+      float tgt_length_limit_factor = 3.0  // NOLINT
+  );
 
   /// Enqueue an existing request onto model, also keep account of that this
   /// model and request are now pending.
   ///
-  /// @param [in] model: FModel to use in translation. A shared ownership to
+  /// @param [in] model: Model to use in translation. A shared ownership to
   /// this model is accepted by this object to keep the model alive until
   /// translation is complete.
   /// @param [in] request: A request to be enqueued to model.
   /// @returns number of sentences added for translation.
-  size_t enqueue(const Ptr<FModel>& model, const Ptr<Request>& request);
+  size_t enqueue(const Ptr<Model>& model, const Ptr<Request>& request);
 
   /// Generate a batch from pending requests, obtained from available
   /// Models.
   ///
-  /// @param [out] model: FModel
+  /// @param [out] model: Model
   /// @param [out] batch: Batch to write onto, which is consumed at translation
   /// elsewhere.
   /// @returns Number of sentences in the generated batch.
-  std::tuple<Batch, Ptr<FModel>> generate();
+  std::tuple<Batch, Ptr<Model>> generate();
 
   /// Clear the aggregate queue. Does not clear the underlying model/request
   /// pairs but the next call to `generate()` will return 0. (Unless
@@ -100,7 +104,13 @@ class AggregateBatcher {
   void clear();
 
  private:
-  std::unordered_set<std::shared_ptr<FModel>, HashPtr<FModel>> queue_;
+  std::unordered_set<std::shared_ptr<Model>, HashPtr<Model>> queue_;
+  std::unordered_map<size_t, Batcher> batcher_;
+  std::mutex mutex_;
+
+  size_t max_words_;               //
+  size_t wrap_length_;             //
+  float tgt_length_limit_factor_;  //
 };
 
 /// The following mechanism operates in a multithreaded async-workflow guarding
@@ -115,7 +125,7 @@ class AggregateBatcher {
 ///
 /// Originally written by for a single model (where items are produce: Request,
 /// consume: Batch), converted to also work for multiple models where items are
-/// produce: (FModel, Request), consume: (TranlsationModel, Batch).
+/// produce: (Model, Request), consume: (TranlsationModel, Batch).
 /// This is accomplished by template parameter packs.
 ///
 /// Requires BatcherType to implement the following:

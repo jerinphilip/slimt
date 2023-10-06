@@ -635,12 +635,6 @@ void AffineIntgemm() {
 #endif
 
 namespace slimt {
-template <class Field>
-struct Record {
-  Field model;
-  Field vocabulary;
-  Field shortlist;
-};
 
 void integration() {
   std::string home = std::getenv("HOME");

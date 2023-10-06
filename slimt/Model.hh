@@ -79,9 +79,9 @@ class Decoder {
 Words greedy_sample(Tensor &logits, const Words &words, size_t batch_size);
 void transform_embedding(Tensor &word_embedding, size_t start = 0);
 
-class Model {
+class Transformer {
  public:
-  explicit Model(const Config &config, View model);
+  explicit Transformer(const Config &config, View model);
 
   Config &config() { return config_; }
   Tensor &embedding() { return embedding_; }
@@ -106,20 +106,21 @@ struct Record {
   Field shortlist;
 };
 
-class FModel {
+class Model {
  public:
-  explicit FModel(const Config &config, Record<View> package);
+  explicit Model(const Config &config, Record<View> package);
   Config &config() { return config_; }
   Vocabulary &vocabulary() { return vocabulary_; }
   TextProcessor &processor() { return processor_; }
-  Model &model() { return model_; }
+  Transformer &model() { return model_; }
+  size_t id() { return 4; }  // NOLINT
   ShortlistGenerator &shortlist_generator() { return shortlist_generator_; }
 
  private:
   Config config_;
   Vocabulary vocabulary_;
   TextProcessor processor_;
-  Model model_;
+  Transformer model_;
   ShortlistGenerator shortlist_generator_;
 };
 

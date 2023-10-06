@@ -58,7 +58,7 @@ void update_alignment(const std::vector<size_t> &lengths,
 }
 
 Histories decode(Tensor &encoder_out, Batch &batch,
-                 const size_t &tgt_length_limit_factor, Model &model_,
+                 const size_t &tgt_length_limit_factor, Transformer &model_,
                  const Word &eos_id, ShortlistGenerator &shortlist_generator_) {
   // Prepare a shortlist for the entire batch.
   size_t batch_size = encoder_out.dim(-3);
@@ -122,7 +122,7 @@ Histories decode(Tensor &encoder_out, Batch &batch,
 }
 
 Histories forward(Batch &batch, const size_t &tgt_length_limit_factor,
-                  Model &model_, const Word &eos_id,
+                  Transformer &model_, const Word &eos_id,
                   ShortlistGenerator &shortlist_generator_) {
   Tensor &indices = batch.indices();
   Tensor &mask = batch.mask();
@@ -148,7 +148,7 @@ Histories forward(Batch &batch, const size_t &tgt_length_limit_factor,
 
 Blocking::Blocking(const Config &config) : config_(config) {}  // NOLINT
 
-Response Blocking::translate(FModel &model, std::string source,
+Response Blocking::translate(Ptr<Model> &model, std::string source,
                              const Options &options) {
   // Create a request
   std::optional<HTML> html = std::nullopt;
@@ -156,13 +156,13 @@ Response Blocking::translate(FModel &model, std::string source,
     html.emplace(source);
   }
   auto [annotated_source, segments] =
-      model.processor().process(std::move(source));
+      model->processor().process(std::move(source));
 
   std::promise<Response> promise;
   auto future = promise.get_future();
 
   ResponseBuilder response_builder(options, std::move(annotated_source),
-                                   model.vocabulary(), std::move(promise));
+                                   model->vocabulary(), std::move(promise));
 
   auto request = std::make_shared<rd::Request>(  //
       id_, model_id_,                            //
@@ -183,8 +183,8 @@ Response Blocking::translate(FModel &model, std::string source,
     Timer timer;
     Batch batch = convert(rd_batch);
     Histories histories =
-        forward(batch, config_.tgt_length_limit_factor, model.model(),
-                model.vocabulary().eos_id(), model.shortlist_generator());
+        forward(batch, config_.tgt_length_limit_factor, model->model(),
+                model->vocabulary().eos_id(), model->shortlist_generator());
     rd_batch.complete(histories);
     rd_batch = batcher.generate();
 
@@ -227,7 +227,7 @@ Async::Async(const Config &config)
   }
 }
 
-std::future<Response> Async::translate(FModel &model, std::string source,
+std::future<Response> Async::translate(Ptr<Model> &model, std::string source,
                                        const Options &options) {
   // Create a request
   std::optional<HTML> html = std::nullopt;
@@ -235,13 +235,13 @@ std::future<Response> Async::translate(FModel &model, std::string source,
     html.emplace(source);
   }
   auto [annotated_source, segments] =
-      model.processor().process(std::move(source));
+      model->processor().process(std::move(source));
 
   std::promise<Response> promise;
   auto future = promise.get_future();
 
   ResponseBuilder response_builder(options, std::move(annotated_source),
-                                   model.vocabulary(), std::move(promise));
+                                   model->vocabulary(), std::move(promise));
 
   auto request = std::make_shared<rd::Request>(  //
       id_, model_id_,                            //
@@ -250,7 +250,7 @@ std::future<Response> Async::translate(FModel &model, std::string source,
       cache_                                     //
   );
 
-  batcher_.enqueue(request);
+  batcher_.enqueue(model, request);
   return future;
 }
 

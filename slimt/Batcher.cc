@@ -2,8 +2,10 @@
 
 #include <algorithm>
 #include <cassert>
+#include <utility>
 
 #include "slimt/Macros.hh"
+#include "slimt/Model.hh"
 #include "slimt/Utils.hh"
 
 namespace slimt::rd {
@@ -86,33 +88,50 @@ void Batcher::clear() {
   }
 }
 
-AggregateBatcher::AggregateBatcher() = default;
+AggregateBatcher::AggregateBatcher(
+    size_t max_words,                         //
+    size_t wrap_length,                       //
+    float tgt_length_limit_factor /*= 3.0 */  // NOLINT
+    )
+    : max_words_(max_words),
+      wrap_length_(wrap_length),
+      tgt_length_limit_factor_(tgt_length_limit_factor) {}
 
-size_t AggregateBatcher::enqueue(const Ptr<FModel>& model,
+size_t AggregateBatcher::enqueue(const Ptr<Model>& model,
                                  const Ptr<Request>& request) {
-  (void)queue_;
-  (void)model;
-  (void)request;
-  return 0;
-  // size_t sentences_enqueued = model->enqueue(request);
-  // queue_.insert(model);
-  // return sentences_enqueued;
+  std::lock_guard guard(mutex_);
+  auto query = batcher_.find(model->id());
+  if (query == batcher_.end()) {
+    batcher_.emplace(                        //
+        std::piecewise_construct,            //
+        std::forward_as_tuple(model->id()),  //
+        std::forward_as_tuple(max_words_, wrap_length_,
+                              tgt_length_limit_factor_)  //
+    );
+  }
+  query = batcher_.find(model->id());
+  Batcher& batcher = query->second;
+
+  size_t size = batcher.enqueue(request);
+  queue_.insert(model);
+  return size;
 }
 
-std::tuple<Batch, Ptr<FModel>> AggregateBatcher::generate() {
-  (void)queue_;
-  // while (!queue_.empty()) {
-  //   auto candidate_iterator = queue_.begin();
-  //   Ptr<FModel> candidate = *candidate_iterator;
-  //   Batch batch = candidate->generate();
-  //   if (batch.size() > 0) {
-  //     model = candidate;
-  //     return batch;
-  //   }
-  //   // Try the next model's batching pool.
-  //   queue_.erase(candidate_iterator);
-  // }
-  // // Empty.
+std::tuple<Batch, Ptr<Model>> AggregateBatcher::generate() {
+  while (!queue_.empty()) {
+    auto model_iterator = queue_.begin();
+    Ptr<Model> model = *model_iterator;
+    std::lock_guard guard(mutex_);
+    auto query = batcher_.find(model->id());
+    Batcher& batcher = query->second;
+    Batch batch = batcher.generate();
+    if (!batch.empty()) {
+      return {std::move(batch), std::move(model)};
+    }
+    // Try the next model's batching pool.
+    queue_.erase(model_iterator);
+  }
+  // Empty.
   Batch batch;
   return {std::move(batch), nullptr};
 }

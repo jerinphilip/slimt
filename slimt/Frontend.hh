@@ -23,7 +23,8 @@ struct View;
 class Blocking {
  public:
   explicit Blocking(const Config &config);
-  Response translate(FModel &model, std::string source, const Options &options);
+  Response translate(Ptr<Model> &model, std::string source,
+                     const Options &options);
 
  private:
   Config config_;
@@ -38,7 +39,7 @@ class Async {
   explicit Async(const Config &config);
   ~Async();
 
-  std::future<Response> translate(FModel &model, std::string source,
+  std::future<Response> translate(Ptr<Model> &model, std::string source,
                                   const Options &options);
 
  private:

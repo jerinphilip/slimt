@@ -68,7 +68,7 @@ void run(const Options &options) {
   // Sample user-operation.
   // We decide the user interface first, ideally nice, clean.
   // There are times when it won't match - EM.
-  FModel model(options.config, view);
+  auto model = std::make_shared<Model>(options.config, view);
 
   {
     // Async operation.
