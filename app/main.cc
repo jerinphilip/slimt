@@ -70,22 +70,22 @@ void run(const Options &options) {
   // There are times when it won't match - EM.
   auto model = std::make_shared<Model>(options.config, view);
 
-  {
-    // Async operation.
-    Async service(options.config);
+  // {
+  //   // Async operation.
+  //   Async service(options.config);
 
-    std::string source = read_from_stdin();
-    slimt::Options opts{
-        .alignment = true,    //
-        .html = options.html  //
-    };
+  //   std::string source = read_from_stdin();
+  //   slimt::Options opts{
+  //       .alignment = true,    //
+  //       .html = options.html  //
+  //   };
 
-    std::future<Response> future =
-        service.translate(model, std::move(source), opts);
+  //   std::future<Response> future =
+  //       service.translate(model, std::move(source), opts);
 
-    Response response = future.get();
-    fprintf(stdout, "%s\n", response.target.text.c_str());
-  }
+  //   Response response = future.get();
+  //   fprintf(stdout, "%s\n", response.target.text.c_str());
+  // }
 
   {
     // Async operation.
@@ -98,7 +98,6 @@ void run(const Options &options) {
     };
 
     Response response = service.translate(model, std::move(source), opts);
-
     fprintf(stdout, "%s\n", response.target.text.c_str());
   }
 
