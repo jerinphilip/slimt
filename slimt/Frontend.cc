@@ -146,29 +146,23 @@ Histories forward(Batch &batch, const size_t &tgt_length_limit_factor,
 
 }  // namespace
 
-Translator::Translator(const Config &config, View model, View shortlist,
-                       View vocabulary)
-    : config_(config),
-      vocabulary_(vocabulary.data, vocabulary.size),
-      processor_(config.wrap_length, config.split_mode, vocabulary_,
-                 config.prefix_path),
-      model_(config, model),
-      shortlist_generator_(shortlist.data, shortlist.size, vocabulary_,
-                           vocabulary_) {}
+Blocking::Blocking(const Config &config) : config_(config) {}  // NOLINT
 
-Response Translator::translate(std::string source, const Options &options) {
+Response Blocking::translate(FModel &model, std::string source,
+                             const Options &options) {
   // Create a request
   std::optional<HTML> html = std::nullopt;
   if (options.html) {
     html.emplace(source);
   }
-  auto [annotated_source, segments] = processor_.process(std::move(source));
+  auto [annotated_source, segments] =
+      model.processor().process(std::move(source));
 
   std::promise<Response> promise;
   auto future = promise.get_future();
 
   ResponseBuilder response_builder(options, std::move(annotated_source),
-                                   vocabulary_, std::move(promise));
+                                   model.vocabulary(), std::move(promise));
 
   auto request = std::make_shared<rd::Request>(  //
       id_, model_id_,                            //
@@ -189,8 +183,8 @@ Response Translator::translate(std::string source, const Options &options) {
     Timer timer;
     Batch batch = convert(rd_batch);
     Histories histories =
-        forward(batch, config_.tgt_length_limit_factor, model_,
-                vocabulary_.eos_id(), shortlist_generator_);
+        forward(batch, config_.tgt_length_limit_factor, model.model(),
+                model.vocabulary().eos_id(), model.shortlist_generator());
     rd_batch.complete(histories);
     rd_batch = batcher.generate();
 
@@ -208,28 +202,21 @@ Response Translator::translate(std::string source, const Options &options) {
   return response;
 }
 
-Async::Async(const Config &config, View model, View shortlist, View vocabulary)
-    : config_(config),
-      vocabulary_(vocabulary.data, vocabulary.size),
-      processor_(config.wrap_length, config.split_mode, vocabulary_,
-                 config.prefix_path),
-      model_(config, model),
-      shortlist_generator_(shortlist.data, shortlist.size, vocabulary_,
-                           vocabulary_),
-      batcher_(config.max_words, config.wrap_length,
+Async::Async(const Config &config)
+    : batcher_(config.max_words, config.wrap_length,
                config.tgt_length_limit_factor) {
   // Also creates consumers, starts listening.
   for (size_t i = 0; i < config.workers; i++) {
     workers_.emplace_back([this]() {
-      rd::Batch rd_batch = batcher_.generate();
+      auto [rd_batch, model] = batcher_.generate();
       while (!rd_batch.empty()) {
         // convert between batches.
         Batch batch = convert(rd_batch);
         Histories histories =
-            forward(batch, config_.tgt_length_limit_factor, model_,
-                    vocabulary_.eos_id(), shortlist_generator_);
+            forward(batch, config_.tgt_length_limit_factor, model->model(),
+                    model->vocabulary().eos_id(), model->shortlist_generator());
         rd_batch.complete(histories);
-        rd_batch = batcher_.generate();
+        auto [rd_batch, model] = batcher_.generate();
       }
 
       // Might have to move to a callback, or move to response-builder.
@@ -240,19 +227,21 @@ Async::Async(const Config &config, View model, View shortlist, View vocabulary)
   }
 }
 
-Response Async::translate(std::string &source, const Options &options) {
+std::future<Response> Async::translate(FModel &model, std::string source,
+                                       const Options &options) {
   // Create a request
   std::optional<HTML> html = std::nullopt;
   if (options.html) {
     html.emplace(source);
   }
-  auto [annotated_source, segments] = processor_.process(std::move(source));
+  auto [annotated_source, segments] =
+      model.processor().process(std::move(source));
 
   std::promise<Response> promise;
   auto future = promise.get_future();
 
   ResponseBuilder response_builder(options, std::move(annotated_source),
-                                   vocabulary_, std::move(promise));
+                                   model.vocabulary(), std::move(promise));
 
   auto request = std::make_shared<rd::Request>(  //
       id_, model_id_,                            //
@@ -262,10 +251,7 @@ Response Async::translate(std::string &source, const Options &options) {
   );
 
   batcher_.enqueue(request);
-
-  future.wait();
-  return future.get();
-  ;
+  return future;
 }
 
 Async::~Async() {

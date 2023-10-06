@@ -10,6 +10,7 @@
 #include "slimt/Modules.hh"
 #include "slimt/Shortlist.hh"
 #include "slimt/Tensor.hh"
+#include "slimt/TextProcessor.hh"
 #include "slimt/Types.hh"
 #include "slimt/Vocabulary.hh"
 
@@ -26,6 +27,7 @@ struct Config {
   size_t max_words = 1024;
   size_t wrap_length = 128;
 
+  size_t cache_size = 1024;
   size_t workers = 1;
 
   std::string prefix_path;
@@ -95,6 +97,30 @@ class Model {
   Tensor embedding_;
   Encoder encoder_;
   Decoder decoder_;
+};
+
+template <class Field>
+struct Record {
+  Field model;
+  Field vocabulary;
+  Field shortlist;
+};
+
+class FModel {
+ public:
+  explicit FModel(const Config &config, Record<View> package);
+  Config &config() { return config_; }
+  Vocabulary &vocabulary() { return vocabulary_; }
+  TextProcessor &processor() { return processor_; }
+  Model &model() { return model_; }
+  ShortlistGenerator &shortlist_generator() { return shortlist_generator_; }
+
+ private:
+  Config config_;
+  Vocabulary vocabulary_;
+  TextProcessor processor_;
+  Model model_;
+  ShortlistGenerator shortlist_generator_;
 };
 
 }  // namespace slimt

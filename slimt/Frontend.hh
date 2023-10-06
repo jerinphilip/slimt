@@ -20,23 +20,13 @@ class Batch;
 class Tensor;
 struct View;
 
-struct Data {
-  Aligned model;
-  Aligned shortlist;
-  Aligned vocabulary;
-};
-
-class Translator {
+class Blocking {
  public:
-  Translator(const Config &config, View model, View shortlist, View vocabulary);
-  Response translate(std::string source, const Options &options);
+  explicit Blocking(const Config &config);
+  Response translate(FModel &model, std::string source, const Options &options);
 
  private:
   Config config_;
-  Vocabulary vocabulary_;
-  TextProcessor processor_;
-  Model model_;
-  ShortlistGenerator shortlist_generator_;
   std::optional<TranslationCache> cache_;
 
   size_t id_ = 0;
@@ -45,22 +35,19 @@ class Translator {
 
 class Async {
  public:
-  Async(const Config &config, View model, View shortlist, View vocabulary);
-  Response translate(std::string &source, const Options &options);
+  explicit Async(const Config &config);
   ~Async();
+
+  std::future<Response> translate(FModel &model, std::string source,
+                                  const Options &options);
 
  private:
   Config config_;
-  Vocabulary vocabulary_;
-  TextProcessor processor_;
-  Model model_;
-  ShortlistGenerator shortlist_generator_;
   std::optional<TranslationCache> cache_;
-  rd::Threadsafe<rd::Batcher> batcher_;
+  rd::Threadsafe<rd::AggregateBatcher> batcher_;
   std::vector<std::thread> workers_;
 
   size_t id_ = 0;
-
   size_t model_id_ = 0;
 };
 

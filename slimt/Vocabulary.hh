@@ -14,7 +14,7 @@ namespace slimt {
 class Vocabulary {
  public:
   explicit Vocabulary(const std::string &fpath);
-  Vocabulary(void *data, size_t size);
+  explicit Vocabulary(View view);
   std::tuple<Words, Views> encode(const std::string_view &line,
                                   bool add_eos = false) const;
   Views decode(const Words &words, std::string &decoded,

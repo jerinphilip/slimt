@@ -83,18 +83,17 @@ void ShortlistGenerator::load(const void* data, size_t blob_size,
   }
 }
 
-ShortlistGenerator::ShortlistGenerator(const void* data, const size_t blob_size,
-                                       Vocabulary& source, Vocabulary& target,
-                                       size_t source_index /*= 0*/,
-                                       size_t /*target_index = 1*/,
-                                       bool shared /*= false*/,
-                                       bool check /*= true*/)
+ShortlistGenerator::ShortlistGenerator(                        //
+    View view,                                                 //
+    Vocabulary& source, Vocabulary& target,                    //
+    size_t source_index /*= 0*/, size_t /*target_index = 1*/,  //
+    bool shared /*= false*/, bool check /*= true*/)
     : source_(source),
       target_(target),
       source_index_(source_index),
       shared_(shared) {
   LOG(info, "[data] Loading binary shortlist from buffer with check={}", check);
-  load(data, blob_size, check);
+  load(view.data, view.size, check);
 
   (void)source_index_;
 }

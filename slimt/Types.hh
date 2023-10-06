@@ -24,6 +24,12 @@ inline bool operator==(Range &a, Range b) {
 
 using Word = uint32_t;
 using Words = std::vector<Word>;
+
+struct View {
+  void *data = nullptr;
+  size_t size = 0;
+};
+
 using Views = std::vector<std::string_view>;
 
 using Segment = Words;

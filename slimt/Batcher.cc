@@ -88,7 +88,7 @@ void Batcher::clear() {
 
 AggregateBatcher::AggregateBatcher() = default;
 
-size_t AggregateBatcher::enqueue(const Ptr<Model>& model,
+size_t AggregateBatcher::enqueue(const Ptr<FModel>& model,
                                  const Ptr<Request>& request) {
   (void)queue_;
   (void)model;
@@ -99,12 +99,11 @@ size_t AggregateBatcher::enqueue(const Ptr<Model>& model,
   // return sentences_enqueued;
 }
 
-Batch AggregateBatcher::generate(Ptr<Model>& model) {
+std::tuple<Batch, Ptr<FModel>> AggregateBatcher::generate() {
   (void)queue_;
-  (void)model;
   // while (!queue_.empty()) {
   //   auto candidate_iterator = queue_.begin();
-  //   Ptr<Model> candidate = *candidate_iterator;
+  //   Ptr<FModel> candidate = *candidate_iterator;
   //   Batch batch = candidate->generate();
   //   if (batch.size() > 0) {
   //     model = candidate;
@@ -115,7 +114,7 @@ Batch AggregateBatcher::generate(Ptr<Model>& model) {
   // }
   // // Empty.
   Batch batch;
-  return batch;
+  return {std::move(batch), nullptr};
 }
 
 void AggregateBatcher::clear() { queue_.clear(); }
