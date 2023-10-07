@@ -34,4 +34,3 @@ endif(WITH_ASAN)
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Version.hh.in
                ${CMAKE_CURRENT_BINARY_DIR}/Version.hh @ONLY)
-
