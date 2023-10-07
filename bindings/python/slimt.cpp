@@ -156,8 +156,8 @@ class PyService {
   Service service_;
 };
 
-PYBIND11_MODULE(_bergamot, m) {
-  m.doc() = "Bergamot pybind11 bindings";
+PYBIND11_MODULE(_slimt, m) {
+  m.doc() = "slimt python bindings";
   m.attr("__version__") = slimt::version();
   py::class_<Range>(m, "Range")
       .def(py::init<>())

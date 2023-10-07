@@ -163,10 +163,10 @@ class List:
 
 
 def make_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser("bergamot")
+    parser = argparse.ArgumentParser("slimt")
     subparsers = parser.add_subparsers(
         title="actions",
-        description="The following actions are available through the bergamot package",
+        description="The following actions are available through the slimt package",
         help="To obtain help on how to run these actions supply <cmd> -h.",
         dest="action",
     )

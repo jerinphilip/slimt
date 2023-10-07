@@ -10,9 +10,9 @@ import requests
 from appdirs import AppDirs
 
 from .typing_utils import URL, PathLike
-from .utils import download_resource, patch_marian_for_bergamot
+from .utils import download_resource, patch_marian_for_slimt
 
-APP = "bergamot"
+APP = "slimt"
 
 
 class Repository(ABC):  # pragma: no cover

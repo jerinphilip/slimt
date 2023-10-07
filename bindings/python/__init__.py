@@ -1,6 +1,6 @@
 import typing
 
-from ._bergamot import *  # type: ignore
+from ._slimt import *  # type: ignore
 from .repository import Aggregator, TranslateLocallyLike
 
 REPOSITORY = Aggregator(
