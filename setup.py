@@ -58,7 +58,7 @@ class CMakeBuild(build_ext):
             f"-DSSPLIT_USE_INTERNAL_PCRE2={internal_pcre2}",
         ]
 
-        build_args = ["-t", "_bergamot"]
+        build_args = ["-t", "_slimt"]
         # Adding CMake arguments set as environment variable
         # (needed e.g. to build for ARM OSx on conda-forge)
         if "CMAKE_ARGS" in os.environ:
@@ -146,7 +146,7 @@ with io.open(os.path.join(here, "bindings/python/README.md"), encoding="utf-8") 
     long_description = "\n" + f.read()
 
 version = None
-with open(os.path.join(here, "BERGAMOT_VERSION")) as f:
+with open(os.path.join(here, "slimt.version")) as f:
     version = f.read().strip()
     suffix = os.environ.get("PYTHON_LOCAL_VERSION_IDENTIFIER", None)
     if suffix:
@@ -198,26 +198,26 @@ class build_py(_build_py):
 # The information here can also be placed in setup.cfg - better separation of
 # logic and declaration, and simpler if you include description/version in a file.
 setup(
-    name="bergamot",
+    name="slimt",
     version=version,
     author="Jerin Philip",
     author_email="jerinphilip@live.in",
-    url="https://github.com/browsermt/bergamot-translator/",
+    url="https://github.com/jerinphilip/slimt/",
     description="Translate text-content locally in your machine across langauges.",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    ext_modules=[CMakeExtension("bergamot/_bergamot")],
+    ext_modules=[CMakeExtension("slimt/_slimt")],
     cmdclass={"build_py": build_py, "build_ext": CMakeBuild},
     zip_safe=False,
     extras_require={"test": ["pytest>=6.0"]},
     license_files=("LICENSE",),
     python_requires=">=3.6",
-    packages=["bergamot", "bergamot.tests"],
-    package_dir={"bergamot": "bindings/python"},
+    packages=["slimt", "slimt.tests"],
+    package_dir={"slimt": "bindings/python"},
     install_requires=["requests", "pyyaml>=5.1", "appdirs"],
     entry_points={
         "console_scripts": [
-            "bergamot = bergamot.__main__:main",
+            "slimt = slimt.__main__:main",
         ],
     },
     # Classifiers help users find your project by categorizing it.
@@ -246,8 +246,8 @@ setup(
         "Programming Language :: Python :: 3 :: Only",
     ],
     project_urls={
-        "Bug Reports": "https://github.com/browsermt/bergamot-translator/issues",
-        "Source": "https://github.com/browsermt/bergamot-translator/",
-        "Documentation": "https://browser.mt/docs/main/python.html",
+        "Bug Reports": "https://github.com/jerinphilip/slimt/issues",
+        "Source": "https://github.com/jerinphilip/slimt/",
+        "Documentation": "https://github.com/jerinphilip/slimt/",
     },
 )
