@@ -1,14 +1,9 @@
+#include "slimt/slimt.hh"
+
 #include <pybind11/iostream.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <pybind11/stl_bind.h>
-#include <translator/annotation.h>
-#include <translator/parser.h>
-#include <translator/project_version.h>
-#include <translator/response.h>
-#include <translator/response_options.h>
-#include <translator/service.h>
-#include <translator/translation_model.h>
 
 #include <iostream>
 #include <string>
@@ -16,15 +11,16 @@
 
 namespace py = pybind11;
 
-using marian::bergamot::AnnotatedText;
-using marian::bergamot::ByteRange;
-using marian::bergamot::Response;
-using marian::bergamot::ResponseOptions;
-using Service = marian::bergamot::AsyncService;
-using _Model = marian::bergamot::TranslationModel;
+using slimt::Alignment;
+using slimt::Alignments;
+using slimt::AnnotatedText;
+using slimt::Options;
+using slimt::Range;
+using slimt::Response;
+
+using Service = slimt::Async;
+using _Model = slimt::Model;
 using Model = std::shared_ptr<_Model>;
-using Alignment = std::vector<std::vector<float>>;
-using Alignments = std::vector<Alignment>;
 
 PYBIND11_MAKE_OPAQUE(std::vector<Response>);
 PYBIND11_MAKE_OPAQUE(std::vector<std::string>);
@@ -63,7 +59,7 @@ class ServicePyAdapter {
     std::vector<std::promise<Response>> promises;
     promises.resize(inputs.size());
 
-    ResponseOptions options;
+    Options options;
     options.HTML = html;
     options.qualityScores = qualityScores;
     options.alignment = alignment;
@@ -107,10 +103,10 @@ class ServicePyAdapter {
       inputs.push_back(py::str(handle));
     }
 
-    ResponseOptions options;
-    options.HTML = html;
-    options.qualityScores = qualityScores;
-    options.alignment = alignment;
+    Options options{
+        .alignment = alignment,  //
+        .html = html             //
+    };
 
     // Prepare promises, save respective futures. Have callback's in async set
     // value to the promises.
@@ -167,34 +163,34 @@ class ServicePyAdapter {
 
 PYBIND11_MODULE(_bergamot, m) {
   m.doc() = "Bergamot pybind11 bindings";
-  m.attr("__version__") = marian::bergamot::bergamotBuildVersion();
-  py::class_<ByteRange>(m, "ByteRange")
+  m.attr("__version__") = slimt::bergamotBuildVersion();
+  py::class_<Range>(m, "Range")
       .def(py::init<>())
-      .def_readonly("begin", &ByteRange::begin)
-      .def_readonly("end", &ByteRange::end)
-      .def("__repr__", [](const ByteRange &range) {
+      .def_readonly("begin", &Range::begin)
+      .def_readonly("end", &Range::end)
+      .def("__repr__", [](const Range &range) {
         return "{" + std::to_string(range.begin) + ", " +
                std::to_string(range.end) + "}";
       });
 
   py::class_<AnnotatedText>(m, "AnnotatedText")
       .def(py::init<>())
-      .def("numWords", &AnnotatedText::numWords)
-      .def("numSentences", &AnnotatedText::numSentences)
+      .def("word_count", &AnnotatedText::word_count)
+      .def("sentence_count", &AnnotatedText::sentence_count)
       .def("word",
-           [](const AnnotatedText &annotatedText, size_t sentenceIdx,
-              size_t wordIdx) -> std::string {
-             auto view = annotatedText.word(sentenceIdx, wordIdx);
+           [](const AnnotatedText &annotated_text, size_t sentence_id,
+              size_t word_id) -> std::string {
+             auto view = annotated_text.word(sentence_id, word_id);
              return std::string(view.data(), view.size());
            })
       .def("sentence",
-           [](const AnnotatedText &annotatedText,
-              size_t sentenceIdx) -> std::string {
-             auto view = annotatedText.sentence(sentenceIdx);
+           [](const AnnotatedText &annotated_text,
+              size_t sentence_id) -> std::string {
+             auto view = annotated_text.sentence(sentence_id);
              return std::string(view.data(), view.size());
            })
-      .def("wordAsByteRange", &AnnotatedText::wordAsByteRange)
-      .def("sentenceAsByteRange", &AnnotatedText::sentenceAsByteRange)
+      .def("wordAsRange", &AnnotatedText::wordAsRange)
+      .def("sentenceAsRange", &AnnotatedText::sentenceAsRange)
       .def_readonly("text", &AnnotatedText::text);
 
   py::class_<Response>(m, "Response")
@@ -225,16 +221,15 @@ PYBIND11_MODULE(_bergamot, m) {
       .def_static(
           "from_config",
           [](const std::string &config) {
-            auto options = marian::bergamot::parseOptionsFromString(config);
-            return marian::New<_Model>(options);
+            auto options = slimt::parseOptionsFromString(config);
+            return std::make_shared<_Model>(options);
           },
           py::arg("config"))
       .def_static(
           "from_config_path",
           [](const std::string &configPath) {
-            auto options =
-                marian::bergamot::parseOptionsFromFilePath(configPath);
-            return marian::New<_Model>(options);
+            auto options = slimt::parseOptionsFromFilePath(configPath);
+            return std::make_shared<_Model>(options);
           },
           py::arg("config_path"));
 }

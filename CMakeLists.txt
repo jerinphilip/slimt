@@ -125,3 +125,7 @@ add_subdirectory(slimt)
 target_include_directories(slimt PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(slimt PUBLIC ${CMAKE_BINARY_DIR})
 add_subdirectory(app)
+
+if(BUILD_PYTHON)
+  add_subdirectory(bindings/python)
+endif(BUILD_PYTHON)
