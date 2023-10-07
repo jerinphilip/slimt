@@ -13,8 +13,8 @@
 
 namespace slimt {
 
-Vocabulary::Vocabulary(void *data, size_t size) {
-  absl::string_view serialized(reinterpret_cast<char *>(data), size);
+Vocabulary::Vocabulary(View view) {
+  absl::string_view serialized(reinterpret_cast<char *>(view.data), view.size);
   processor_.LoadFromSerializedProto(serialized);
 }
 

@@ -13,18 +13,13 @@ inline std::string read_from_stdin() {
   return input;
 }
 
-template <class Field>
-struct Record {
-  Field model;
-  Field vocabulary;
-  Field shortlist;
-};
-
 struct Options {
-  Record<std::string> translator;
+  slimt::Record<std::string> translator;
   std::string root;
+  bool async = false;
   bool html = false;
-  size_t max_tokens_per_batch = 1024;  // NOLINT
+  bool version = false;
+  slimt::Config config;
 
   template <class App>
   void setup_onto(App &app) {
@@ -33,8 +28,10 @@ struct Options {
     app.add_option("--model", translator.model, "Path to model");
     app.add_option("--vocabulary", translator.vocabulary, "Path to vocabulary");
     app.add_option("--shortlist", translator.shortlist, "Path to shortlist");
-    app.add_option("--max-tokens-per-batch", max_tokens_per_batch, "Path to shortlist");
+    app.add_flag("--version", version, "Display version");
     app.add_flag("--html", html, "Whether content is HTML");
+    app.add_flag("--async", async, "Try async backend");
+    config.setup_onto(app);
     // clang-format on
   }
 };
@@ -72,15 +69,39 @@ void run(const Options &options) {
       .shortlist = {mmap.shortlist.data(), mmap.shortlist.size()},     //
   };
 
-  Config config;
-  Translator translator(config, view.model, view.shortlist, view.vocabulary);
-  std::string source = read_from_stdin();
-  slimt::Options opts{
-      .alignment = true,    //
-      .html = options.html  //
-  };
-  Response response = translator.translate(source, opts);
-  fprintf(stdout, "%s\n", response.target.text.c_str());
+  // Sample user-operation.
+  // We decide the user interface first, ideally nice, clean.
+  // There are times when it won't match - EM.
+  auto model = std::make_shared<Model>(options.config, view);
+
+  if (options.async) {
+    // Async operation.
+    Async service(options.config);
+
+    std::string source = read_from_stdin();
+    slimt::Options opts{
+        .alignment = true,    //
+        .html = options.html  //
+    };
+
+    std::future<Response> future =
+        service.translate(model, std::move(source), opts);
+
+    Response response = future.get();
+    fprintf(stdout, "%s\n", response.target.text.c_str());
+  } else {
+    // Blocking operation.
+    Blocking service(options.config);
+
+    std::string source = read_from_stdin();
+    slimt::Options opts{
+        .alignment = true,    //
+        .html = options.html  //
+    };
+
+    Response response = service.translate(model, std::move(source), opts);
+    fprintf(stdout, "%s\n", response.target.text.c_str());
+  }
 
   // fprintf(stdout, "wps: %f\n", wps.value());
 }

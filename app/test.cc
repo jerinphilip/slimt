@@ -635,12 +635,6 @@ void AffineIntgemm() {
 #endif
 
 namespace slimt {
-template <class Field>
-struct Record {
-  Field model;
-  Field vocabulary;
-  Field shortlist;
-};
 
 void integration() {
   std::string home = std::getenv("HOME");
@@ -673,10 +667,11 @@ void integration() {
   };
 
   Config config;
-  Translator translator(config, view.model, view.shortlist, view.vocabulary);
+  auto model = std::make_shared<Model>(config, view);
+  Blocking service(config);
   std::string source = "1 2\n1 2 3\n";
   slimt::Options opts;
-  Response response = translator.translate(source, opts);
+  Response response = service.translate(model, std::move(source), opts);
   fprintf(stdout, "%s\n", response.target.text.c_str());
 }
 
@@ -700,10 +695,11 @@ void ShortlistGen() {
 
   // Load ShortlistGenerator
   io::MmapFile shortlist_file(shortlist_path);
-  ShortlistGenerator shortlist_generator(            //
-      shortlist_file.data(), shortlist_file.size(),  //
-      source, target                                 //
-  );
+  View view{
+      .data = shortlist_file.data(),  //
+      .size = shortlist_file.size()   //
+  };
+  ShortlistGenerator shortlist_generator(view, source, target);
 
   std::string line = "May I try the shortlist on, please?";
   auto [words, views] = vocab.encode(line, /*add_eos=*/true);

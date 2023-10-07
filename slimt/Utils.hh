@@ -128,17 +128,4 @@ class AverageMeter {
   size_t count_ = 0;
 };
 
-/// Hashes a pointer to an object using the address the pointer points to. If
-/// two pointers point to the same address, they hash to the same value.  Useful
-/// to put widely shared_ptrs of entities (eg: Model, Vocab,
-/// Shortlist) etc into containers which require the members to be hashable
-/// (std::unordered_set, std::unordered_map).
-template <class T>
-struct HashPtr {
-  size_t operator()(const std::shared_ptr<T> &t) const {
-    auto address = reinterpret_cast<size_t>(t.get());
-    return std::hash<size_t>()(address);
-  }
-};
-
 }  // namespace slimt

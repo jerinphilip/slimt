@@ -121,6 +121,11 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
+message(STATUS "Project name: ${PROJECT_NAME}")
+set(PROJECT_VERSION_FILE ${CMAKE_CURRENT_SOURCE_DIR}/slimt.version)
+include(GetVersionFromFile)
+message(STATUS "Project version: ${PROJECT_VERSION_STRING_FULL}")
+
 add_subdirectory(slimt)
 target_include_directories(slimt PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(slimt PUBLIC ${CMAKE_BINARY_DIR})

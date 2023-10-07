@@ -555,6 +555,19 @@ void prepare_weight_quantized_transposed<Provider::Ruy>(const int8_t* input,
 
 namespace gemmology {
 
+#ifdef USE_AVX512
+template struct Engine<xsimd::avx512bw>;
+template void Engine<xsimd::avx512bw>::SelectColumnsB(const int8_t*, int8_t*,
+                                                      size_t, const uint32_t*,
+                                                      const uint32_t*);
+template void Engine<xsimd::avx512bw>::Shift::Multiply(
+    const uint8_t*, const int8_t*, size_t, size_t, size_t,
+    gemmology::callbacks::UnquantizeAndAddBiasAndWrite);
+template void Engine<xsimd::avx512bw>::Shift::PrepareBias(
+    const int8_t*, size_t, size_t,
+    gemmology::callbacks::UnquantizeAndAddBiasAndWrite);
+#endif
+
 #ifdef USE_AVX2
 template struct Engine<xsimd::avx2>;
 template void Engine<xsimd::avx2>::SelectColumnsB(const int8_t*, int8_t*,
