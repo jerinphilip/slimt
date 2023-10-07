@@ -74,7 +74,7 @@ std::vector<Tensor> Decoder::start_states(size_t batch_size) {
   return states;
 }
 
-Model::Model(const Config &config, View model)
+Transformer::Transformer(const Config &config, View model)
     : items_(io::load_items(model.data)),
       encoder_(config),  //
       decoder_(config, embedding_) {
@@ -163,7 +163,7 @@ std::tuple<Tensor, Tensor> Decoder::step(Tensor &encoder_out, Tensor &mask,
   return {std::move(logits), std::move(guided_alignment)};
 }
 
-void Model::load_parameters() {
+void Transformer::load_parameters() {
   // Get the parameterss from strings to target tensors to load.
   ParameterMap parameters;
   std::string prefix;
@@ -205,8 +205,8 @@ void Model::load_parameters() {
   }
 }
 
-void Model::register_parameters(const std::string &prefix,
-                                ParameterMap &parameters) {
+void Transformer::register_parameters(const std::string &prefix,
+                                      ParameterMap &parameters) {
   parameters.emplace("Wemb", &embedding_);
   encoder_.register_parameters(prefix, parameters);
   decoder_.register_parameters(prefix, parameters);
@@ -231,5 +231,20 @@ Words greedy_sample(Tensor &logits, const Words &words, size_t batch_size) {
   }
   return sampled_words;
 }
+
+namespace {
+
+size_t model_id = 0;
+
+}
+
+Model::Model(const Config &config, Record<View> package)
+    : id_(model_id++),
+      config_(config),
+      vocabulary_(package.vocabulary),
+      processor_(config.wrap_length, config.split_mode, vocabulary_,
+                 config.prefix_path),
+      model_(config, package.model),
+      shortlist_generator_(package.shortlist, vocabulary_, vocabulary_) {}
 
 }  // namespace slimt

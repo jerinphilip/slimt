@@ -26,6 +26,7 @@ class Vocabulary;
 
 class ResponseBuilder {
  public:
+  using Continuation = std::function<void(Response &&response)>;
   /// @param [in] options: Options, indicating what to include
   /// or not in the response and any additional configurable parameters.
   /// @param [in] vocabulary: marian vocab object (used in decoding)
@@ -33,12 +34,11 @@ class ResponseBuilder {
   /// @param [in] qualityEstimator: the QualityEstimator model that can be used
   /// to provide translation quality probability.
   ResponseBuilder(Options options, AnnotatedText &&source,
-                  const Vocabulary &vocabulary,
-                  std::promise<Response> &&promise)
+                  const Vocabulary &vocabulary, Continuation &&continuation)
       : options_(options),
         vocabulary_(vocabulary),
         source_(std::move(source)),
-        promise_(std::move(promise)) {}
+        continuation_(std::move(continuation)) {}
 
   /// Constructs and sets the promise of a Response object from obtained
   /// histories after translating.
@@ -53,6 +53,6 @@ class ResponseBuilder {
                                   // and any source validation checks.
   AnnotatedText source_;
 
-  std::promise<Response> promise_;
+  Continuation continuation_;
 };
 }  // namespace slimt

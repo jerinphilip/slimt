@@ -12,11 +12,6 @@
 
 namespace slimt {
 
-struct View {
-  void *data = nullptr;
-  size_t size = 0;
-};
-
 // NOLINTBEGIN
 enum class Type {
   i8,   //

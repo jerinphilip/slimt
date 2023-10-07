@@ -9,4 +9,5 @@
 #include "slimt/Tensor.hh"
 #include "slimt/TensorOps.hh"
 #include "slimt/Utils.hh"
+#include "slimt/Version.hh"
 #include "slimt/Vocabulary.hh"

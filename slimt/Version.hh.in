@@ -1,0 +1,17 @@
+#pragma once
+
+/*
+ * File Version.hh is generated using CMake. Do not modify
+ * Version.hh manually! Edit Version.hh.in file instead.
+ */
+
+#include <string>
+
+namespace slimt {
+
+inline std::string version() {
+  // e.g. v1.2.3-alpha.1.1+abc123d
+  return "@PROJECT_VERSION_STRING_FULL@";
+}
+
+}  // namespace slimt
