@@ -113,10 +113,11 @@ class Model {
   Vocabulary &vocabulary() { return vocabulary_; }
   TextProcessor &processor() { return processor_; }
   Transformer &model() { return model_; }
-  size_t id() { return 4; }  // NOLINT
+  size_t id() const { return id_; }  // NOLINT
   ShortlistGenerator &shortlist_generator() { return shortlist_generator_; }
 
  private:
+  size_t id_;
   Config config_;
   Vocabulary vocabulary_;
   TextProcessor processor_;

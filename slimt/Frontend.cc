@@ -216,7 +216,9 @@ Async::Async(const Config &config)
             forward(batch, config_.tgt_length_limit_factor, model->model(),
                     model->vocabulary().eos_id(), model->shortlist_generator());
         rd_batch.complete(histories);
-        auto [rd_batch, model] = batcher_.generate();
+        auto [next_batch, next_model] = batcher_.generate();
+        rd_batch = std::move(next_batch);
+        model = std::move(next_model);
       }
 
       // Might have to move to a callback, or move to response-builder.

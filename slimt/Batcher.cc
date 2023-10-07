@@ -99,20 +99,22 @@ AggregateBatcher::AggregateBatcher(
 
 size_t AggregateBatcher::enqueue(const Ptr<Model>& model,
                                  const Ptr<Request>& request) {
-  auto query = batcher_.find(model->id());
+  queue_.insert(model);
+  size_t id = model->id();
+
+  auto query = batcher_.find(id);
   if (query == batcher_.end()) {
-    batcher_.emplace(                        //
-        std::piecewise_construct,            //
-        std::forward_as_tuple(model->id()),  //
+    batcher_.emplace(               //
+        std::piecewise_construct,   //
+        std::forward_as_tuple(id),  //
         std::forward_as_tuple(max_words_, wrap_length_,
                               tgt_length_limit_factor_)  //
     );
   }
-  query = batcher_.find(model->id());
-  Batcher& batcher = query->second;
 
+  query = batcher_.find(id);
+  Batcher& batcher = query->second;
   size_t size = batcher.enqueue(request);
-  queue_.insert(model);
   return size;
 }
 
@@ -126,7 +128,6 @@ std::tuple<Batch, Ptr<Model>> AggregateBatcher::generate() {
     if (!batch.empty()) {
       return {std::move(batch), std::move(model)};
     }
-    // Try the next model's batching pool.
     queue_.erase(model_iterator);
   }
   // Empty.
