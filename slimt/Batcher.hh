@@ -6,11 +6,13 @@
 #include <memory>
 #include <mutex>
 #include <set>
+#include <unordered_map>
 #include <unordered_set>
 #include <utility>
 #include <vector>
 
 #include "slimt/Batch.hh"
+#include "slimt/Model.hh"
 #include "slimt/Request.hh"
 #include "slimt/Types.hh"
 #include "slimt/Utils.hh"
@@ -67,20 +69,24 @@ class Batcher {
 /// parameterized by Model.
 ///
 /// Note: This class is not thread-safe. You may use this class wrapped with
-/// ThreadsafeBatcher for a thread-safe equivalent of this class, if
+/// Threadsafe for a thread-safe equivalent of this class, if
 /// needed.
 class AggregateBatcher {
  public:
   /// Create an AggregateBatcher with (tentatively) global (across all
   /// Batchers) limits imposed here.
-  AggregateBatcher();
+  AggregateBatcher(                        //
+      size_t max_words,                    //
+      size_t wrap_length,                  //
+      float tgt_length_limit_factor = 3.0  // NOLINT
+  );
 
   /// Enqueue an existing request onto model, also keep account of that this
   /// model and request are now pending.
   ///
-  /// @param [in] model: Model to use in translation. A shared ownership to this
-  /// model is accepted by this object to keep the model alive until translation
-  /// is complete.
+  /// @param [in] model: Model to use in translation. A shared ownership to
+  /// this model is accepted by this object to keep the model alive until
+  /// translation is complete.
   /// @param [in] request: A request to be enqueued to model.
   /// @returns number of sentences added for translation.
   size_t enqueue(const Ptr<Model>& model, const Ptr<Request>& request);
@@ -92,7 +98,7 @@ class AggregateBatcher {
   /// @param [out] batch: Batch to write onto, which is consumed at translation
   /// elsewhere.
   /// @returns Number of sentences in the generated batch.
-  Batch generate(Ptr<Model>& model);
+  std::tuple<Batch, Ptr<Model>> generate();
 
   /// Clear the aggregate queue. Does not clear the underlying model/request
   /// pairs but the next call to `generate()` will return 0. (Unless
@@ -100,7 +106,23 @@ class AggregateBatcher {
   void clear();
 
  private:
-  std::unordered_set<std::shared_ptr<Model>, HashPtr<Model>> queue_;
+  /// Hashes a pointer to an object using the address the pointer points to. If
+  /// two pointers point to the same address, they hash to the same value.
+  /// Useful to put widely shared_ptrs of entities (eg: Model, Vocab, Shortlist)
+  /// etc into containers which require the members to be hashable
+  /// (std::unordered_set, std::unordered_map).
+  struct Hash {
+    size_t operator()(const std::shared_ptr<Model>& model) const {
+      return std::hash<size_t>()(model->id());
+    }
+  };
+
+  std::unordered_set<std::shared_ptr<Model>, Hash> queue_;
+  std::unordered_map<size_t, Batcher> batcher_;
+
+  size_t max_words_;               //
+  size_t wrap_length_;             //
+  float tgt_length_limit_factor_;  //
 };
 
 /// The following mechanism operates in a multithreaded async-workflow guarding
@@ -125,25 +147,46 @@ class AggregateBatcher {
 /// to be consumed)
 
 template <class BatcherType>
-class ThreadsafeBatcher {
+class Threadsafe {
  public:
-  template <class... Args>
-  explicit ThreadsafeBatcher(Args&&... args);
-  ~ThreadsafeBatcher();
-
-  template <class... Args>
-  void enqueue(Args&&... args);
-
-  template <class... Args>
-  size_t generate(Args&&... args);
-
-  // Removes any pending requests from the batching pool.
-  void clear();
-
   // Signals shut down of batching pool. After this no new requests can be
   // enqueued, but all enqueued requests will be processed. To prevent this from
   // happening, call `clear()` before `shutdown()`.
-  void shutdown();
+  template <class... Args>
+  explicit Threadsafe(Args&&... args) : backend_(std::forward<Args>(args)...) {}
+
+  ~Threadsafe() { shutdown(); }
+
+  template <class... Args>
+  void enqueue(Args&&... args) {
+    std::unique_lock<std::mutex> lock(mutex_);
+    assert(!shutdown_);
+    enqueued_ += backend_.enqueue(std::forward<Args>(args)...);
+    work_.notify_all();
+  }
+
+  void clear() {
+    std::unique_lock<std::mutex> lock(mutex_);
+    backend_.clear();
+    enqueued_ = 0;
+  }
+
+  void shutdown() {
+    std::unique_lock<std::mutex> lock(mutex_);
+    shutdown_ = true;
+    work_.notify_all();
+  }
+
+  template <class... Args>
+  auto generate() {
+    std::unique_lock<std::mutex> lock(mutex_);
+    work_.wait(lock, [this]() { return enqueued_ || shutdown_; });
+    auto pack = backend_.generate();
+    auto batch = std::get<0>(pack);
+    assert(!batch.empty() || shutdown_);
+    enqueued_ -= batch.size();
+    return pack;
+  }
 
  private:
   BatcherType backend_;
@@ -161,49 +204,6 @@ class ThreadsafeBatcher {
   std::condition_variable work_;
 };
 
-template <class BatcherType>
-template <class... Args>
-ThreadsafeBatcher<BatcherType>::ThreadsafeBatcher(Args&&... args)
-    : backend_(std::forward<Args>(args)...) {}
-
-template <class BatcherType>
-ThreadsafeBatcher<BatcherType>::~ThreadsafeBatcher() {
-  shutdown();
-}
-
-template <class BatcherType>
-template <class... Args>
-void ThreadsafeBatcher<BatcherType>::enqueue(Args&&... args) {
-  std::unique_lock<std::mutex> lock(mutex_);
-  assert(!shutdown_);
-  enqueued_ += backend_.enqueue(std::forward<Args>(args)...);
-  work_.notify_all();
-}
-
-template <class BatcherType>
-void ThreadsafeBatcher<BatcherType>::clear() {
-  std::unique_lock<std::mutex> lock(mutex_);
-  backend_.clear();
-  enqueued_ = 0;
-}
-
-template <class BatcherType>
-void ThreadsafeBatcher<BatcherType>::shutdown() {
-  std::unique_lock<std::mutex> lock(mutex_);
-  shutdown_ = true;
-  work_.notify_all();
-}
-
-template <class BatcherType>
-template <class... Args>
-size_t ThreadsafeBatcher<BatcherType>::generate(Args&&... args) {
-  std::unique_lock<std::mutex> lock(mutex_);
-  work_.wait(lock, [this]() { return enqueued_ || shutdown_; });
-  size_t sentences_in_batch = backend_.generate(std::forward<Args>(args)...);
-  assert(sentences_in_batch > 0 || shutdown_);
-  enqueued_ -= sentences_in_batch;
-  return sentences_in_batch;
-}
 }  // namespace rd
 
 }  // namespace slimt

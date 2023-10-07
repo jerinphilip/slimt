@@ -49,3 +49,6 @@ if(UNIX)
   install(TARGETS ${SLIMT_LIBRIARIES} DESTINATION ${CMAKE_INSTALL_LIBDIR})
   message(STATUS "Exports: ${SLIMT_PUBLIC_HEADERS} ${SLIMT_LIBRIARIES}")
 endif(UNIX)
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Version.hh.in
+               ${CMAKE_CURRENT_BINARY_DIR}/Version.hh @ONLY)
