@@ -12,6 +12,7 @@
 #include <vector>
 
 #include "slimt/Batch.hh"
+#include "slimt/Model.hh"
 #include "slimt/Request.hh"
 #include "slimt/Types.hh"
 #include "slimt/Utils.hh"
@@ -105,7 +106,18 @@ class AggregateBatcher {
   void clear();
 
  private:
-  std::unordered_set<std::shared_ptr<Model>, HashPtr<Model>> queue_;
+  /// Hashes a pointer to an object using the address the pointer points to. If
+  /// two pointers point to the same address, they hash to the same value.
+  /// Useful to put widely shared_ptrs of entities (eg: Model, Vocab, Shortlist)
+  /// etc into containers which require the members to be hashable
+  /// (std::unordered_set, std::unordered_map).
+  struct Hash {
+    size_t operator()(const std::shared_ptr<Model>& model) const {
+      return std::hash<size_t>()(model->id());
+    }
+  };
+
+  std::unordered_set<std::shared_ptr<Model>, Hash> queue_;
   std::unordered_map<size_t, Batcher> batcher_;
 
   size_t max_words_;               //

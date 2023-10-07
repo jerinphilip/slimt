@@ -231,8 +231,16 @@ Words greedy_sample(Tensor &logits, const Words &words, size_t batch_size) {
   }
   return sampled_words;
 }
+
+namespace {
+
+size_t model_id = 0;
+
+}
+
 Model::Model(const Config &config, Record<View> package)
-    : config_(config),
+    : id_(model_id++),
+      config_(config),
       vocabulary_(package.vocabulary),
       processor_(config.wrap_length, config.split_mode, vocabulary_,
                  config.prefix_path),
