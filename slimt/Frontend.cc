@@ -160,9 +160,17 @@ Response Blocking::translate(Ptr<Model> &model, std::string source,
 
   std::promise<Response> promise;
   auto future = promise.get_future();
+  auto continuation = [&html, &promise](Response &&response) {
+    if (html) {
+      html->restore(response);
+    }
+    promise.set_value(std::move(response));
+  };
 
-  ResponseBuilder response_builder(options, std::move(annotated_source),
-                                   model->vocabulary(), std::move(promise));
+  ResponseBuilder response_builder(                 //
+      options, std::move(annotated_source),         //
+      model->vocabulary(), std::move(continuation)  //
+  );
 
   auto request = std::make_shared<rd::Request>(  //
       id_, model_id_,                            //
@@ -196,9 +204,6 @@ Response Blocking::translate(Ptr<Model> &model, std::string source,
 
   future.wait();
   Response response = future.get();
-  if (html) {
-    html->restore(response);
-  }
   return response;
 }
 
@@ -220,11 +225,6 @@ Async::Async(const Config &config)
         rd_batch = std::move(next_batch);
         model = std::move(next_model);
       }
-
-      // Might have to move to a callback, or move to response-builder.
-      // if (html) {
-      //   html->restore(response);
-      // }
     });
   }
 }
@@ -232,18 +232,27 @@ Async::Async(const Config &config)
 std::future<Response> Async::translate(Ptr<Model> &model, std::string source,
                                        const Options &options) {
   // Create a request
-  std::optional<HTML> html = std::nullopt;
+  std::shared_ptr<HTML> html = nullptr;
   if (options.html) {
-    html.emplace(source);
+    html = std::make_shared<HTML>(source);
   }
   auto [annotated_source, segments] =
       model->processor().process(std::move(source));
 
-  std::promise<Response> promise;
-  auto future = promise.get_future();
+  using Promise = std::promise<Response>;
+  auto promise = std::make_shared<Promise>();
+  auto future = promise->get_future();
+  auto continuation = [html, promise](Response &&response) {
+    if (html) {
+      html->restore(response);
+    }
+    promise->set_value(std::move(response));
+  };
 
-  ResponseBuilder response_builder(options, std::move(annotated_source),
-                                   model->vocabulary(), std::move(promise));
+  ResponseBuilder response_builder(                 //
+      options, std::move(annotated_source),         //
+      model->vocabulary(), std::move(continuation)  //
+  );
 
   auto request = std::make_shared<rd::Request>(  //
       id_, model_id_,                            //
