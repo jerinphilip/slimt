@@ -32,18 +32,22 @@ PYBIND11_MAKE_OPAQUE(Alignments);
 
 class ServicePyAdapter {
  public:
-  ServicePyAdapter(const size_t numWorkers, const size_t cacheSize, const std::string &logLevel)
+  ServicePyAdapter(const size_t numWorkers, const size_t cacheSize,
+                   const std::string &logLevel)
       : service_(make_service(numWorkers, cacheSize, logLevel)) {
     // Set marian to throw exceptions instead of std::abort()
     marian::setThrowExceptionOnAbort(true);
   }
 
-  std::vector<Response> translate(Model model, py::list &texts, bool html, bool qualityScores, bool alignment) {
-    py::scoped_ostream_redirect outstream(std::cout,                                 // std::ostream&
-                                          py::module_::import("sys").attr("stdout")  // Python output
+  std::vector<Response> translate(Model model, py::list &texts, bool html,
+                                  bool qualityScores, bool alignment) {
+    py::scoped_ostream_redirect outstream(
+        std::cout,                                 // std::ostream&
+        py::module_::import("sys").attr("stdout")  // Python output
     );
-    py::scoped_ostream_redirect errstream(std::cerr,                                 // std::ostream&
-                                          py::module_::import("sys").attr("stderr")  // Python output
+    py::scoped_ostream_redirect errstream(
+        std::cerr,                                 // std::ostream&
+        py::module_::import("sys").attr("stderr")  // Python output
     );
 
     py::call_guard<py::gil_scoped_release> gil_guard;
@@ -65,9 +69,12 @@ class ServicePyAdapter {
     options.alignment = alignment;
 
     for (size_t i = 0; i < inputs.size(); i++) {
-      auto callback = [&promises, i](Response &&response) { promises[i].set_value(std::move(response)); };
+      auto callback = [&promises, i](Response &&response) {
+        promises[i].set_value(std::move(response));
+      };
 
-      service_.translate(model, std::move(inputs[i]), std::move(callback), options);
+      service_.translate(model, std::move(inputs[i]), std::move(callback),
+                         options);
 
       futures.push_back(std::move(promises[i].get_future()));
     }
@@ -82,13 +89,15 @@ class ServicePyAdapter {
     return responses;
   }
 
-  std::vector<Response> pivot(Model first, Model second, py::list &texts, bool html, bool qualityScores,
-                              bool alignment) {
-    py::scoped_ostream_redirect outstream(std::cout,                                 // std::ostream&
-                                          py::module_::import("sys").attr("stdout")  // Python output
+  std::vector<Response> pivot(Model first, Model second, py::list &texts,
+                              bool html, bool qualityScores, bool alignment) {
+    py::scoped_ostream_redirect outstream(
+        std::cout,                                 // std::ostream&
+        py::module_::import("sys").attr("stdout")  // Python output
     );
-    py::scoped_ostream_redirect errstream(std::cerr,                                 // std::ostream&
-                                          py::module_::import("sys").attr("stderr")  // Python output
+    py::scoped_ostream_redirect errstream(
+        std::cerr,                                 // std::ostream&
+        py::module_::import("sys").attr("stderr")  // Python output
     );
 
     py::call_guard<py::gil_scoped_release> gil_guard;
@@ -110,9 +119,12 @@ class ServicePyAdapter {
     promises.resize(inputs.size());
 
     for (size_t i = 0; i < inputs.size(); i++) {
-      auto callback = [&promises, i](Response &&response) { promises[i].set_value(std::move(response)); };
+      auto callback = [&promises, i](Response &&response) {
+        promises[i].set_value(std::move(response));
+      };
 
-      service_.pivot(first, second, std::move(inputs[i]), std::move(callback), options);
+      service_.pivot(first, second, std::move(inputs[i]), std::move(callback),
+                     options);
 
       futures.push_back(std::move(promises[i].get_future()));
     }
@@ -127,13 +139,16 @@ class ServicePyAdapter {
     return responses;
   }
 
-  private /*functions*/:
-  static Service make_service(size_t numWorkers, size_t cacheSize, const std::string &logLevel) {
-    py::scoped_ostream_redirect outstream(std::cout,                                 // std::ostream&
-                                          py::module_::import("sys").attr("stdout")  // Python output
+ private /*functions*/:
+  static Service make_service(size_t numWorkers, size_t cacheSize,
+                              const std::string &logLevel) {
+    py::scoped_ostream_redirect outstream(
+        std::cout,                                 // std::ostream&
+        py::module_::import("sys").attr("stdout")  // Python output
     );
-    py::scoped_ostream_redirect errstream(std::cerr,                                 // std::ostream&
-                                          py::module_::import("sys").attr("stderr")  // Python output
+    py::scoped_ostream_redirect errstream(
+        std::cerr,                                 // std::ostream&
+        py::module_::import("sys").attr("stderr")  // Python output
     );
 
     py::call_guard<py::gil_scoped_release> gil_guard;
@@ -146,7 +161,7 @@ class ServicePyAdapter {
     return Service(config);
   }
 
-  private /*data*/:
+ private /*data*/:
   Service service_;
 };
 
@@ -158,7 +173,8 @@ PYBIND11_MODULE(_bergamot, m) {
       .def_readonly("begin", &ByteRange::begin)
       .def_readonly("end", &ByteRange::end)
       .def("__repr__", [](const ByteRange &range) {
-        return "{" + std::to_string(range.begin) + ", " + std::to_string(range.end) + "}";
+        return "{" + std::to_string(range.begin) + ", " +
+               std::to_string(range.end) + "}";
       });
 
   py::class_<AnnotatedText>(m, "AnnotatedText")
@@ -166,12 +182,14 @@ PYBIND11_MODULE(_bergamot, m) {
       .def("numWords", &AnnotatedText::numWords)
       .def("numSentences", &AnnotatedText::numSentences)
       .def("word",
-           [](const AnnotatedText &annotatedText, size_t sentenceIdx, size_t wordIdx) -> std::string {
+           [](const AnnotatedText &annotatedText, size_t sentenceIdx,
+              size_t wordIdx) -> std::string {
              auto view = annotatedText.word(sentenceIdx, wordIdx);
              return std::string(view.data(), view.size());
            })
       .def("sentence",
-           [](const AnnotatedText &annotatedText, size_t sentenceIdx) -> std::string {
+           [](const AnnotatedText &annotatedText,
+              size_t sentenceIdx) -> std::string {
              auto view = annotatedText.sentence(sentenceIdx);
              return std::string(view.data(), view.size());
            })
@@ -193,12 +211,15 @@ PYBIND11_MODULE(_bergamot, m) {
   py::bind_vector<Alignments>(m, "Alignments");
 
   py::class_<ServicePyAdapter>(m, "Service")
-      .def(py::init<size_t, size_t, const std::string &>(), py::arg("num_workers") = 1, py::arg("cache_size") = 0,
+      .def(py::init<size_t, size_t, const std::string &>(),
+           py::arg("num_workers") = 1, py::arg("cache_size") = 0,
            py::arg("log_level") = "off")
-      .def("translate", &ServicePyAdapter::translate, py::arg("model"), py::arg("texts"), py::arg("html") = false,
+      .def("translate", &ServicePyAdapter::translate, py::arg("model"),
+           py::arg("texts"), py::arg("html") = false,
            py::arg("quality_scores") = false, py::arg("alignment") = false)
-      .def("pivot", &ServicePyAdapter::pivot, py::arg("first"), py::arg("second"), py::arg("texts"),
-           py::arg("html") = false, py::arg("quality_scores") = false, py::arg("alignment") = false);
+      .def("pivot", &ServicePyAdapter::pivot, py::arg("first"),
+           py::arg("second"), py::arg("texts"), py::arg("html") = false,
+           py::arg("quality_scores") = false, py::arg("alignment") = false);
 
   py::class_<_Model, std::shared_ptr<_Model>>(m, "Model")
       .def_static(
@@ -211,7 +232,8 @@ PYBIND11_MODULE(_bergamot, m) {
       .def_static(
           "from_config_path",
           [](const std::string &configPath) {
-            auto options = marian::bergamot::parseOptionsFromFilePath(configPath);
+            auto options =
+                marian::bergamot::parseOptionsFromFilePath(configPath);
             return marian::New<_Model>(options);
           },
           py::arg("config_path"));
