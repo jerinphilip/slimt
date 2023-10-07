@@ -14,29 +14,28 @@ namespace py = pybind11;
 using slimt::Alignment;
 using slimt::Alignments;
 using slimt::AnnotatedText;
+using slimt::Config;
 using slimt::Options;
 using slimt::Range;
 using slimt::Response;
 
 using Service = slimt::Async;
-using _Model = slimt::Model;
-using Model = std::shared_ptr<_Model>;
+using Model = slimt::Model;
 
 PYBIND11_MAKE_OPAQUE(std::vector<Response>);
 PYBIND11_MAKE_OPAQUE(std::vector<std::string>);
 PYBIND11_MAKE_OPAQUE(Alignments);
 
-class ServicePyAdapter {
+class PyService {
  public:
-  ServicePyAdapter(const size_t numWorkers, const size_t cacheSize,
-                   const std::string &logLevel)
-      : service_(make_service(numWorkers, cacheSize, logLevel)) {
-    // Set marian to throw exceptions instead of std::abort()
-    marian::setThrowExceptionOnAbort(true);
+  PyService(const size_t workers, const size_t cache_size)
+      : service_(make_service(workers, cache_size)) {
+    // Set slimt to throw exceptions instead of std::abort()
+    // slimt::setThrowExceptionOnAbort(true);
   }
 
-  std::vector<Response> translate(Model model, py::list &texts, bool html,
-                                  bool qualityScores, bool alignment) {
+  std::vector<Response> translate(std::shared_ptr<Model> model, py::list &texts,
+                                  bool html) {
     py::scoped_ostream_redirect outstream(
         std::cout,                                 // std::ostream&
         py::module_::import("sys").attr("stdout")  // Python output
@@ -48,45 +47,39 @@ class ServicePyAdapter {
 
     py::call_guard<py::gil_scoped_release> gil_guard;
 
-    std::vector<std::string> inputs;
+    std::vector<std::string> sources;
     for (auto handle : texts) {
-      inputs.push_back(py::str(handle));
+      sources.push_back(py::str(handle));
     }
 
     // Prepare promises, save respective futures. Have callback's in async set
     // value to the promises.
     std::vector<std::future<Response>> futures;
-    std::vector<std::promise<Response>> promises;
-    promises.resize(inputs.size());
 
-    Options options;
-    options.HTML = html;
-    options.qualityScores = qualityScores;
-    options.alignment = alignment;
+    Options options{
+        .html = html,  //
+    };
 
-    for (size_t i = 0; i < inputs.size(); i++) {
-      auto callback = [&promises, i](Response &&response) {
-        promises[i].set_value(std::move(response));
-      };
+    for (auto &source : sources) {
+      std::future<Response> future =
+          service_.translate(model, std::move(source), options);
 
-      service_.translate(model, std::move(inputs[i]), std::move(callback),
-                         options);
-
-      futures.push_back(std::move(promises[i].get_future()));
+      futures.push_back(std::move(future));
     }
 
     // Wait on all futures to be ready.
     std::vector<Response> responses;
-    for (size_t i = 0; i < futures.size(); i++) {
-      futures[i].wait();
-      responses.push_back(std::move(futures[i].get()));
+    for (auto &future : futures) {
+      future.wait();
+      responses.push_back(std::move(future.get()));
     }
 
     return responses;
   }
 
-  std::vector<Response> pivot(Model first, Model second, py::list &texts,
-                              bool html, bool qualityScores, bool alignment) {
+#if 0
+  std::vector<Response> pivot(std::shared_ptr<Model> first, std::shared_ptr<Model> second, py::list &texts,
+                              bool html) {
     py::scoped_ostream_redirect outstream(
         std::cout,                                 // std::ostream&
         py::module_::import("sys").attr("stdout")  // Python output
@@ -104,8 +97,7 @@ class ServicePyAdapter {
     }
 
     Options options{
-        .alignment = alignment,  //
-        .html = html             //
+        .html = html  //
     };
 
     // Prepare promises, save respective futures. Have callback's in async set
@@ -119,8 +111,12 @@ class ServicePyAdapter {
         promises[i].set_value(std::move(response));
       };
 
-      service_.pivot(first, second, std::move(inputs[i]), std::move(callback),
-                     options);
+      service_.pivot(            //
+          first, second,         //
+          std::move(inputs[i]),  //
+          std::move(callback),   //
+          options                //
+      );
 
       futures.push_back(std::move(promises[i].get_future()));
     }
@@ -129,15 +125,16 @@ class ServicePyAdapter {
     std::vector<Response> responses;
     for (size_t i = 0; i < futures.size(); i++) {
       futures[i].wait();
-      responses.push_back(std::move(futures[i].get()));
+      Response response = futures[i].get();
+      responses.push_back(std::move(response));
     }
 
     return responses;
   }
+#endif
 
- private /*functions*/:
-  static Service make_service(size_t numWorkers, size_t cacheSize,
-                              const std::string &logLevel) {
+ private:
+  static Service make_service(size_t workers, size_t cache_size) {
     py::scoped_ostream_redirect outstream(
         std::cout,                                 // std::ostream&
         py::module_::import("sys").attr("stdout")  // Python output
@@ -149,21 +146,19 @@ class ServicePyAdapter {
 
     py::call_guard<py::gil_scoped_release> gil_guard;
 
-    Service::Config config;
-    config.numWorkers = numWorkers;
-    config.cacheSize = cacheSize;
-    config.logger.level = logLevel;
+    Config config;
+    config.workers = workers;
+    config.cache_size = cache_size;
 
     return Service(config);
   }
 
- private /*data*/:
   Service service_;
 };
 
 PYBIND11_MODULE(_bergamot, m) {
   m.doc() = "Bergamot pybind11 bindings";
-  m.attr("__version__") = slimt::bergamotBuildVersion();
+  m.attr("__version__") = slimt::version();
   py::class_<Range>(m, "Range")
       .def(py::init<>())
       .def_readonly("begin", &Range::begin)
@@ -189,8 +184,8 @@ PYBIND11_MODULE(_bergamot, m) {
              auto view = annotated_text.sentence(sentence_id);
              return std::string(view.data(), view.size());
            })
-      .def("wordAsRange", &AnnotatedText::wordAsRange)
-      .def("sentenceAsRange", &AnnotatedText::sentenceAsRange)
+      .def("word_as_range", &AnnotatedText::word_as_range)
+      .def("sentence_as_range", &AnnotatedText::sentence_as_range)
       .def_readonly("text", &AnnotatedText::text);
 
   py::class_<Response>(m, "Response")
@@ -206,30 +201,32 @@ PYBIND11_MODULE(_bergamot, m) {
   py::bind_vector<Alignment>(m, "Alignment");
   py::bind_vector<Alignments>(m, "Alignments");
 
-  py::class_<ServicePyAdapter>(m, "Service")
+  py::class_<PyService>(m, "Service")
       .def(py::init<size_t, size_t, const std::string &>(),
-           py::arg("num_workers") = 1, py::arg("cache_size") = 0,
-           py::arg("log_level") = "off")
-      .def("translate", &ServicePyAdapter::translate, py::arg("model"),
-           py::arg("texts"), py::arg("html") = false,
-           py::arg("quality_scores") = false, py::arg("alignment") = false)
-      .def("pivot", &ServicePyAdapter::pivot, py::arg("first"),
-           py::arg("second"), py::arg("texts"), py::arg("html") = false,
-           py::arg("quality_scores") = false, py::arg("alignment") = false);
+           py::arg("workers") = 1, py::arg("cache_size") = 0)
+      .def("translate", &PyService::translate, py::arg("model"),
+           py::arg("texts"), py::arg("html") = false)
+#if 0
+      .def("pivot", &PyService::pivot, py::arg("first"),
+           py::arg("second"), py::arg("texts"), py::arg("html") = false)
+#endif
+      ;
 
-  py::class_<_Model, std::shared_ptr<_Model>>(m, "Model")
+#if 0
+  py::class_<Model, std::shared_ptr<Model>>(m, "Model")
       .def_static(
           "from_config",
           [](const std::string &config) {
             auto options = slimt::parseOptionsFromString(config);
-            return std::make_shared<_Model>(options);
+            return std::make_shared<Model>(options);
           },
           py::arg("config"))
       .def_static(
           "from_config_path",
           [](const std::string &configPath) {
             auto options = slimt::parseOptionsFromFilePath(configPath);
-            return std::make_shared<_Model>(options);
+            return std::make_shared<Model>(options);
           },
           py::arg("config_path"));
+#endif
 }
