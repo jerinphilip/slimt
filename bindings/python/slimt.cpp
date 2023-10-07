@@ -202,8 +202,8 @@ PYBIND11_MODULE(_bergamot, m) {
   py::bind_vector<Alignments>(m, "Alignments");
 
   py::class_<PyService>(m, "Service")
-      .def(py::init<size_t, size_t, const std::string &>(),
-           py::arg("workers") = 1, py::arg("cache_size") = 0)
+      .def(py::init<size_t, size_t>(), py::arg("workers") = 1,
+           py::arg("cache_size") = 0)
       .def("translate", &PyService::translate, py::arg("model"),
            py::arg("texts"), py::arg("html") = false)
 #if 0
