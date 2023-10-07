@@ -31,3 +31,7 @@ if(WITH_ASAN)
   target_compile_options(slimt PUBLIC -fsanitize=address -fsanitize=undefined)
   target_link_options(slimt PUBLIC -fsanitize=address -fsanitize=undefined)
 endif(WITH_ASAN)
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Version.hh.in
+               ${CMAKE_CURRENT_BINARY_DIR}/Version.hh @ONLY)
+

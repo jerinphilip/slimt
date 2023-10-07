@@ -18,6 +18,7 @@ struct Options {
   std::string root;
   bool async = false;
   bool html = false;
+  bool version = false;
   slimt::Config config;
 
   template <class App>
@@ -27,6 +28,7 @@ struct Options {
     app.add_option("--model", translator.model, "Path to model");
     app.add_option("--vocabulary", translator.vocabulary, "Path to vocabulary");
     app.add_option("--shortlist", translator.shortlist, "Path to shortlist");
+    app.add_flag("--version", version, "Display version");
     app.add_flag("--html", html, "Whether content is HTML");
     app.add_flag("--async", async, "Try async backend");
     config.setup_onto(app);
