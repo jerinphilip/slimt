@@ -58,13 +58,13 @@ void update_alignment(const std::vector<size_t> &lengths,
 }
 
 Histories decode(Tensor &encoder_out, Batch &batch,
-                 const size_t &tgt_length_limit_factor, Transformer &model_,
-                 const Word &eos_id, ShortlistGenerator &shortlist_generator_) {
+                 const size_t &tgt_length_limit_factor, Transformer &model,
+                 const Word &eos_id, ShortlistGenerator &shortlist_generator) {
   // Prepare a shortlist for the entire batch.
   size_t batch_size = encoder_out.dim(-3);
   size_t source_sequence_length = encoder_out.dim(-2);
 
-  Shortlist shortlist = shortlist_generator_.generate(batch.words());
+  Shortlist shortlist = shortlist_generator.generate(batch.words());
   Words indices = shortlist.words();
   // The following can be used to check if shortlist is going wrong.
   // std::vector<uint32_t> indices(vocabulary_.size());
@@ -88,7 +88,7 @@ Histories decode(Tensor &encoder_out, Batch &batch,
   Sentences sentences(batch_size);
   Alignments alignments(sentences.size());
 
-  Decoder &decoder = model_.decoder();
+  Decoder &decoder = model.decoder();
   Words previous_slice = {};
   std::vector<Tensor> states = decoder.start_states(batch_size);
   auto [logits, attn] =
@@ -123,7 +123,7 @@ Histories decode(Tensor &encoder_out, Batch &batch,
 
 Histories forward(Batch &batch, const size_t &tgt_length_limit_factor,
                   Transformer &model_, const Word &eos_id,
-                  ShortlistGenerator &shortlist_generator_) {
+                  ShortlistGenerator &shortlist_generator) {
   Tensor &indices = batch.indices();
   Tensor &mask = batch.mask();
 
@@ -140,7 +140,7 @@ Histories forward(Batch &batch, const size_t &tgt_length_limit_factor,
   modify_mask_for_pad_tokens_in_attention(mask.data<float>(), mask.size());
   Tensor encoder_out = model_.encoder().forward(word_embedding, mask);
   Histories histories = decode(encoder_out, batch, tgt_length_limit_factor,
-                               model_, eos_id, shortlist_generator_);
+                               model_, eos_id, shortlist_generator);
   return histories;
 }
 
