@@ -58,13 +58,13 @@ void update_alignment(const std::vector<size_t> &lengths,
 }
 
 Histories decode(Tensor &encoder_out, Batch &batch,
-                 const size_t &tgt_length_limit_factor, Transformer &model_,
-                 const Word &eos_id, ShortlistGenerator &shortlist_generator_) {
+                 const size_t &tgt_length_limit_factor, Transformer &model,
+                 const Word &eos_id, ShortlistGenerator &shortlist_generator) {
   // Prepare a shortlist for the entire batch.
   size_t batch_size = encoder_out.dim(-3);
   size_t source_sequence_length = encoder_out.dim(-2);
 
-  Shortlist shortlist = shortlist_generator_.generate(batch.words());
+  Shortlist shortlist = shortlist_generator.generate(batch.words());
   Words indices = shortlist.words();
   // The following can be used to check if shortlist is going wrong.
   // std::vector<uint32_t> indices(vocabulary_.size());
@@ -88,7 +88,7 @@ Histories decode(Tensor &encoder_out, Batch &batch,
   Sentences sentences(batch_size);
   Alignments alignments(sentences.size());
 
-  Decoder &decoder = model_.decoder();
+  Decoder &decoder = model.decoder();
   Words previous_slice = {};
   std::vector<Tensor> states = decoder.start_states(batch_size);
   auto [logits, attn] =
@@ -123,7 +123,7 @@ Histories decode(Tensor &encoder_out, Batch &batch,
 
 Histories forward(Batch &batch, const size_t &tgt_length_limit_factor,
                   Transformer &model_, const Word &eos_id,
-                  ShortlistGenerator &shortlist_generator_) {
+                  ShortlistGenerator &shortlist_generator) {
   Tensor &indices = batch.indices();
   Tensor &mask = batch.mask();
 
@@ -140,7 +140,7 @@ Histories forward(Batch &batch, const size_t &tgt_length_limit_factor,
   modify_mask_for_pad_tokens_in_attention(mask.data<float>(), mask.size());
   Tensor encoder_out = model_.encoder().forward(word_embedding, mask);
   Histories histories = decode(encoder_out, batch, tgt_length_limit_factor,
-                               model_, eos_id, shortlist_generator_);
+                               model_, eos_id, shortlist_generator);
   return histories;
 }
 
@@ -160,9 +160,17 @@ Response Blocking::translate(Ptr<Model> &model, std::string source,
 
   std::promise<Response> promise;
   auto future = promise.get_future();
+  auto continuation = [&html, &promise](Response &&response) {
+    if (html) {
+      html->restore(response);
+    }
+    promise.set_value(std::move(response));
+  };
 
-  ResponseBuilder response_builder(options, std::move(annotated_source),
-                                   model->vocabulary(), std::move(promise));
+  ResponseBuilder response_builder(                 //
+      options, std::move(annotated_source),         //
+      model->vocabulary(), std::move(continuation)  //
+  );
 
   auto request = std::make_shared<rd::Request>(  //
       id_, model_id_,                            //
@@ -196,9 +204,6 @@ Response Blocking::translate(Ptr<Model> &model, std::string source,
 
   future.wait();
   Response response = future.get();
-  if (html) {
-    html->restore(response);
-  }
   return response;
 }
 
@@ -220,11 +225,6 @@ Async::Async(const Config &config)
         rd_batch = std::move(next_batch);
         model = std::move(next_model);
       }
-
-      // Might have to move to a callback, or move to response-builder.
-      // if (html) {
-      //   html->restore(response);
-      // }
     });
   }
 }
@@ -232,18 +232,27 @@ Async::Async(const Config &config)
 std::future<Response> Async::translate(Ptr<Model> &model, std::string source,
                                        const Options &options) {
   // Create a request
-  std::optional<HTML> html = std::nullopt;
+  std::shared_ptr<HTML> html = nullptr;
   if (options.html) {
-    html.emplace(source);
+    html = std::make_shared<HTML>(source);
   }
   auto [annotated_source, segments] =
       model->processor().process(std::move(source));
 
-  std::promise<Response> promise;
-  auto future = promise.get_future();
+  using Promise = std::promise<Response>;
+  auto promise = std::make_shared<Promise>();
+  auto future = promise->get_future();
+  auto continuation = [html, promise](Response &&response) {
+    if (html) {
+      html->restore(response);
+    }
+    promise->set_value(std::move(response));
+  };
 
-  ResponseBuilder response_builder(options, std::move(annotated_source),
-                                   model->vocabulary(), std::move(promise));
+  ResponseBuilder response_builder(                 //
+      options, std::move(annotated_source),         //
+      model->vocabulary(), std::move(continuation)  //
+  );
 
   auto request = std::make_shared<rd::Request>(  //
       id_, model_id_,                            //

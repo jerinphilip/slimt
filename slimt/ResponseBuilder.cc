@@ -48,7 +48,7 @@ void ResponseBuilder::operator()(Histories &&histories) {
     response.alignments.push_back(std::move(alignment));
   }
 
-  promise_.set_value(std::move(response));
+  continuation_(std::move(response));
 }
 
 }  // namespace slimt
