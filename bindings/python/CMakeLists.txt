@@ -1,4 +1,3 @@
-find_package(Python COMPONENTS Interpreter Development.Module Development.Embed REQUIRED)
 find_package(pybind11 REQUIRED)
 
 message("Using Python: " ${Python_EXECUTABLE})
