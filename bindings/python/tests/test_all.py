@@ -1,7 +1,7 @@
 # type: ignore
 import pytest
-from bergamot import REPOSITORY, Model, Service
-from bergamot.utils import toJSON
+from slimt import REPOSITORY, Model, Service
+from slimt.utils import toJSON
 
 
 def test_basic():
