@@ -22,12 +22,12 @@ option(USE_NEON "Use NEON" OFF)
 
 set(SLIMT_COMPILE_OPTIONS
     -Wall
-    -Wpedantic
     -Wextra
     -Wno-unknown-pragmas
     -Werror
     -Wno-missing-field-initializers
-    -Wno-unused-function)
+    -Wno-unused-function
+    -pedantic)
 
 set(SLIMT_COMPILE_DEFINITIONS "")
 
