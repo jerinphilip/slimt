@@ -212,21 +212,5 @@ PYBIND11_MODULE(_slimt, m) {
 #endif
       ;
 
-#if 0
-  py::class_<Model, std::shared_ptr<Model>>(m, "Model")
-      .def_static(
-          "from_config",
-          [](const std::string &config) {
-            auto options = slimt::parseOptionsFromString(config);
-            return std::make_shared<Model>(options);
-          },
-          py::arg("config"))
-      .def_static(
-          "from_config_path",
-          [](const std::string &configPath) {
-            auto options = slimt::parseOptionsFromFilePath(configPath);
-            return std::make_shared<Model>(options);
-          },
-          py::arg("config_path"));
-#endif
+  py::class_<Model, std::shared_ptr<Model>>(m, "Model");
 }

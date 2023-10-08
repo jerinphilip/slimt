@@ -124,7 +124,7 @@ class TranslateLocallyLike(Repository):
         model = self.model(model_identifier)
         fprefix = self._archive_name_without_extension(model["url"])
         model_dir = os.path.join(self.dirs["models"], fprefix)
-        return os.path.join(model_dir, "config.bergamot.yml")
+        return os.path.join(model_dir, "config.slimt.yml")
 
     def model(self, model_identifier: str) -> t.Any:
         return self.data_by_code[model_identifier]
@@ -170,10 +170,10 @@ class TranslateLocallyLike(Repository):
                 os.symlink(model_dir, symlink)
 
             config_path = os.path.join(symlink, "config.intgemm8bitalpha.yml")
-            bergamot_config_path = os.path.join(symlink, "config.bergamot.yml")
+            slimt_config_path = os.path.join(symlink, "config.slimt.yml")
 
             # Finally patch so we don't have to reload this again.
-            patch_marian_for_bergamot(config_path, bergamot_config_path)
+            patch_marian_for_slimt(config_path, slimt_config_path)
 
             print("Done.")
 

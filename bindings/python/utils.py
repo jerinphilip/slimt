@@ -23,12 +23,12 @@ def download_resource(url: URL, save_location: PathLike, force_download=False):
                 handle.write(block)
 
 
-def patch_marian_for_bergamot(
-    marian_config_path: PathLike, bergamot_config_path: PathLike, quality: bool = False
+def patch_marian_for_slimt(
+    marian_config_path: PathLike, slimt_config_path: PathLike, quality: bool = False
 ):
     """
     Accepts path to a config-file from marian-training and followign
-    quantization and adjusts parameters for use in bergamot.
+    quantization and adjusts parameters for use in slimt.
     """
     # Load marian_config_path
     data = None
@@ -51,7 +51,7 @@ def patch_marian_for_bergamot(
         data.update({"quality": quality, "skip-cost": False})
 
     # Write-out.
-    with open(bergamot_config_path, "w") as output_file:
+    with open(slimt_config_path, "w") as output_file:
         print(yaml.dump(data, sort_keys=False), file=output_file)
 
 

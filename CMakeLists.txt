@@ -37,7 +37,7 @@ add_subdirectory(3rd-party)
 set(SLIMT_EXTERNAL_LIBS SentencePiece::SentencePiece PCRE2::PCRE2)
 
 if(WITH_BLAS)
-  find_package(BLAS)
+  find_package(BLAS REQUIRED)
 
   if(BLAS_FOUND AND NOT TARGET BLAS::BLAS)
     add_library(BLAS::BLAS INTERFACE IMPORTED)
@@ -45,8 +45,10 @@ if(WITH_BLAS)
       BLAS::BLAS PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "${BLAS_INCLUDE_DIR}"
                               INTERFACE_LINK_LIBRARIES "${BLAS_LIBRARIES}")
   endif()
+
   set(SLIMT_EXTERNAL_LIBS ${SLIMT_EXTERNAL_LIBS} BLAS::BLAS)
   set(SLIMT_COMPILE_DEFINITIONS ${SLIMT_COMPILE_DEFINITIONS} SLIMT_HAS_BLAS)
+
   if(APPLE)
     set(BLAS_VENDOR "Accelerate")
     # see https://developer.apple.com/documentation/accelerate for more info you
