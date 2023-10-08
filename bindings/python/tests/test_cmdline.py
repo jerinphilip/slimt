@@ -20,7 +20,7 @@ def run_successfully(cmd, stdin=None):
 
 def test_cmdline():
     python = sys.executable
-    base = [python, "-m", "bergamot"]
+    base = [python, "-m", "slimt"]
 
     for model in ["en-de-tiny", "de-en-tiny"]:
         run_successfully(base + ["download", "-m", model])

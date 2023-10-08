@@ -202,7 +202,13 @@ PYBIND11_MODULE(_slimt, m) {
   py::bind_vector<Alignment>(m, "Alignment");
   py::bind_vector<Alignments>(m, "Alignments");
   py::class_<Package>(m, "Package")
-      .def(py::init<>())
+      .def(py::init<>([](std::string model, std::string vocabulary,
+                         std::string shortlist) {
+             return Package{.model = std::move(model),
+                            .vocabulary = std::move(vocabulary),
+                            .shortlist = std::move(shortlist)};
+           }),
+           py::arg("model"), py::arg("vocabulary"), py::arg("shortlist"))
       .def_readwrite("model", &Package::model)
       .def_readwrite("vocabulary", &Package::vocabulary)
       .def_readwrite("shortlist", &Package::shortlist);
