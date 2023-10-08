@@ -240,22 +240,21 @@ jobs:
           with:
             name: wheels
             path: ./wheelhouse/*.whl
+  upload-wheels:
+    name: "Upload wheels to PyPI"
+    runs-on: ubuntu-latest
+    if: ${{ startsWith(github.ref, 'refs/tags/v') }}
+    needs: [build-wheels]
+    steps:
+    - name: Download artifacts
+      uses: actions/download-artifact@v2
+      with:
+        name: wheels
 
-    upload-wheels:
-      name: "Upload wheels to PyPI"
-      runs-on: ubuntu-latest
-      if: ${{ startsWith(github.ref, 'refs/tags/v') }}
-      needs: [build-wheels]
-      steps:
-      - name: Download artifacts
-        uses: actions/download-artifact@v2
-        with:
-          name: wheels
-
-      - name: Publish wheels to PyPI
-        env:
-          TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
-          TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-        run: |
-          python3 -m pip install twine
-          twine upload *.whl
+    - name: Publish wheels to PyPI
+      env:
+        TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+        TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+      run: |
+        python3 -m pip install twine
+        twine upload *.whl
