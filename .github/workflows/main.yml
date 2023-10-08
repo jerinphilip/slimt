@@ -252,7 +252,7 @@ jobs:
 
             CIBW_TEST_EXTRAS: test
             CIBW_TEST_COMMAND: |
-              python -m pytest --pyargs bergamot -s
+              python -m pytest --pyargs slimt -s
 
 
         - uses: actions/upload-artifact@v2
