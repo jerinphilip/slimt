@@ -121,7 +121,6 @@ class Model {
  private:
   size_t id_;
   Config config_;
-
   using Mmap = Package<io::MmapFile>;
   std::optional<Mmap> mmap_;
   Package<View> view_;
