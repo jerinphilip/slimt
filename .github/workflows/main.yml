@@ -215,6 +215,7 @@ jobs:
               # Install Intel MKL.
               yum-config-manager -y --add-repo https://yum.repos.intel.com/mkl/setup/intel-mkl.repo
               yum install -y intel-mkl
+              yum install -y openblas-devel
 
               chmod -R a+rwx /host/${{ env.ccache_dir }}
 
