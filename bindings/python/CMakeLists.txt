@@ -1,4 +1,3 @@
-find_package(pybind11 REQUIRED)
 
 message("Using Python: " ${Python_EXECUTABLE})
 

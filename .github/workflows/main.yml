@@ -97,6 +97,9 @@ jobs:
         - uses: actions/checkout@v2
           with:
             submodules: recursive
+        - name: "Fetch pybind11"
+          run: |
+            git clone https://github.com/pybind/pybind11 3rd-party/pybind11
 
         - name: Generate ccache_vars for ccache based on machine
           shell: bash
@@ -184,6 +187,7 @@ jobs:
               PYTHON_LOCAL_VERSION_IDENTIFIER=${{ env.PYTHON_LOCAL_VERSION_IDENTIFIER }}
               CCACHE_DIR=/host/${{ env.ccache_dir }}
               CCACHE_BASEDIR=/host/${{ env.ccache_basedir }}
+              CMAKE_ARGS="-DUSE_PYBIND11_SOURCE=ON"
 
             CIBW_ENVIRONMENT_MACOS:
               BUILD_ARCH=${{ matrix.BUILD_ARCH_CMAKE }}
