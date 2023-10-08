@@ -19,6 +19,7 @@ using slimt::Options;
 using slimt::Range;
 using slimt::Response;
 
+using Package = slimt::Package<std::string>;
 using Service = slimt::Async;
 using Model = slimt::Model;
 
@@ -200,6 +201,13 @@ PYBIND11_MODULE(_slimt, m) {
   py::bind_vector<std::vector<float>>(m, "VectorFloat");
   py::bind_vector<Alignment>(m, "Alignment");
   py::bind_vector<Alignments>(m, "Alignments");
+  py::class_<Package>(m, "Package")
+      .def(py::init<>())
+      .def_readwrite("model", &Package::model)
+      .def_readwrite("vocabulary", &Package::vocabulary)
+      .def_readwrite("shortlist", &Package::shortlist);
+
+  py::class_<Config>(m, "Config").def(py::init<>());
 
   py::class_<PyService>(m, "Service")
       .def(py::init<size_t, size_t>(), py::arg("workers") = 1,
@@ -212,5 +220,9 @@ PYBIND11_MODULE(_slimt, m) {
 #endif
       ;
 
-  py::class_<Model, std::shared_ptr<Model>>(m, "Model");
+  py::class_<Model, std::shared_ptr<Model>>(m, "Model")
+      .def(py::init<>([](const Config &config, const Package &package) {
+             return std::make_shared<Model>(config, package);
+           }),
+           py::arg("config"), py::arg("package"));
 }
