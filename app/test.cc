@@ -648,19 +648,19 @@ void integration() {
     return path;
   };
 
-  Record<std::string> path{
+  Package<std::string> path{
       .model = prefix_browsermt("model.intgemm.alphas.bin"),  //
       .vocabulary = prefix_browsermt("vocab.deen.spm"),       //
       .shortlist = prefix_browsermt("lex.s2t.bin")            //
   };
 
-  Record<io::MmapFile> mmap{
+  Package<io::MmapFile> mmap{
       .model = io::MmapFile(path.model),            //
       .vocabulary = io::MmapFile(path.vocabulary),  //
       .shortlist = io::MmapFile(path.shortlist),    //
   };
 
-  Record<View> view{
+  Package<View> view{
       .model = {mmap.model.data(), mmap.model.size()},                 //
       .vocabulary = {mmap.vocabulary.data(), mmap.vocabulary.size()},  //
       .shortlist = {mmap.shortlist.data(), mmap.shortlist.size()},     //

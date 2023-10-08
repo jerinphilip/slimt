@@ -238,7 +238,7 @@ size_t model_id = 0;
 
 }
 
-Model::Model(const Config &config, Record<View> package)
+Model::Model(const Config &config, Package<View> package)
     : id_(model_id++),
       config_(config),
       vocabulary_(package.vocabulary),

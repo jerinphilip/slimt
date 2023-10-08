@@ -100,7 +100,7 @@ class Transformer {
 };
 
 template <class Field>
-struct Record {
+struct Package {
   Field model;
   Field vocabulary;
   Field shortlist;
@@ -108,7 +108,7 @@ struct Record {
 
 class Model {
  public:
-  explicit Model(const Config &config, Record<View> package);
+  explicit Model(const Config &config, Package<View> package);
   Config &config() { return config_; }
   Vocabulary &vocabulary() { return vocabulary_; }
   TextProcessor &processor() { return processor_; }

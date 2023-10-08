@@ -14,7 +14,7 @@ inline std::string read_from_stdin() {
 }
 
 struct Options {
-  slimt::Record<std::string> translator;
+  slimt::Package<std::string> translator;
   std::string root;
   bool async = false;
   bool html = false;
@@ -51,19 +51,19 @@ void run(const Options &options) {
   using namespace slimt;  // NOLINT
 
   // Adjust paths.
-  Record<std::string> adjusted{
+  Package<std::string> adjusted{
       .model = prefix(options.root, options.translator.model),            //
       .vocabulary = prefix(options.root, options.translator.vocabulary),  //
       .shortlist = prefix(options.root, options.translator.shortlist)     //
   };
 
-  Record<io::MmapFile> mmap{
+  Package<io::MmapFile> mmap{
       .model = io::MmapFile(adjusted.model),            //
       .vocabulary = io::MmapFile(adjusted.vocabulary),  //
       .shortlist = io::MmapFile(adjusted.shortlist),    //
   };
 
-  Record<View> view{
+  Package<View> view{
       .model = {mmap.model.data(), mmap.model.size()},                 //
       .vocabulary = {mmap.vocabulary.data(), mmap.vocabulary.size()},  //
       .shortlist = {mmap.shortlist.data(), mmap.shortlist.size()},     //
