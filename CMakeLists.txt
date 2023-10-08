@@ -129,10 +129,12 @@ target_include_directories(slimt PUBLIC ${CMAKE_BINARY_DIR})
 add_subdirectory(app)
 
 if(BUILD_PYTHON)
-  find_package(pybind11 REQUIRED)
   if(USE_PYBIND11_SOURCE)
     message(STATUS "Using pybind11 from source.")
     add_subdirectory(3rd-party/pybind11)
+  else(USE_PYBIND11_SOURCE)
+    find_package(pybind11 REQUIRED)
   endif(USE_PYBIND11_SOURCE)
+
   add_subdirectory(bindings/python)
 endif(BUILD_PYTHON)
