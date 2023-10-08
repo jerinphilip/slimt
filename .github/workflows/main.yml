@@ -220,7 +220,7 @@ jobs:
               # yum install -y openblas-devel
               
               # Install CBLAS
-              yum install -y atlas-devel
+              yum install -y atlas-devel blas-devel
 
               chmod -R a+rwx /host/${{ env.ccache_dir }}
 
