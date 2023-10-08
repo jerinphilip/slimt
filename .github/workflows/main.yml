@@ -68,9 +68,9 @@ jobs:
   build-wheels:
       strategy:
         matrix:
-          os: ["ubuntu-20.04"]
-         #- ubuntu-20.04
-				 # - windows-2019
+          os: 
+            - "ubuntu-20.04"
+          # - "windows-2019"
           # include:
           #   - os: macos-12
           #     BUILD_ARCH_MACOS: x86_64
