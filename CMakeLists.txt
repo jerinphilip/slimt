@@ -118,10 +118,6 @@ mark_as_advanced(
 )
 # cmake-format: on
 
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
-
 message(STATUS "Project name: ${PROJECT_NAME}")
 set(PROJECT_VERSION_FILE ${CMAKE_CURRENT_SOURCE_DIR}/slimt.version)
 include(GetVersionFromFile)

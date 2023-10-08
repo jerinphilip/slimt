@@ -55,7 +55,7 @@ class CMakeBuild(build_ext):
             f"-DPython_EXECUTABLE={sys.executable}",
             f"-DCMAKE_BUILD_TYPE={cfg}",  # not used on MSVC, but no harm
             f"-DBUILD_PYTHON=ON",
-            f"-DSSPLIT_USE_INTERNAL_PCRE2={internal_pcre2}",
+            f"-DSLIMT_USE_INTERNAL_PCRE2={internal_pcre2}",
         ]
 
         build_args = ["-t", "_slimt"]
@@ -206,7 +206,7 @@ setup(
     description="Translate text-content locally in your machine across languages.",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    ext_modules=[CMakeExtension("slimt/_slimt")],
+    ext_modules=[CMakeExtension("slimt._slimt")],
     cmdclass={"build_py": build_py, "build_ext": CMakeBuild},
     zip_safe=False,
     extras_require={"test": ["pytest>=6.0"]},
@@ -233,12 +233,10 @@ setup(
         "Intended Audience :: Developers",
         "Topic :: Software Development :: Build Tools",
         # Pick your license as you wish
-        "License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)",
+        # "License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)",
         # Specify the Python versions you support here. In particular, ensure
         # that you indicate you support Python 3. These classifiers are *not*
         # checked by 'pip install'. See instead 'python_requires' below.
-        "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
