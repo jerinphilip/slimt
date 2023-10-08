@@ -213,9 +213,14 @@ jobs:
               yum install -y ccache
 
               # Install Intel MKL.
-              yum-config-manager -y --add-repo https://yum.repos.intel.com/mkl/setup/intel-mkl.repo
-              yum install -y intel-mkl
-              yum install -y openblas-devel
+              # yum-config-manager -y --add-repo https://yum.repos.intel.com/mkl/setup/intel-mkl.repo
+              # yum install -y intel-mkl
+              
+              # Install OpenBLAS
+              # yum install -y openblas-devel
+              
+              # Install CBLAS
+              yum install -y blas-devel
 
               chmod -R a+rwx /host/${{ env.ccache_dir }}
 
