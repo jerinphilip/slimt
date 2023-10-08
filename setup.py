@@ -51,10 +51,10 @@ class CMakeBuild(build_ext):
         cmake_args = [
             f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={extdir}",
             f"-DCMAKE_RUNTIME_OUTPUT_DIRECTORY={extdir}",
-            f"-DPYTHON_EXECUTABLE={sys.executable}",
+            # f"-DPYTHON_EXECUTABLE={sys.executable}",
+            f"-DPython_EXECUTABLE={sys.executable}",
             f"-DCMAKE_BUILD_TYPE={cfg}",  # not used on MSVC, but no harm
-            f"-DCOMPILE_PYTHON=ON",
-            f"-DBUILD_ARCH={build_arch}",
+            f"-DBUILD_PYTHON=ON",
             f"-DSSPLIT_USE_INTERNAL_PCRE2={internal_pcre2}",
         ]
 
@@ -65,7 +65,7 @@ class CMakeBuild(build_ext):
             cmake_args += [item for item in os.environ["CMAKE_ARGS"].split(" ") if item]
 
         # In this example, we pass in the version to C++. You might not need to.
-        cmake_args += [f"-DEXAMPLE_VERSION_INFO={self.distribution.get_version()}"]
+        # cmake_args += [f"-DEXAMPLE_VERSION_INFO={self.distribution.get_version()}"]
 
         use_ccache = os.environ.get("USE_CCACHE", "0") == "1"
         if use_ccache:
@@ -203,7 +203,7 @@ setup(
     author="Jerin Philip",
     author_email="jerinphilip@live.in",
     url="https://github.com/jerinphilip/slimt/",
-    description="Translate text-content locally in your machine across langauges.",
+    description="Translate text-content locally in your machine across languages.",
     long_description=long_description,
     long_description_content_type="text/markdown",
     ext_modules=[CMakeExtension("slimt/_slimt")],

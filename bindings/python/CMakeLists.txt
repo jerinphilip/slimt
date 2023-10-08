@@ -1,5 +1,5 @@
 find_package(pybind11 REQUIRED)
-# find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
+find_package(Python COMPONENTS Interpreter Development.Module REQUIRED)
 
 message("Using Python: " ${Python_EXECUTABLE})
 
