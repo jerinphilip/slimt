@@ -24,7 +24,7 @@ class AtomicCache {
   void store(const Key &key, Value value) { atomic_store(key, value); }
 
  private:
-  using Package = std::pair<Key, Value>;
+  using Record = std::pair<Key, Value>;
 
   bool atomic_load(const Key &key, Value &value) const {
     // No probing, direct map onto records_
@@ -32,7 +32,7 @@ class AtomicCache {
     size_t lock_id = index % locks_.size();
 
     std::lock_guard<std::mutex> guard(locks_[lock_id]);
-    const Package &candidate = records_[index];
+    const Record &candidate = records_[index];
     if (equals_(key, candidate.first)) {
       value = candidate.second;
       return true;
@@ -47,13 +47,13 @@ class AtomicCache {
     size_t lock_id = index % locks_.size();
 
     std::lock_guard<std::mutex> guard(locks_[lock_id]);
-    Package &candidate = records_[index];
+    Record &candidate = records_[index];
 
     candidate.first = key;
     candidate.second = value;
   }
 
-  std::vector<Package> records_;
+  std::vector<Record> records_;
   mutable std::vector<std::mutex> locks_;
   Hash hash_;
   Equals equals_;
