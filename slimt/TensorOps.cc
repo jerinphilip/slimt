@@ -1,10 +1,20 @@
 #include "slimt/TensorOps.hh"
 
 #ifdef SLIMT_HAS_BLAS
+
+#ifdef __cplusplus
+extern "C" {
+#endif  // __cplusplus
+
 #include <cblas.h>
-#else
+
+#ifdef __cplusplus
+}
+#endif  // __cplusplus
+
+#else  // SLIMT_HAS_BLAS
 #include "3rd-party/ruy/ruy/ruy.h"
-#endif
+#endif  // SLIMT_HAS_BLAS
 
 #include <algorithm>
 #include <cassert>
