@@ -1,4 +1,4 @@
-message("Using Python: " ${Python_EXECUTABLE})
+message("Using Python: " ${PYTHON_EXECUTABLE})
 
 # pybind11 method:
 pybind11_add_module(_slimt SHARED slimt.cpp)
