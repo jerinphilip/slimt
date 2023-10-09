@@ -110,7 +110,7 @@ struct Package {
 class Model {
  public:
   explicit Model(const Config &config, const Package<std::string> &package);
-  // explicit Model(const Config &config, const Package<View> &package);
+  explicit Model(const Config &config, const Package<View> &package);
   Config &config() { return config_; }
   Vocabulary &vocabulary() { return vocabulary_; }
   TextProcessor &processor() { return processor_; }
@@ -122,8 +122,7 @@ class Model {
   size_t id_;
   Config config_;
   using Mmap = Package<io::MmapFile>;
-  Mmap mmap_;
-  // std::optional<Mmap> mmap_;
+  std::optional<Mmap> mmap_;
   Package<View> view_;
 
   Vocabulary vocabulary_;

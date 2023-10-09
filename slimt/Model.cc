@@ -254,7 +254,6 @@ Package<View> view_from(const Package<io::MmapFile> &mmap) {
 
 }  // namespace
 
-/*
 Model::Model(const Config &config, const Package<View> &package)
     : id_(model_id++),
       config_(config),
@@ -264,13 +263,12 @@ Model::Model(const Config &config, const Package<View> &package)
                  config.prefix_path),
       model_(config, package.model),
       shortlist_generator_(package.shortlist, vocabulary_, vocabulary_) {}
-*/
 
 Model::Model(const Config &config, const Package<std::string> &package)
     : id_(model_id++),
       config_(config),
       mmap_(mmap_from(package)),
-      view_(view_from(mmap_)),
+      view_(view_from(*mmap_)),
       vocabulary_(view_.vocabulary),
       processor_(config.wrap_length, config.split_mode, vocabulary_,
                  config.prefix_path),
