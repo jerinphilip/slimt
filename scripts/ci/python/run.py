@@ -1,10 +1,11 @@
+import os
+import subprocess as sp
 import sys
 from argparse import ArgumentParser
-import subprocess as sp
-import yaml
 from collections.abc import Iterable, Mapping
 from copy import deepcopy
-import os
+
+import yaml
 
 
 def str_presenter(dumper, data):
