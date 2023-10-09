@@ -56,16 +56,16 @@ def patch_marian_for_slimt(
 
 
 def toJSON(response: Response, *args, **kwargs) -> str:
-    def toPyNative(annotatedText: AnnotatedText) -> t.Dict[t.Any, t.Any]:
+    def toPyNative(annotated_text: AnnotatedText) -> t.Dict[t.Any, t.Any]:
         result = []
-        for sentenceIdx in range(annotatedText.numSentences()):
+        for sentenceIdx in range(annotated_text.sentence_count()):
             wordLs = []
-            for wordIdx in range(annotatedText.numWords(sentenceIdx)):
-                word = annotatedText.wordAsByteRange(sentenceIdx, wordIdx)
+            for wordIdx in range(annotated_text.word_count(sentenceIdx)):
+                word = annotated_text.word_as_range(sentenceIdx, wordIdx)
                 wordLs.append((word.begin, word.end))
             result.append(wordLs)
 
-        return {"text": annotatedText.text, "annotation": result}
+        return {"text": annotated_text.text, "annotation": result}
 
     return json.dumps(
         {

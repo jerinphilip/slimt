@@ -31,12 +31,6 @@ def test_basic():
             model = Model(config, package)
             print(repository, modelId)
             source = "1 2 3 4 5 6 7 8 9"
-            responses = service.translate(
-                model,
-                [source],
-                alignment=True,
-                quality_scores=True,
-                html=False,
-            )
+            responses = service.translate(model, [source], html=False)
             for response in responses:
                 print(toJSON(response, indent=4))
