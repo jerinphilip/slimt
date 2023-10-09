@@ -20,6 +20,8 @@ option(USE_SSSE3 "Use SSSE3" OFF)
 option(USE_SSE2 "Use SSE2" OFF)
 option(USE_NEON "Use NEON" OFF)
 
+option(SLIMT_SIMD "Use SLIMT SIMD" OFF)
+
 set(SLIMT_COMPILE_OPTIONS
     -Wall
     -Wextra
