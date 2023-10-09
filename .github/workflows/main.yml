@@ -187,7 +187,7 @@ jobs:
               PYTHON_LOCAL_VERSION_IDENTIFIER=${{ env.PYTHON_LOCAL_VERSION_IDENTIFIER }}
               CCACHE_DIR=/host/${{ env.ccache_dir }}
               CCACHE_BASEDIR=/host/${{ env.ccache_basedir }}
-              CMAKE_ARGS="-DUSE_PYBIND11_SOURCE=ON -DBLA_VENDOR=OpenBLAS -DSLIMT_SIMD=OFF"
+              CMAKE_ARGS="-DUSE_PYBIND11_SOURCE=ON -DBLA_VENDOR=OpenBLAS"
 
             CIBW_ENVIRONMENT_MACOS:
               BUILD_ARCH=${{ matrix.BUILD_ARCH_CMAKE }}
