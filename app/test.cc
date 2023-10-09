@@ -654,20 +654,8 @@ void integration() {
       .shortlist = prefix_browsermt("lex.s2t.bin")            //
   };
 
-  Package<io::MmapFile> mmap{
-      .model = io::MmapFile(path.model),            //
-      .vocabulary = io::MmapFile(path.vocabulary),  //
-      .shortlist = io::MmapFile(path.shortlist),    //
-  };
-
-  Package<View> view{
-      .model = {mmap.model.data(), mmap.model.size()},                 //
-      .vocabulary = {mmap.vocabulary.data(), mmap.vocabulary.size()},  //
-      .shortlist = {mmap.shortlist.data(), mmap.shortlist.size()},     //
-  };
-
   Config config;
-  auto model = std::make_shared<Model>(config, view);
+  auto model = std::make_shared<Model>(config, path);
   Blocking service(config);
   std::string source = "1 2\n1 2 3\n";
   slimt::Options opts;

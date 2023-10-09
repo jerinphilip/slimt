@@ -237,25 +237,24 @@ namespace {
 size_t model_id = 0;
 
 Package<io::MmapFile> mmap_from(const Package<std::string> &package) {
-  Package<io::MmapFile> mmap{
+  return {
       .model = io::MmapFile(package.model),            //
       .vocabulary = io::MmapFile(package.vocabulary),  //
       .shortlist = io::MmapFile(package.shortlist),    //
   };
-  return mmap;
 }
 
 Package<View> view_from(const Package<io::MmapFile> &mmap) {
-  Package<View> view{
+  return {
       .model = {mmap.model.data(), mmap.model.size()},                 //
       .vocabulary = {mmap.vocabulary.data(), mmap.vocabulary.size()},  //
       .shortlist = {mmap.shortlist.data(), mmap.shortlist.size()},     //
   };
-  return view;
 }
 
 }  // namespace
 
+/*
 Model::Model(const Config &config, const Package<View> &package)
     : id_(model_id++),
       config_(config),
@@ -265,12 +264,13 @@ Model::Model(const Config &config, const Package<View> &package)
                  config.prefix_path),
       model_(config, package.model),
       shortlist_generator_(package.shortlist, vocabulary_, vocabulary_) {}
+*/
 
 Model::Model(const Config &config, const Package<std::string> &package)
     : id_(model_id++),
       config_(config),
       mmap_(mmap_from(package)),
-      view_(view_from(*mmap_)),
+      view_(view_from(mmap_)),
       vocabulary_(view_.vocabulary),
       processor_(config.wrap_length, config.split_mode, vocabulary_,
                  config.prefix_path),
