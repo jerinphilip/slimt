@@ -87,17 +87,22 @@ command-line usage and testing respectively.
 build/bin/slimt                               \
     --root <path/to/folder>                   \
     --model </relative/path/to/model>         \
-    --vocabulary </relative/path/to/vocab>         \
+    --vocabulary </relative/path/to/vocab>    \
     --shortlist </relative/path/to/shortlist>
 
 build/slimt_test <test-name>
 ```
 
-To procure models, use the existing Python CLI.
+### Python
+
+Python bindings to the C++ code are available. 
 
 ```bash
-# Install `bergamot` CLI via pip.
-python3 -m pip install bergamot -f  https://github.com/jerinphilip/bergamot-translator/releases/expanded_assets/latest
+python3 -m venv env
+source env/bin/activate
+python3 -m pip install wheel
+python3 setup.py bdist_wheel
+python3 -m pip install dist/<wheel-name>.whl
 
 # Download en-de-tiny and de-en-tiny models.
 bergamot download -m en-de-tiny

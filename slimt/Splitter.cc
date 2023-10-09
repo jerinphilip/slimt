@@ -362,13 +362,13 @@ bool SentenceStream::operator>>(std::string_view& snt) {
     snt = splitter_(&paragraph_);
   }
   return true;
-};
+}
 
 bool SentenceStream::operator>>(std::string& snt) {
   std::string_view s;
   if (!((*this) >> s)) return false;
   single_line(snt, s, "", false);
   return true;
-};
+}
 
 }  // namespace slimt

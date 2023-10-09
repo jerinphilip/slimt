@@ -316,14 +316,13 @@ MmapFile::~MmapFile() {
 
 MmapFile::MmapFile(MmapFile&& from) noexcept
     : fd_(from.fd_), data_(from.data_), size_(from.size_) {
-  reset();
-};
+  from.reset();
+}
 
 MmapFile& MmapFile::operator=(MmapFile&& from) noexcept {
   if (this == &from) {
     return *this;
   }
-  reset();
   consume(from);
   return *this;
 }

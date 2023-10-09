@@ -4,7 +4,7 @@
             "name": "(gdb) test",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/bin/slimt_test",
+            "program": "${workspaceFolder}/build/app/slimt_test",
             "args": [
                 "integration",
                 "ShortlistGen",
@@ -38,7 +38,7 @@
             "name": "(gdb) main",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/bin/slimt",
+            "program": "${workspaceFolder}/build/app/slimt",
             "args": [
                 "--root",
                 "/home/jerin/.local/share/bergamot/models/browsermt/ende.student.tiny11/",

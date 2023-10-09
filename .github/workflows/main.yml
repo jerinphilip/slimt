@@ -8,6 +8,15 @@ on:
   pull_request:
     branches:
       - '**'
+env:
+  ccache_basedir: ${{ github.workspace }}
+  ccache_dir: "${{ github.workspace }}/.ccache"
+  ccache_compilercheck: content
+  ccache_compress: 'true'
+  ccache_compresslevel: 9
+  ccache_maxsize: 200M
+  ccache_cmake: -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_C_COMPILER_LAUNCHER=ccache
+  ccache_version: '4.5'
 
 jobs:
   formatting:
@@ -64,3 +73,207 @@ jobs:
         - name: Test
           run:
             bash scripts/ci/${{ matrix.name }}/03-test.sh
+
+  build-wheels:
+      strategy:
+        matrix:
+          os: 
+            - "ubuntu-20.04"
+          # - "windows-2019"
+          # include:
+          #   - os: macos-12
+          #     BUILD_ARCH_MACOS: x86_64
+          #     BUILD_ARCH_CMAKE: core-avx-i
+          #   - os: macos-12
+          #     BUILD_ARCH_MACOS: arm64
+          #     BUILD_ARCH_CMAKE: armv8-a
+
+        fail-fast: false
+
+      name: "cibuildwheel / ${{ matrix.os }}"
+      runs-on: ${{ matrix.os }}
+
+      steps:
+        - uses: actions/checkout@v2
+          with:
+            submodules: recursive
+        - name: "Fetch pybind11"
+          run: |
+            git clone https://github.com/pybind/pybind11 3rd-party/pybind11
+
+        - name: Generate ccache_vars for ccache based on machine
+          shell: bash
+          id: ccache_vars
+          run: |-
+            echo "::set-output name=hash::$(echo ${{ env.ccache_compilercheck }})"
+            echo "::set-output name=timestamp::$(date '+%Y-%m-%dT%H.%M.%S')"
+
+        - name: Cache-op for build-cache through ccache
+          uses: actions/cache@v2
+          with:
+            path: ${{ env.ccache_dir }}
+            key: ccache-cibuildwheel-${{ matrix.os }}-${{ steps.ccache_vars.outputs.hash }}-${{ github.ref }}-${{ steps.ccache_vars.outputs.timestamp }}
+            restore-keys: |-
+              ccache-cibuildwheel-${{ matrix.os }}-${{ steps.ccache_vars.outputs.hash }}-${{ github.ref }}
+              ccache-cibuildwheel-${{ matrix.os }}-${{ steps.ccache_vars.outputs.hash }}
+              ccache-cibuildwheel-${{ matrix.os }}
+
+        - name: ccache environment setup
+          shell: bash
+          run: |-
+            mkdir -p ${{ env.ccache_dir }}
+
+        - name: Inject local version identifier for non tag builds
+          if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
+          shell: bash
+          run: |-
+            echo "PYTHON_LOCAL_VERSION_IDENTIFIER=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+
+        - name: Apply MacOS patch
+          if: ${{ startsWith(runner.os, 'mac') }}
+          run: |
+            patch -p1 < patches/01-marian-fstream-for-macos.patch
+
+        - name: "Windows: Install dependencies"
+          if: ${{ startsWith(runner.os, 'windows') }}
+          shell: powershell
+          run: |
+            C:\msys64\usr\bin\wget.exe -nv ${{ env.NUGET_MKL_URL }} -O mkl.zip
+            Expand-Archive -Force mkl.zip ${{ env.WIN_NUGET_DIR}}
+
+            New-Item -Path ${{ github.workspace }} -Name "mkl" -ItemType "directory"
+
+            Move-Item -Path ${{ env.WIN_NUGET_DIR }}\lib\native\win-x64 -Destination ${{ env.WIN_MKL_ROOT }}\lib
+            Move-Item -Path ${{ env.WIN_NUGET_DIR }}\lib\native\include -Destination ${{ env.WIN_MKL_ROOT }}\include
+
+            Get-ChildItem -Recurse -Path ${{ env.WIN_MKL_ROOT }}
+
+            $PSDefaultParameterValues['Out-File:Encoding'] = 'utf8' 
+            echo "set(VCPKG_BUILD_TYPE release)" | Tee-Object -FilePath C:\vcpkg\triplets\x64-windows-static.cmake -Append
+            echo "set(VCPKG_BUILD_TYPE release)" | Tee-Object -FilePath C:\vcpkg\triplets\x64-windows.cmake -Append
+            # Commenting out, but useful in checks via CI
+            # cat C:\vcpkg\triplets\x64-windows-static.cmake
+            # cat C:\vcpkg\triplets\x64-windows.cmake
+            # cat C:\vcpkg\scripts\buildsystems\vcpkg.cmake
+            C:\vcpkg\vcpkg install protobuf:x64-windows-static pcre2:x64-windows-static
+            C:\vcpkg\vcpkg upgrade --no-dry-run 
+
+        - name: Download ccache
+          if: ${{ startsWith(runner.os, 'windows') }}
+          shell: cmake -P {0}
+          run: |
+            set(ccache_url "https://github.com/cristianadam/ccache/releases/download/v${{ env.ccache_version }}/${{ runner.os }}.tar.xz")
+            file(DOWNLOAD "${ccache_url}" ./ccache.tar.xz SHOW_PROGRESS)
+            execute_process(COMMAND ${CMAKE_COMMAND} -E tar xvf ./ccache.tar.xz)
+            if(ret AND NOT ret EQUAL 0)
+              message( FATAL_ERROR "Bad exit status")
+            endif()
+
+
+        - name: Build wheels
+          uses: pypa/cibuildwheel@v2.11.1
+          # to supply options, put them in 'env', like:
+          env:
+            CIBW_BUILD_VERBOSITY: 3
+            CIBW_ARCHS_MACOS: ${{ matrix.BUILD_ARCH_MACOS }}
+
+            CIBW_ENVIRONMENT_LINUX:
+              BUILD_ARCH=core-avx-i
+              USE_CCACHE=1
+              CCACHE_COMPILER_CHECK=${{ env.ccache_compilercheck }}
+              CCACHE_COMPRESS=${{ env.ccache_compress }}
+              CCACHE_COMPRESSLEVEL=${{ env.ccache_compresslevel }}
+              CCACHE_MAXSIZE=${{ env.ccache_maxsize }}
+              PYTHON_LOCAL_VERSION_IDENTIFIER=${{ env.PYTHON_LOCAL_VERSION_IDENTIFIER }}
+              CCACHE_DIR=/host/${{ env.ccache_dir }}
+              CCACHE_BASEDIR=/host/${{ env.ccache_basedir }}
+              CMAKE_ARGS="-DUSE_PYBIND11_SOURCE=ON -DBLA_VENDOR=OpenBLAS"
+
+            CIBW_ENVIRONMENT_MACOS:
+              BUILD_ARCH=${{ matrix.BUILD_ARCH_CMAKE }}
+              USE_CCACHE=1
+              CCACHE_COMPILER_CHECK=${{ env.ccache_compilercheck }}
+              CCACHE_COMPRESS=${{ env.ccache_compress }}
+              CCACHE_COMPRESSLEVEL=${{ env.ccache_compresslevel }}
+              CCACHE_MAXSIZE=${{ env.ccache_maxsize }}
+              PYTHON_LOCAL_VERSION_IDENTIFIER=${{ env.PYTHON_LOCAL_VERSION_IDENTIFIER }}
+              CCACHE_DIR=${{ env.ccache_dir }}
+              CCACHE_BASEDIR=${{ env.ccache_basedir }}
+              MACOSX_DEPLOYMENT_TARGET=10.9
+
+            CIBW_ENVIRONMENT_WINDOWS:
+              PYTHON_LOCAL_VERSION_IDENTIFIER=${{ env.PYTHON_LOCAL_VERSION_IDENTIFIER }}
+              MKLROOT='${{ env.WIN_MKL_ROOT }}'
+              VCPKG_BUILD_TYPE=release
+              VCPKG_DEFAULT_TRIPLET=x64-windows-static
+              CMAKE_ARGS='-DVCPKG_TARGET_TRIPLET=x64-windows-static -DCMAKE_TOOLCHAIN_FILE=C:\vcpkg\scripts\buildsystems\vcpkg.cmake -DCMAKE_CXX_COMPILER_LAUNCHER=${{github.workspace}}\ccache.exe  -DCMAKE_C_COMPILER_LAUNCHER=${{github.workspace}}\ccache.exe -DUSE_STATIC_LIBS=ON'
+
+
+            CIBW_BEFORE_BUILD_LINUX: |
+              yum install -y ccache
+
+              # Install Intel MKL.
+              # yum-config-manager -y --add-repo https://yum.repos.intel.com/mkl/setup/intel-mkl.repo
+              # yum install -y intel-mkl
+              
+              # Install OpenBLAS
+              yum install -y openblas-devel atlas-devel
+              
+              # Install CBLAS
+              # yum install -y atlas-devel blas-devel
+
+              chmod -R a+rwx /host/${{ env.ccache_dir }}
+
+              ccache -s # Print current cache stats
+              ccache -z # Zero cache entry
+
+            CIBW_BEFORE_BUILD_MACOS: |
+              brew install openblas protobuf ccache boost pybind11
+              chmod -R a+rwx ${{ env.ccache_dir }}
+              ccache -s # Print current cache stats
+              ccache -z # Zero cache entry
+
+            CIBW_BEFORE_BUILD_WINDOWS: |
+              ${{github.workspace}}\ccache.exe -sv # Print current cache stats
+              ${{github.workspace}}\ccache.exe -z # Print current cache stats
+
+
+            CIBW_BUILD: "cp{37,38,39,310,311}-*manylinux_x86_64 cp{37,38,39,310,311}-macosx_x86_64 cp3{8,9,10}-win_amd64 cp*macosx_arm64"
+
+            CIBW_BEFORE_TEST_LINUX: |
+              ccache -s # Print current ccache stats
+
+            CIBW_BEFORE_TEST_MACOS: |
+              ccache -s # Print current ccache stats
+
+            CIBW_BEFORE_TEST_WINDOWS: |
+              ${{github.workspace}}\\ccache.exe -sv # Print current cache stats
+
+
+            CIBW_TEST_EXTRAS: test
+            CIBW_TEST_COMMAND: |
+              python -m pytest --pyargs slimt -s
+
+
+        - uses: actions/upload-artifact@v2
+          with:
+            name: wheels
+            path: ./wheelhouse/*.whl
+  upload-wheels:
+    name: "Upload wheels to PyPI"
+    runs-on: ubuntu-latest
+    if: ${{ startsWith(github.ref, 'refs/tags/v') }}
+    needs: [build-wheels]
+    steps:
+    - name: Download artifacts
+      uses: actions/download-artifact@v2
+      with:
+        name: wheels
+
+    - name: Publish wheels to PyPI
+      env:
+        TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+        TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+      run: |
+        python3 -m pip install twine
+        twine upload *.whl
