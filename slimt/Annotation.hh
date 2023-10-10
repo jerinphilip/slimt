@@ -147,7 +147,7 @@ class AnnotatedText {
   /// text.
   void append_ending_whitespace(std::string_view whitespace);
 
-  /// Record the existence of a sentence that is already in text.  The
+  /// Package the existence of a sentence that is already in text.  The
   /// iterators are over std::string_views for each token that must be in text
   /// already.  This function must be called to record sentences in order.
   /// Normally the beginning of the sentence can be inferred from

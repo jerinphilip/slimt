@@ -63,8 +63,8 @@ typedef union imm_xmm_union {
     return (ret);                                                     \
   }
 
-AVX2_BITOP_USING_SSE2(slli_epi32);  // NOLINT
-AVX2_INTOP_USING_SSE2(add_epi32);   // NOLINT
+AVX2_BITOP_USING_SSE2(slli_epi32)  // NOLINT
+AVX2_INTOP_USING_SSE2(add_epi32)   // NOLINT
 
 #define _PI32_CONST256(Name, Val)                                  \
   static const ALIGN32_BEG int _pi32_256_##Name[8] ALIGN32_END = { \

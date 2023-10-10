@@ -4,6 +4,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 project(slimt CXX C)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 option(WITH_ASAN "Enable AddressSanitizer in builds" OFF)
 option(WITH_TESTS "Enable building tests (requires a few extra libraries)" OFF)
@@ -19,14 +20,16 @@ option(USE_SSSE3 "Use SSSE3" OFF)
 option(USE_SSE2 "Use SSE2" OFF)
 option(USE_NEON "Use NEON" OFF)
 
+option(SLIMT_SIMD "Use SLIMT SIMD" OFF)
+
 set(SLIMT_COMPILE_OPTIONS
     -Wall
-    -Wpedantic
     -Wextra
     -Wno-unknown-pragmas
     -Werror
     -Wno-missing-field-initializers
-    -Wno-unused-function)
+    -Wno-unused-function
+    -pedantic)
 
 set(SLIMT_COMPILE_DEFINITIONS "")
 
@@ -36,9 +39,21 @@ add_subdirectory(3rd-party)
 set(SLIMT_EXTERNAL_LIBS SentencePiece::SentencePiece PCRE2::PCRE2)
 
 if(WITH_BLAS)
-  find_package(BLAS)
+  find_package(BLAS REQUIRED)
+  find_path(CBLAS_INCLUDE_DIR cblas.h)
+
+  if(BLAS_FOUND AND NOT TARGET BLAS::BLAS)
+    add_library(BLAS::BLAS INTERFACE IMPORTED)
+    set_target_properties(
+      BLAS::BLAS
+      PROPERTIES INTERFACE_INCLUDE_DIRECTORIES
+                 "${BLAS_INCLUDE_DIR} ${CBLAS_INCLUDE_DIR}"
+                 INTERFACE_LINK_LIBRARIES "${BLAS_LIBRARIES}")
+  endif()
+
   set(SLIMT_EXTERNAL_LIBS ${SLIMT_EXTERNAL_LIBS} BLAS::BLAS)
   set(SLIMT_COMPILE_DEFINITIONS ${SLIMT_COMPILE_DEFINITIONS} SLIMT_HAS_BLAS)
+
   if(APPLE)
     set(BLAS_VENDOR "Accelerate")
     # see https://developer.apple.com/documentation/accelerate for more info you
@@ -117,10 +132,6 @@ mark_as_advanced(
 )
 # cmake-format: on
 
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
-
 message(STATUS "Project name: ${PROJECT_NAME}")
 set(PROJECT_VERSION_FILE ${CMAKE_CURRENT_SOURCE_DIR}/slimt.version)
 include(GetVersionFromFile)
@@ -130,3 +141,14 @@ add_subdirectory(slimt)
 target_include_directories(slimt PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(slimt PUBLIC ${CMAKE_BINARY_DIR})
 add_subdirectory(app)
+
+if(BUILD_PYTHON)
+  if(USE_PYBIND11_SOURCE)
+    message(STATUS "Using pybind11 from source.")
+    add_subdirectory(3rd-party/pybind11)
+  else(USE_PYBIND11_SOURCE)
+    find_package(pybind11 REQUIRED)
+  endif(USE_PYBIND11_SOURCE)
+
+  add_subdirectory(bindings/python)
+endif(BUILD_PYTHON)
