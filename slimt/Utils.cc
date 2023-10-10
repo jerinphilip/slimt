@@ -212,12 +212,12 @@ Tensor tensor_from_file(const std::string &fpath, const Shape &shape,
 
 #define SLIMT_TENSOR_FROM_FILE_EXPLICIT(type) \
   template Tensor tensor_from_file<type>(     \
-      const std::string &fpath, const Shape &shape, const std::string &name);
+      const std::string &fpath, const Shape &shape, const std::string &name)
 
 #define SLIMT_QTENSOR_FROM_FILE_EXPLICIT(type, quant_type) \
   template std::tuple<Tensor, quant_type>                  \
   quantized_tensor_from_file<type, quant_type>(            \
-      const std::string &fpath, const Shape &shape, const std::string &name);
+      const std::string &fpath, const Shape &shape, const std::string &name)
 
 SLIMT_TENSOR_FROM_FILE_EXPLICIT(float);
 SLIMT_TENSOR_FROM_FILE_EXPLICIT(int);

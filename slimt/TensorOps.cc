@@ -1,10 +1,20 @@
 #include "slimt/TensorOps.hh"
 
 #ifdef SLIMT_HAS_BLAS
+
+#ifdef __cplusplus
+extern "C" {
+#endif  // __cplusplus
+
 #include <cblas.h>
-#else
+
+#ifdef __cplusplus
+}
+#endif  // __cplusplus
+
+#else  // SLIMT_HAS_BLAS
 #include "3rd-party/ruy/ruy/ruy.h"
-#endif
+#endif  // SLIMT_HAS_BLAS
 
 #include <algorithm>
 #include <cassert>
@@ -59,7 +69,7 @@ void transpose_10(const Scalar* in, size_t rows, size_t cols, Scalar* out) {
 // NOLINTBEGIN
 #define SLIMT_TRANSPOSE_10_EXPLICIT(Type)                                    \
   template void transpose_10<Type>(const Type* in, size_t rows, size_t cols, \
-                                   Type* out);
+                                   Type* out)
 // NOLINTEND
 
 SLIMT_TRANSPOSE_10_EXPLICIT(float);

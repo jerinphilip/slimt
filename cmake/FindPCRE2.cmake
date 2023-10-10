@@ -12,14 +12,14 @@ if(SLIMT_USE_INTERNAL_PCRE2)
   set(PCRE2_VERSION "10.39")
   set(PCRE2_FILENAME "pcre2-${PCRE2_VERSION}")
   set(PCRE2_TARBALL "${PCRE2_FILENAME}.tar.gz")
-  set(PCRE2_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/3rd-party/${PCRE2_FILENAME}")
+  set(PCRE2_SOURCE_DIR "${CMAKE_BINARY_DIR}/${PCRE2_FILENAME}")
 
   # Download tarball only if we don't have the pcre2 source code yet. For the
   # time being, we download and unpack pcre2 into the ssplit source tree. This
   # is not particularly clean but allows us to wipe the build dir without having
   # to re-download pcre2 so often. Git has been instructed to ignore
-  # ${PCRE2_SRC_DIR} via .gitignore.
-  if(EXISTS ${PCRE2_SRC_DIR}/configure)
+  # ${PCRE2_SOURCE_DIR} via .gitignore.
+  if(EXISTS ${PCRE2_SOURCE_DIR}/configure)
     set(PCRE2_URL "")
   else()
     set(PCRE2_URL
@@ -31,9 +31,9 @@ if(SLIMT_USE_INTERNAL_PCRE2)
   # Set configure options for internal pcre2 depeding on compiler
   if(CMAKE_CXX_COMPILER MATCHES "/em\\+\\+(-[a-zA-Z0-9.])?$")
     # jit compilation isn't supported by wasm
-    set(PCRE2_JIT_OPTION "-DPCRE2_SUPPORT_JIT=OFF")
+    set(PCRE2_SUPPORT_JIT "OFF")
   else()
-    set(PCRE2_JIT_OPTION "-DPCRE2_SUPPORT_JIT=ON")
+    set(PCRE2_SUPPORT_JIT "ON")
   endif()
 
   # CMAKE_CROSSCOMPILING_EMULATOR might contain semicolon (;) separated
@@ -48,16 +48,12 @@ if(SLIMT_USE_INTERNAL_PCRE2)
   include(GNUInstallDirs)
   set(PCRE2_CONFIGURE_OPTIONS
       -DBUILD_SHARED_LIBS=OFF
-      -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}
+      -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}
       -DCMAKE_BUILD_TYPE=Release
-      -DCMAKE_INSTALL_LIBDIR=${CMAKE_INSTALL_LIBDIR}
-      ${PCRE2_JIT_OPTION}
-      -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE} # Necessary for proper
-                                                     # MacOS compilation
-      -DCMAKE_CROSSCOMPILING_EMULATOR=${CMAKE_CROSSCOMPILING_EMULATOR_WITH_SEMICOLON} # Necessary
-                                                                                      # for proper
-                                                                                      # MacOS
-                                                                                      # compilation
+      -DPCRE2_SUPPORT_JIT=${PCRE2_SUPPORT_JIT}
+      # Necessary for proper MacOS (emscripten) compilation
+      -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
+      -DCMAKE_CROSSCOMPILING_EMULATOR=${CMAKE_CROSSCOMPILING_EMULATOR_WITH_SEMICOLON}
       -DCMAKE_POSITION_INDEPENDENT_CODE:BOOL=true # Added for pybind11
   )
 
@@ -70,24 +66,30 @@ if(SLIMT_USE_INTERNAL_PCRE2)
   endif(ANDROID)
 
   # set include dirs and libraries for PCRE2
+  set(PCRE2_INCLUDE_DIR "${CMAKE_BINARY_DIR}/include")
+  set(PCRE2_LIBDIR ${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR})
   set(PCRE2_LIBRARIES
-      ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}/${CMAKE_STATIC_LIBRARY_PREFIX}pcre2-8${CMAKE_STATIC_LIBRARY_SUFFIX}
+      ${PCRE2_LIBDIR}/${CMAKE_STATIC_LIBRARY_PREFIX}pcre2-8${CMAKE_STATIC_LIBRARY_SUFFIX}
   )
-  set(PCRE2_INCLUDE_DIR "${CMAKE_CURRENT_BINARY_DIR}/include")
-  file(MAKE_DIRECTORY ${PCRE2_INCLUDE_DIR})
 
   # download, configure, compile
   ExternalProject_Add(
     pcre2
-    PREFIX ${CMAKE_CURRENT_BINARY_DIR}/pcre2
+    PREFIX ${CMAKE_BINARY_DIR}
     URL ${PCRE2_URL}
-    DOWNLOAD_DIR ${PCRE2_SRC_DIR}
-    SOURCE_DIR ${PCRE2_SRC_DIR}
-    CONFIGURE_COMMAND ${CMAKE_COMMAND} ${PCRE2_SRC_DIR}
+    DOWNLOAD_DIR ${PCRE2_SOURCE_DIR}
+    SOURCE_DIR ${PCRE2_SOURCE_DIR}
+    CONFIGURE_COMMAND ${CMAKE_COMMAND} ${PCRE2_SOURCE_DIR}
                       ${PCRE2_CONFIGURE_OPTIONS}
     BUILD_COMMAND ${CMAKE_COMMAND} --build <BINARY_DIR>
-    INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}
-    BUILD_BYPRODUCTS ${PCRE2_LIBRARIES})
+    INSTALL_DIR ${CMAKE_BINARY_DIR})
+
+  add_library(pcre2-lib INTERFACE)
+  add_dependencies(pcre2-lib pcre2)
+  set_target_properties(
+    pcre2-lib PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "${PCRE2_INCLUDE_DIR}"
+                         INTERFACE_LINK_LIBRARIES "${PCRE2_LIBRARIES}")
+  add_library(PCRE2::PCRE2 ALIAS pcre2-lib)
 
 else(SLIMT_USE_INTERNAL_PCRE2)
   find_library(
@@ -98,24 +100,24 @@ else(SLIMT_USE_INTERNAL_PCRE2)
   )
 
   find_path(PCRE2_INCLUDE_DIR pcre2.h)
+  if(PCRE2_LIBRARIES AND PCRE2_INCLUDE_DIR)
+    mark_as_advanced(PCRE2_FOUND PCRE2_INCLUDE_DIR PCRE2_LIBRARIES
+                     PCRE2_VERSION)
+    include(FindPackageHandleStandardArgs)
+    find_package_handle_standard_args(
+      PCRE2
+      REQUIRED_VARS PCRE2_INCLUDE_DIR PCRE2_LIBRARIES
+      VERSION_VAR PCRE2_VERSION)
+    set(PCRE2_FOUND TRUE)
+  else()
+    set(PCRE2_FOUND FALSE)
+  endif()
 
+  if(PCRE2_FOUND AND NOT TARGET PCRE2::PCRE2)
+    add_library(PCRE2::PCRE2 INTERFACE IMPORTED)
+    set_target_properties(
+      PCRE2::PCRE2
+      PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "${PCRE2_INCLUDE_DIR}"
+                 INTERFACE_LINK_LIBRARIES "${PCRE2_LIBRARIES}")
+  endif()
 endif(SLIMT_USE_INTERNAL_PCRE2)
-
-if(PCRE2_LIBRARIES AND PCRE2_INCLUDE_DIR)
-  mark_as_advanced(PCRE2_FOUND PCRE2_INCLUDE_DIR PCRE2_LIBRARIES PCRE2_VERSION)
-  include(FindPackageHandleStandardArgs)
-  find_package_handle_standard_args(
-    PCRE2
-    REQUIRED_VARS PCRE2_INCLUDE_DIR PCRE2_LIBRARIES
-    VERSION_VAR PCRE2_VERSION)
-  set(PCRE2_FOUND TRUE)
-else()
-  set(PCRE2_FOUND FALSE)
-endif()
-
-if(PCRE2_FOUND AND NOT TARGET PCRE2::PCRE2)
-  add_library(PCRE2::PCRE2 INTERFACE IMPORTED)
-  set_target_properties(
-    PCRE2::PCRE2 PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "${PCRE2_INCLUDE_DIR}"
-                            INTERFACE_LINK_LIBRARIES "${PCRE2_LIBRARIES}")
-endif()
