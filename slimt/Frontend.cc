@@ -380,6 +380,81 @@ std::future<Response> Async::translate(Ptr<Model> &model, std::string source,
   batcher_.enqueue(model, request);
   return future;
 }
+std::future<Response> Async::pivot(Ptr<Model> &first, Ptr<Model> &second,
+                                   std::string source, const Options &options) {
+  Ptr<HTML> html = nullptr;
+  if (options.html) {
+    html = std::make_shared<HTML>(source);
+  }
+
+  // This is callback chaining or CPS due to async.
+  using Promise = std::promise<Response>;
+
+  Promise promise;
+  auto future = promise.get_future();
+
+  auto continuation = [this, &promise, second,
+                       html](Response &&source_to_pivot) {
+    // We cannot eliminate the following copy, as we need two versions of
+    // intermediate. Holding it in a copy allows moving the response into the
+    // lambda below.
+    AnnotatedText intermediate = source_to_pivot.target;
+
+    // https://stackoverflow.com/a/65606554/4565794
+    // Move semantics only work on mutable lambdas, and can only be done once.
+    // It's only once in our case, so issok.
+    auto joining_continuation = [source_to_pivot = std::move(source_to_pivot),
+                                 &promise,
+                                 html](Response &&pivotToTarget) mutable {
+      // We have both Responses at this callback, source_to_pivot is moved in,
+      // second half will be available when complete.
+      Response response =
+          combine(std::move(source_to_pivot), std::move(pivotToTarget));
+
+      // Sentences should be consistent now, give way to client.
+      if (html) {
+        html->restore(response);
+      }
+      promise.set_value(std::move(response));
+    };
+
+    // Second call.
+    std::string pivot = intermediate.text;
+    auto [annotated_pivot, segments] =
+        second->processor().process(std::move(pivot));
+    Options raw{.html = false};
+    ResponseBuilder response_builder(                          //
+        raw, std::move(annotated_pivot),                       //
+        second->vocabulary(), std::move(joining_continuation)  //
+    );
+
+    auto request = std::make_shared<rd::Request>(
+        id_, second->id(),                                 //
+        std::move(segments), std::move(response_builder),  //
+        cache_                                             //
+    );
+
+    batcher_.enqueue(second, request);
+  };
+
+  auto [annotated_source, segments] =
+      first->processor().process(std::move(source));
+
+  ResponseBuilder response_builder(                 //
+      options, std::move(annotated_source),         //
+      first->vocabulary(), std::move(continuation)  //
+  );
+
+  auto request = std::make_shared<rd::Request>(  //
+      id_, first->id(),                          //
+      std::move(segments),                       //
+      std::move(response_builder),               //
+      cache_                                     //
+  );
+
+  batcher_.enqueue(first, request);
+  return future;
+}
 
 Async::~Async() {
   batcher_.shutdown();
