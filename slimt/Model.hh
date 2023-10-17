@@ -63,7 +63,6 @@ class Model {
   explicit Model(const Config &config, const Package<std::string> &package);
   explicit Model(const Config &config, const Package<View> &package);
 
-  Histories decode(Tensor &encoder_out, Batch &batch);
   Histories forward(Batch &batch);
 
   Config &config() { return config_; }
@@ -74,6 +73,8 @@ class Model {
   ShortlistGenerator &shortlist_generator() { return shortlist_generator_; }
 
  private:
+  Histories decode(Tensor &encoder_out, Batch &batch);
+
   size_t id_;
   Config config_;
   using Mmap = Package<io::MmapFile>;
