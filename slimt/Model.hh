@@ -84,7 +84,6 @@ class Transformer {
  public:
   explicit Transformer(const Config &config, View model);
 
-  Config &config() { return config_; }
   Tensor &embedding() { return embedding_; }
   Encoder &encoder() { return encoder_; }
   Decoder &decoder() { return decoder_; }
@@ -93,7 +92,6 @@ class Transformer {
   void register_parameters(const std::string &prefix, ParameterMap &parameters);
   void load_parameters();
 
-  Config config_;
   std::vector<io::Item> items_;
   Tensor embedding_;
   Encoder encoder_;
