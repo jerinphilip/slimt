@@ -1,4 +1,3 @@
-
 #include "slimt/Frontend.hh"
 
 #include <algorithm>
@@ -148,40 +147,49 @@ Histories forward(Batch &batch, const size_t &tgt_length_limit_factor,
 
 Blocking::Blocking(const Config &config) : config_(config) {}  // NOLINT
 
-Response Blocking::translate(Ptr<Model> &model, std::string source,
-                             const Options &options) {
-  // Create a request
-  std::optional<HTML> html = std::nullopt;
-  if (options.html) {
-    html.emplace(source);
-  }
-  auto [annotated_source, segments] =
-      model->processor().process(std::move(source));
-
-  std::promise<Response> promise;
-  auto future = promise.get_future();
-  auto continuation = [&html, &promise](Response &&response) {
-    if (html) {
-      html->restore(response);
-    }
-    promise.set_value(std::move(response));
-  };
-
-  ResponseBuilder response_builder(                 //
-      options, std::move(annotated_source),         //
-      model->vocabulary(), std::move(continuation)  //
-  );
-
-  auto request = std::make_shared<rd::Request>(  //
-      id_, model_id_,                            //
-      std::move(segments),                       //
-      std::move(response_builder),               //
-      cache_                                     //
-  );
-
+std::vector<Response> Blocking::translate(Ptr<Model> &model,
+                                          std::vector<std::string> sources,
+                                          const Options &options) {
   rd::Batcher batcher(config_.max_words, config_.wrap_length,
                       config_.tgt_length_limit_factor);
-  batcher.enqueue(request);
+
+  using Future = std::future<Response>;
+  std::vector<Future> futures;
+  futures.reserve(sources.size());
+  // Create a request
+  std::optional<HTML> html = std::nullopt;
+  for (auto &source : sources) {
+    if (options.html) {
+      html.emplace(source);
+    }
+
+    auto [annotated_source, segments] =
+        model->processor().process(std::move(source));
+
+    std::promise<Response> promise;
+    auto future = promise.get_future();
+    futures.push_back(std::move(future));
+    auto continuation = [&html, &promise](Response &&response) {
+      if (html) {
+        html->restore(response);
+      }
+      promise.set_value(std::move(response));
+    };
+
+    ResponseBuilder response_builder(                 //
+        options, std::move(annotated_source),         //
+        model->vocabulary(), std::move(continuation)  //
+    );
+
+    auto request = std::make_shared<rd::Request>(  //
+        id_, model_id_,                            //
+        std::move(segments),                       //
+        std::move(response_builder),               //
+        cache_                                     //
+    );
+
+    batcher.enqueue(request);
+  }
 
   AverageMeter<float> wps;
   AverageMeter<float> occupancy;
@@ -202,9 +210,99 @@ Response Blocking::translate(Ptr<Model> &model, std::string source,
     occupancy.record(batch.occupancy());
   }
 
-  future.wait();
-  Response response = future.get();
-  return response;
+  std::vector<Response> responses;
+  responses.reserve(futures.size());
+  for (auto &future : futures) {
+    future.wait();
+    Response response = future.get();
+    responses.push_back(std::move(response));
+  }
+  return responses;
+}
+
+std::vector<Response> Blocking::pivot(Ptr<Model> &first, Ptr<Model> &second,
+                                      std::vector<std::string> sources,
+                                      const Options &options) {
+  std::vector<HTML> htmls;
+  for (auto &source : sources) {
+    if (options.html) {
+      htmls.emplace_back(source);
+    }
+  }
+
+  // Translate source to pivots. This is same as calling translateMultiple.
+  std::vector<Response> source_to_pivots;
+  Options raw{
+      .alignment = options.alignment,  //
+      .html = options.html             //
+  };
+
+  source_to_pivots = translate(first, std::move(sources), raw);
+
+  // Translate pivots to targets, after we have outputs at pivot from first
+  // round. We cannot use translateMultiple here because need consistency at
+  // pivot on both sides.
+  std::vector<Response> pivots_to_targets;
+  pivots_to_targets.resize(source_to_pivots.size());
+  rd::Batcher batcher(config_.max_words, config_.wrap_length,
+                      config_.tgt_length_limit_factor);
+
+  for (size_t i = 0; i < source_to_pivots.size(); i++) {
+    // We cannot eliminate this copy, as we need two versions of intermediate.
+    // Holding it in allows further use in makePivotRequest
+    AnnotatedText intermediate = source_to_pivots[i].target;
+    auto continuation = [i, &pivots_to_targets](Response &&response) {
+      pivots_to_targets[i] = std::move(response);
+    };
+
+    std::string target = intermediate.text;
+    auto [annotated_source, segments] =
+        second->processor().process(std::move(target));
+
+    ResponseBuilder response_builder(options, std::move(annotated_source),
+                                     second->vocabulary(),
+                                     std::move(continuation));
+
+    Ptr<rd::Request> request = std::make_shared<rd::Request>(
+        std::move(intermediate), std::move(response_builder), options, cache_);
+    batcher.enqueue(request);
+  }
+
+  AverageMeter<float> wps;
+  AverageMeter<float> occupancy;
+  rd::Batch rd_batch = batcher.generate();
+  while (!rd_batch.empty()) {
+    // convert between batches.
+    Timer timer;
+    Batch batch = convert(rd_batch);
+    Histories histories =
+        forward(batch, config_.tgt_length_limit_factor, second->model(),
+                second->vocabulary().eos_id(), second->shortlist_generator());
+    rd_batch.complete(histories);
+    rd_batch = batcher.generate();
+
+    auto elapsed = static_cast<float>(timer.elapsed());
+    float batch_wps = batch.words().size() / elapsed;
+    wps.record(batch_wps);
+    occupancy.record(batch.occupancy());
+  }
+
+  // Combine both sides. They're associated by indices.
+  std::vector<Response> responses;
+  for (size_t i = 0; i < source_to_pivots.size(); i++) {
+    auto &f = source_to_pivots[i];
+    auto &s = pivots_to_targets[i];
+    Response response = combine(std::move(f), std::move(s));
+    responses.push_back(std::move(response));
+  }
+
+  if (options.html) {
+    for (size_t i = 0; i < responses.size(); i++) {
+      htmls[i].restore(responses[i]);
+    }
+  }
+
+  return responses;
 }
 
 Async::Async(const Config &config)

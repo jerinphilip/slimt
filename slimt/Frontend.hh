@@ -1,4 +1,3 @@
-
 #pragma once
 #include <cstddef>
 #include <future>
@@ -16,6 +15,7 @@
 #include "slimt/Vocabulary.hh"
 
 namespace slimt {
+
 class Batch;
 class Tensor;
 struct View;
@@ -23,8 +23,12 @@ struct View;
 class Blocking {
  public:
   explicit Blocking(const Config &config);
-  Response translate(Ptr<Model> &model, std::string source,
-                     const Options &options);
+  std::vector<Response> translate(Ptr<Model> &model,
+                                  std::vector<std::string> sources,
+                                  const Options &options);
+  std::vector<Response> pivot(Ptr<Model> &first, Ptr<Model> &second,
+                              std::vector<std::string> sources,
+                              const Options &options);
 
  private:
   Config config_;
@@ -41,6 +45,8 @@ class Async {
 
   std::future<Response> translate(Ptr<Model> &model, std::string source,
                                   const Options &options);
+  std::future<Response> pivot(Ptr<Model> &first, Ptr<Model> &second,
+                              std::string source, const Options &options);
 
  private:
   Config config_;
