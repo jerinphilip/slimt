@@ -239,35 +239,41 @@ std::vector<Response> Blocking::pivot(Ptr<Model> &first, Ptr<Model> &second,
                                       std::vector<std::string> sources,
                                       const Options &options) {
   std::vector<HTML> htmls;
+
+  // Strip any existing HTML.
   for (auto &source : sources) {
     if (options.html) {
       htmls.emplace_back(source);
     }
   }
 
-  // Translate source to pivots. This is same as calling translateMultiple.
+  // Translate source to pivots.
   std::vector<Response> source_to_pivots;
   Options raw{
       .alignment = options.alignment,  //
-      .html = options.html             //
+      .html = false                    //
   };
 
   source_to_pivots = translate(first, std::move(sources), raw);
 
   // Translate pivots to targets, after we have outputs at pivot from first
-  // round. We cannot use translateMultiple here because need consistency at
-  // pivot on both sides.
-  std::vector<Response> pivots_to_targets;
-  pivots_to_targets.resize(source_to_pivots.size());
+  // round.
+  std::vector<Response> responses(source_to_pivots.size());
+
   rd::Batcher batcher(config_.max_words, config_.wrap_length,
                       config_.tgt_length_limit_factor);
 
   for (size_t i = 0; i < source_to_pivots.size(); i++) {
     // We cannot eliminate this copy, as we need two versions of intermediate.
-    // Holding it in allows further use in makePivotRequest
     AnnotatedText intermediate = source_to_pivots[i].target;
-    auto continuation = [i, &pivots_to_targets](Response &&response) {
-      pivots_to_targets[i] = std::move(response);
+    Response &source_to_pivot = source_to_pivots[i];
+    Response &response = responses[i];
+
+    auto continuation = [&response,
+                         &source_to_pivot](Response &&pivot_to_target) {
+      Response combined =
+          combine(std::move(source_to_pivot), std::move(pivot_to_target));
+      response = std::move(combined);
     };
 
     std::string target = intermediate.text;
@@ -304,15 +310,6 @@ std::vector<Response> Blocking::pivot(Ptr<Model> &first, Ptr<Model> &second,
     float batch_wps = batch.words().size() / elapsed;
     wps.record(batch_wps);
     occupancy.record(batch.occupancy());
-  }
-
-  // Combine both sides. They're associated by indices.
-  std::vector<Response> responses;
-  for (size_t i = 0; i < source_to_pivots.size(); i++) {
-    auto &f = source_to_pivots[i];
-    auto &s = pivots_to_targets[i];
-    Response response = combine(std::move(f), std::move(s));
-    responses.push_back(std::move(response));
   }
 
   if (options.html) {
