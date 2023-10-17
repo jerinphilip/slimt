@@ -33,9 +33,7 @@ class Blocking {
  private:
   Config config_;
   std::optional<TranslationCache> cache_;
-
   size_t id_ = 0;
-  size_t model_id_ = 0;
 };
 
 class Async {
@@ -55,7 +53,6 @@ class Async {
   std::vector<std::thread> workers_;
 
   size_t id_ = 0;
-  size_t model_id_ = 0;
 };
 
 }  // namespace slimt

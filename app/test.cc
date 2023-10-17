@@ -659,8 +659,8 @@ void integration() {
   Blocking service(config);
   std::string source = "1 2\n1 2 3\n";
   slimt::Options opts;
-  Response response = service.translate(model, std::move(source), opts);
-  fprintf(stdout, "%s\n", response.target.text.c_str());
+  auto responses = service.translate(model, {std::move(source)}, opts);
+  fprintf(stdout, "%s\n", responses[0].target.text.c_str());
 }
 
 void ShortlistGen() {

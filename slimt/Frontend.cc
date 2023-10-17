@@ -182,7 +182,7 @@ std::vector<Response> Blocking::translate(Ptr<Model> &model,
     );
 
     auto request = std::make_shared<rd::Request>(  //
-        id_, model_id_,                            //
+        id_, model->id(),                          //
         std::move(segments),                       //
         std::move(response_builder),               //
         cache_                                     //
@@ -263,8 +263,12 @@ std::vector<Response> Blocking::pivot(Ptr<Model> &first, Ptr<Model> &second,
                                      second->vocabulary(),
                                      std::move(continuation));
 
-    Ptr<rd::Request> request = std::make_shared<rd::Request>(
-        std::move(intermediate), std::move(response_builder), options, cache_);
+    Ptr<rd::Request> request = std::make_shared<rd::Request>(  //
+        id_, second->id(),                                     //
+        std::move(segments),                                   //
+        std::move(response_builder),                           //
+        cache_                                                 //
+    );
     batcher.enqueue(request);
   }
 
@@ -353,7 +357,7 @@ std::future<Response> Async::translate(Ptr<Model> &model, std::string source,
   );
 
   auto request = std::make_shared<rd::Request>(  //
-      id_, model_id_,                            //
+      id_, model->id(),                          //
       std::move(segments),                       //
       std::move(response_builder),               //
       cache_                                     //
