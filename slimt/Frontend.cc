@@ -153,12 +153,18 @@ std::vector<Response> Blocking::translate(Ptr<Model> &model,
   rd::Batcher batcher(config_.max_words, config_.wrap_length,
                       config_.tgt_length_limit_factor);
 
+  using Promise = std::promise<Response>;
   using Future = std::future<Response>;
+
+  std::vector<Promise> promises;
   std::vector<Future> futures;
+
+  promises.reserve(sources.size());
   futures.reserve(sources.size());
   // Create a request
   std::optional<HTML> html = std::nullopt;
-  for (auto &source : sources) {
+  for (size_t i = 0; i < sources.size(); i++) {
+    std::string &source = sources[i];
     if (options.html) {
       html.emplace(source);
     }
@@ -166,9 +172,10 @@ std::vector<Response> Blocking::translate(Ptr<Model> &model,
     auto [annotated_source, segments] =
         model->processor().process(std::move(source));
 
-    std::promise<Response> promise;
-    auto future = promise.get_future();
+    Promise &promise = promises[i];
+    Future future = promise.get_future();
     futures.push_back(std::move(future));
+
     auto continuation = [&html, &promise](Response &&response) {
       if (html) {
         html->restore(response);
