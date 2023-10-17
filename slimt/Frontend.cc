@@ -211,7 +211,7 @@ std::vector<Response> Blocking::translate(Ptr<Model> &model,
     Timer timer;
     Batch batch = convert(rd_batch);
     Histories histories =
-        forward(batch, config_.tgt_length_limit_factor, model->model(),
+        forward(batch, config_.tgt_length_limit_factor, model->transformer(),
                 model->vocabulary().eos_id(), model->shortlist_generator());
     rd_batch.complete(histories);
     rd_batch = batcher.generate();
@@ -297,7 +297,7 @@ std::vector<Response> Blocking::pivot(Ptr<Model> &first, Ptr<Model> &second,
     Timer timer;
     Batch batch = convert(rd_batch);
     Histories histories =
-        forward(batch, config_.tgt_length_limit_factor, second->model(),
+        forward(batch, config_.tgt_length_limit_factor, second->transformer(),
                 second->vocabulary().eos_id(), second->shortlist_generator());
     rd_batch.complete(histories);
     rd_batch = batcher.generate();
@@ -327,9 +327,9 @@ Async::Async(const Config &config)
       while (!rd_batch.empty()) {
         // convert between batches.
         Batch batch = convert(rd_batch);
-        Histories histories =
-            forward(batch, config_.tgt_length_limit_factor, model->model(),
-                    model->vocabulary().eos_id(), model->shortlist_generator());
+        Histories histories = forward(
+            batch, config_.tgt_length_limit_factor, model->transformer(),
+            model->vocabulary().eos_id(), model->shortlist_generator());
         rd_batch.complete(histories);
         auto [next_batch, next_model] = batcher_.generate();
         rd_batch = std::move(next_batch);
