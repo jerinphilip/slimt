@@ -156,18 +156,26 @@ std::vector<Response> Blocking::translate(Ptr<Model> &model,
   using Promise = std::promise<Response>;
   using Future = std::future<Response>;
 
-  std::vector<Promise> promises;
-  std::vector<Future> futures;
+  // Configure promises, and HTML
+  std::vector<Promise> promises(sources.size());
 
-  promises.reserve(sources.size());
+  std::vector<HTML> htmls;
+  if (options.html) {
+    htmls.reserve(sources.size());
+  }
+
+  if (options.html) {
+    for (std::string &source : sources) {
+      htmls.emplace_back(source);
+    }
+  }
+
+  std::vector<Future> futures;
   futures.reserve(sources.size());
-  // Create a request
-  std::optional<HTML> html = std::nullopt;
+
   for (size_t i = 0; i < sources.size(); i++) {
     std::string &source = sources[i];
-    if (options.html) {
-      html.emplace(source);
-    }
+    HTML *html = options.html ? &htmls[i] : nullptr;
 
     auto [annotated_source, segments] =
         model->processor().process(std::move(source));
@@ -176,7 +184,7 @@ std::vector<Response> Blocking::translate(Ptr<Model> &model,
     Future future = promise.get_future();
     futures.push_back(std::move(future));
 
-    auto continuation = [&html, &promise](Response &&response) {
+    auto continuation = [&promise, html](Response &&response) {
       if (html) {
         html->restore(response);
       }
@@ -340,7 +348,6 @@ Async::Async(const Config &config)
 
 std::future<Response> Async::translate(Ptr<Model> &model, std::string source,
                                        const Options &options) {
-  // Create a request
   std::shared_ptr<HTML> html = nullptr;
   if (options.html) {
     html = std::make_shared<HTML>(source);
