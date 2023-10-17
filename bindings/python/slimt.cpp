@@ -11,6 +11,9 @@
 
 namespace py = pybind11;
 
+#define pystdout py::module_::import("sys").attr("stdout")
+#define pystderr py::module_::import("sys").attr("stderr")
+
 using slimt::Alignment;
 using slimt::Alignments;
 using slimt::AnnotatedText;
@@ -27,6 +30,15 @@ PYBIND11_MAKE_OPAQUE(std::vector<Response>);
 PYBIND11_MAKE_OPAQUE(std::vector<std::string>);
 PYBIND11_MAKE_OPAQUE(Alignments);
 
+class Redirect {
+ public:
+  Redirect() : out_(std::cout, pystdout), err_(std::cerr, pystderr) {}
+
+ public:
+  py::scoped_ostream_redirect out_;
+  py::scoped_ostream_redirect err_;
+};
+
 class PyService {
  public:
   PyService(const size_t workers, const size_t cache_size)
@@ -37,16 +49,8 @@ class PyService {
 
   std::vector<Response> translate(std::shared_ptr<Model> model, py::list &texts,
                                   bool html) {
-    py::scoped_ostream_redirect outstream(
-        std::cout,                                 // std::ostream&
-        py::module_::import("sys").attr("stdout")  // Python output
-    );
-    py::scoped_ostream_redirect errstream(
-        std::cerr,                                 // std::ostream&
-        py::module_::import("sys").attr("stderr")  // Python output
-    );
-
     py::call_guard<py::gil_scoped_release> gil_guard;
+    Redirect redirect;
 
     std::vector<std::string> sources;
     for (auto handle : texts) {
