@@ -19,10 +19,10 @@ namespace slimt {
 class Blocking {
  public:
   explicit Blocking(const Config &config);
-  std::vector<Response> translate(Ptr<Model> model,
+  std::vector<Response> translate(const Ptr<Model> &model,
                                   std::vector<std::string> sources,
                                   const Options &options);
-  std::vector<Response> pivot(Ptr<Model> first, Ptr<Model> second,
+  std::vector<Response> pivot(const Ptr<Model> &first, const Ptr<Model> &second,
                               std::vector<std::string> sources,
                               const Options &options);
 
@@ -37,9 +37,9 @@ class Async {
   explicit Async(const Config &config);
   ~Async();
 
-  std::future<Response> translate(Ptr<Model> model, std::string source,
+  std::future<Response> translate(const Ptr<Model> &model, std::string source,
                                   const Options &options);
-  std::future<Response> pivot(Ptr<Model> first, Ptr<Model> second,
+  std::future<Response> pivot(const Ptr<Model> &first, const Ptr<Model> &second,
                               std::string source, const Options &options);
 
  private:

@@ -30,7 +30,7 @@ Batch convert(rd::Batch &rd_batch) {
   return batch;
 }
 
-void exhaust(Ptr<Model> model, rd::Batcher &batcher) {
+void exhaust(const Ptr<Model> &model, rd::Batcher &batcher) {
   AverageMeter<float> wps;
   AverageMeter<float> occupancy;
   rd::Batch rd_batch = batcher.generate();
@@ -50,8 +50,8 @@ void exhaust(Ptr<Model> model, rd::Batcher &batcher) {
 }
 
 template <class Continuation>
-Ptr<rd::Request> make_request(size_t id, Ptr<Model> model, std::string &&source,
-                              const Options &options,
+Ptr<rd::Request> make_request(size_t id, const Ptr<Model> &model,
+                              std::string &&source, const Options &options,
                               std::optional<TranslationCache> &cache_,
                               Continuation &&continuation) {
   auto [annotated_source, segments] =
@@ -75,7 +75,7 @@ Ptr<rd::Request> make_request(size_t id, Ptr<Model> model, std::string &&source,
 
 Blocking::Blocking(const Config &config) : config_(config) {}  // NOLINT
 
-std::vector<Response> Blocking::translate(Ptr<Model> model,
+std::vector<Response> Blocking::translate(const Ptr<Model> &model,
                                           std::vector<std::string> sources,
                                           const Options &options) {
   rd::Batcher batcher(config_.max_words, config_.wrap_length,
@@ -127,7 +127,8 @@ std::vector<Response> Blocking::translate(Ptr<Model> model,
   return responses;
 }
 
-std::vector<Response> Blocking::pivot(Ptr<Model> first, Ptr<Model> second,
+std::vector<Response> Blocking::pivot(const Ptr<Model> &first,
+                                      const Ptr<Model> &second,
                                       std::vector<std::string> sources,
                                       const Options &options) {
   std::vector<HTML> htmls;
@@ -205,7 +206,8 @@ Async::Async(const Config &config)
   }
 }
 
-std::future<Response> Async::translate(Ptr<Model> model, std::string source,
+std::future<Response> Async::translate(const Ptr<Model> &model,
+                                       std::string source,
                                        const Options &options) {
   std::shared_ptr<HTML> html = nullptr;
   if (options.html) {
@@ -227,8 +229,9 @@ std::future<Response> Async::translate(Ptr<Model> model, std::string source,
   batcher_.enqueue(model, request);
   return future;
 }
-std::future<Response> Async::pivot(Ptr<Model> first, Ptr<Model> second,
-                                   std::string source, const Options &options) {
+std::future<Response> Async::pivot(const Ptr<Model> &first,
+                                   const Ptr<Model> &second, std::string source,
+                                   const Options &options) {
   Ptr<HTML> html = nullptr;
   if (options.html) {
     html = std::make_shared<HTML>(source);
