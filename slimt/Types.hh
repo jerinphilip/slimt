@@ -1,6 +1,7 @@
 #pragma once
 #include <cstddef>
 #include <cstdint>
+#include <future>
 #include <iostream>
 #include <memory>
 #include <string_view>
@@ -51,5 +52,10 @@ struct Hypothesis {
 using History = Ptr<Hypothesis>;
 using Histories = std::vector<History>;
 using TranslationCache = AtomicCache<size_t, History>;
+
+struct Response;
+
+using Promise = std::promise<Response>;
+using Future = std::future<Response>;
 
 }  // namespace slimt

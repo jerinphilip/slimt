@@ -153,9 +153,6 @@ std::vector<Response> Blocking::translate(Ptr<Model> &model,
   rd::Batcher batcher(config_.max_words, config_.wrap_length,
                       config_.tgt_length_limit_factor);
 
-  using Promise = std::promise<Response>;
-  using Future = std::future<Response>;
-
   // Configure promises, and HTML
   std::vector<Promise> promises(sources.size());
 
@@ -264,19 +261,18 @@ std::vector<Response> Blocking::pivot(Ptr<Model> &first, Ptr<Model> &second,
                       config_.tgt_length_limit_factor);
 
   for (size_t i = 0; i < source_to_pivots.size(); i++) {
-    // We cannot eliminate this copy, as we need two versions of intermediate.
-    AnnotatedText intermediate = source_to_pivots[i].target;
     Response &source_to_pivot = source_to_pivots[i];
     Response &response = responses[i];
 
-    auto continuation = [&response,
-                         &source_to_pivot](Response &&pivot_to_target) {
+    auto continuation = [&source_to_pivot,
+                         &response](Response &&pivot_to_target) {
       Response combined =
           combine(std::move(source_to_pivot), std::move(pivot_to_target));
       response = std::move(combined);
     };
 
-    std::string target = intermediate.text;
+    // We cannot eliminate this copy, as we need two versions of intermediate.
+    std::string target = source_to_pivots[i].target.text;
     auto [annotated_source, segments] =
         second->processor().process(std::move(target));
 
@@ -349,10 +345,10 @@ std::future<Response> Async::translate(Ptr<Model> &model, std::string source,
   if (options.html) {
     html = std::make_shared<HTML>(source);
   }
+
   auto [annotated_source, segments] =
       model->processor().process(std::move(source));
 
-  using Promise = std::promise<Response>;
   auto promise = std::make_shared<Promise>();
   auto future = promise->get_future();
   auto continuation = [html, promise](Response &&response) {
@@ -385,8 +381,6 @@ std::future<Response> Async::pivot(Ptr<Model> &first, Ptr<Model> &second,
   }
 
   // This is callback chaining or CPS due to async.
-  using Promise = std::promise<Response>;
-
   Promise promise;
   auto future = promise.get_future();
 
