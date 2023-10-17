@@ -62,6 +62,10 @@ class Model {
  public:
   explicit Model(const Config &config, const Package<std::string> &package);
   explicit Model(const Config &config, const Package<View> &package);
+
+  Histories decode(Tensor &encoder_out, Batch &batch);
+  Histories forward(Batch &batch);
+
   Config &config() { return config_; }
   Vocabulary &vocabulary() { return vocabulary_; }
   TextProcessor &processor() { return processor_; }

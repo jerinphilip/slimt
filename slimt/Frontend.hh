@@ -16,10 +16,6 @@
 
 namespace slimt {
 
-class Batch;
-class Tensor;
-struct View;
-
 class Blocking {
  public:
   explicit Blocking(const Config &config);
