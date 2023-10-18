@@ -19,6 +19,7 @@ add_library(
   Tensor.cc
   TensorOps.cc
   TextProcessor.cc
+  Transformer.cc
   Utils.cc
   Vocabulary.cc
   XHScanner.cc)

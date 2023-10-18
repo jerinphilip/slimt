@@ -178,7 +178,6 @@ jobs:
             CIBW_ARCHS_MACOS: ${{ matrix.BUILD_ARCH_MACOS }}
 
             CIBW_ENVIRONMENT_LINUX:
-              BUILD_ARCH=core-avx-i
               USE_CCACHE=1
               CCACHE_COMPILER_CHECK=${{ env.ccache_compilercheck }}
               CCACHE_COMPRESS=${{ env.ccache_compress }}
@@ -190,7 +189,6 @@ jobs:
               CMAKE_ARGS="-DUSE_PYBIND11_SOURCE=ON -DBLA_VENDOR=OpenBLAS"
 
             CIBW_ENVIRONMENT_MACOS:
-              BUILD_ARCH=${{ matrix.BUILD_ARCH_CMAKE }}
               USE_CCACHE=1
               CCACHE_COMPILER_CHECK=${{ env.ccache_compilercheck }}
               CCACHE_COMPRESS=${{ env.ccache_compress }}

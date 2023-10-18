@@ -12,6 +12,7 @@
 #include "slimt/Shortlist.hh"
 #include "slimt/Tensor.hh"
 #include "slimt/TextProcessor.hh"
+#include "slimt/Transformer.hh"
 #include "slimt/Types.hh"
 #include "slimt/Vocabulary.hh"
 
@@ -50,56 +51,6 @@ struct Config {
   }
 };
 
-class Encoder {
- public:
-  explicit Encoder(const Config &config);
-  Tensor forward(Tensor &embedding, Tensor &mask);
-  void register_parameters(const std::string &prefix, ParameterMap &parameters);
-
- private:
-  std::vector<EncoderLayer> encoder_;
-};
-
-class Decoder {
- public:
-  Decoder(const Config &config, Tensor &embedding);
-
-  void register_parameters(const std::string &prefix, ParameterMap &parameters);
-
-  std::vector<Tensor> start_states(size_t batch_size);
-  std::tuple<Tensor, Tensor> step(Tensor &encoder_out, Tensor &mask,
-                                  std::vector<Tensor> &states,
-                                  Words &previous_step, Words &shortlist);
-
- private:
-  Tensor &embedding_;
-  std::vector<DecoderLayer> decoder_;
-  Affine output_;
-};
-
-Words greedy_sample(Tensor &logits, const Words &words, size_t batch_size);
-void transform_embedding(Tensor &word_embedding, size_t start = 0);
-
-class Transformer {
- public:
-  explicit Transformer(const Config &config, View model);
-
-  Config &config() { return config_; }
-  Tensor &embedding() { return embedding_; }
-  Encoder &encoder() { return encoder_; }
-  Decoder &decoder() { return decoder_; }
-
- private:
-  void register_parameters(const std::string &prefix, ParameterMap &parameters);
-  void load_parameters();
-
-  Config config_;
-  std::vector<io::Item> items_;
-  Tensor embedding_;
-  Encoder encoder_;
-  Decoder decoder_;
-};
-
 template <class Field>
 struct Package {
   Field model;
@@ -111,14 +62,19 @@ class Model {
  public:
   explicit Model(const Config &config, const Package<std::string> &package);
   explicit Model(const Config &config, const Package<View> &package);
+
+  Histories forward(Batch &batch);
+
   Config &config() { return config_; }
   Vocabulary &vocabulary() { return vocabulary_; }
   TextProcessor &processor() { return processor_; }
-  Transformer &model() { return model_; }
+  Transformer &transformer() { return transformer_; }
   size_t id() const { return id_; }  // NOLINT
   ShortlistGenerator &shortlist_generator() { return shortlist_generator_; }
 
  private:
+  Histories decode(Tensor &encoder_out, Batch &batch);
+
   size_t id_;
   Config config_;
   using Mmap = Package<io::MmapFile>;
@@ -127,7 +83,7 @@ class Model {
 
   Vocabulary vocabulary_;
   TextProcessor processor_;
-  Transformer model_;
+  Transformer transformer_;
   ShortlistGenerator shortlist_generator_;
 };
 

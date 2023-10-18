@@ -87,8 +87,8 @@ void run(const Options &options) {
         .html = options.html  //
     };
 
-    Response response = service.translate(model, std::move(source), opts);
-    fprintf(stdout, "%s\n", response.target.text.c_str());
+    auto responses = service.translate(model, {std::move(source)}, opts);
+    fprintf(stdout, "%s\n", responses[0].target.text.c_str());
   }
 
   // fprintf(stdout, "wps: %f\n", wps.value());
