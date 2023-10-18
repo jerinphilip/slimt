@@ -9,6 +9,7 @@
 #include "slimt/Batch.hh"
 #include "slimt/Batcher.hh"
 #include "slimt/HTML.hh"
+#include "slimt/Model.hh"
 #include "slimt/Request.hh"
 #include "slimt/Response.hh"
 #include "slimt/ResponseBuilder.hh"

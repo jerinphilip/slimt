@@ -4,7 +4,11 @@
 #include <iostream>
 #include <unordered_map>
 
+// Public headers.
 #include "slimt/slimt.hh"
+
+// Private headers, required for partial testing.
+#include "slimt/TensorOps.hh"
 
 namespace slimt {
 
