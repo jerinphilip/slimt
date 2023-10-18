@@ -5,7 +5,7 @@ import typing as t
 import requests
 import yaml
 
-from . import Alignments, AnnotatedText, Response
+from . import Alignments, AnnotatedText, Response, Package
 from .typing_utils import URL, PathLike
 
 
@@ -76,3 +76,15 @@ def toJSON(response: Response, *args, **kwargs) -> str:
         *args,
         **kwargs
     )
+
+
+def package_from_config_path(path):
+    with open(path) as yaml_file:
+        c = yaml.safe_load(yaml_file)
+    root = os.path.dirname(path)
+    package = Package(
+        model=os.path.join(root, c["models"][0]),
+        vocabulary=os.path.join(root, c["vocabs"][0]),
+        shortlist=os.path.join(root, c["shortlist"][0]),
+    )
+    return package
