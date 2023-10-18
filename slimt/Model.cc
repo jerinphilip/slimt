@@ -42,8 +42,7 @@ Model::Model(const Config &config, const Package<View> &package)
       processor_(config.wrap_length, config.split_mode, vocabulary_,
                  config.prefix_path),
       transformer_(config.encoder_layers, config.decoder_layers,
-                   config.attention_num_heads, config.feed_forward_depth,
-                   package.model),
+                   config.num_heads, config.feed_forward_depth, package.model),
       shortlist_generator_(package.shortlist, vocabulary_, vocabulary_) {}
 
 Model::Model(const Config &config, const Package<std::string> &package)
@@ -55,8 +54,7 @@ Model::Model(const Config &config, const Package<std::string> &package)
       processor_(config.wrap_length, config.split_mode, vocabulary_,
                  config.prefix_path),
       transformer_(config.encoder_layers, config.decoder_layers,
-                   config.attention_num_heads, config.feed_forward_depth,
-                   view_.model),
+                   config.num_heads, config.feed_forward_depth, view_.model),
       shortlist_generator_(view_.shortlist, vocabulary_, vocabulary_) {}
 
 namespace {
