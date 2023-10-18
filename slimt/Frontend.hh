@@ -5,16 +5,14 @@
 #include <string>
 #include <vector>
 
-#include "slimt/Aligned.hh"
 #include "slimt/Batcher.hh"
-#include "slimt/Model.hh"
+#include "slimt/Cache.hh"
 #include "slimt/Response.hh"
-#include "slimt/Shortlist.hh"
-#include "slimt/TextProcessor.hh"
 #include "slimt/Types.hh"
-#include "slimt/Vocabulary.hh"
 
 namespace slimt {
+
+class Model;
 
 class Blocking {
  public:
