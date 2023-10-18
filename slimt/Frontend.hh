@@ -1,4 +1,3 @@
-
 #pragma once
 #include <cstddef>
 #include <future>
@@ -17,22 +16,20 @@
 
 namespace slimt {
 
-class Batch;
-class Tensor;
-struct View;
-
 class Blocking {
  public:
   explicit Blocking(const Config &config);
-  Response translate(Ptr<Model> &model, std::string source,
-                     const Options &options);
+  std::vector<Response> translate(const Ptr<Model> &model,
+                                  std::vector<std::string> sources,
+                                  const Options &options);
+  std::vector<Response> pivot(const Ptr<Model> &first, const Ptr<Model> &second,
+                              std::vector<std::string> sources,
+                              const Options &options);
 
  private:
   Config config_;
   std::optional<TranslationCache> cache_;
-
   size_t id_ = 0;
-  size_t model_id_ = 0;
 };
 
 class Async {
@@ -40,8 +37,10 @@ class Async {
   explicit Async(const Config &config);
   ~Async();
 
-  std::future<Response> translate(Ptr<Model> &model, std::string source,
+  std::future<Response> translate(const Ptr<Model> &model, std::string source,
                                   const Options &options);
+  std::future<Response> pivot(const Ptr<Model> &first, const Ptr<Model> &second,
+                              std::string source, const Options &options);
 
  private:
   Config config_;
@@ -50,7 +49,6 @@ class Async {
   std::vector<std::thread> workers_;
 
   size_t id_ = 0;
-  size_t model_id_ = 0;
 };
 
 }  // namespace slimt

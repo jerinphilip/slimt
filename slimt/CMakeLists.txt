@@ -27,6 +27,7 @@ set(SLIMT_SOURCES
     Tensor.cc
     TensorOps.cc
     TextProcessor.cc
+    Transformer.cc
     Utils.cc
     Vocabulary.cc
     XHScanner.cc)
