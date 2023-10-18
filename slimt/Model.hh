@@ -8,9 +8,7 @@
 
 #include "slimt/Batch.hh"
 #include "slimt/Config.hh"
-#include "slimt/Modules.hh"
 #include "slimt/Shortlist.hh"
-#include "slimt/Tensor.hh"
 #include "slimt/TextProcessor.hh"
 #include "slimt/Transformer.hh"
 #include "slimt/Types.hh"

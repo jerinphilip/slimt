@@ -13,7 +13,7 @@ extern "C" {
 #endif  // __cplusplus
 
 #else  // SLIMT_HAS_BLAS
-#include "3rd-party/ruy/ruy/ruy.h"
+#include "ruy/ruy.h"
 #endif  // SLIMT_HAS_BLAS
 
 #include <algorithm>
