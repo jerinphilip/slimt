@@ -1,4 +1,23 @@
-set(SLIMT_PUBLIC_HEADERS slimt.hh Frontend.hh Model.hh)
+set(SLIMT_PUBLIC_HEADERS
+    slimt.hh
+    Aligned.hh
+    Annotation.hh
+    Batcher.hh
+    Cache.hh
+    Frontend.hh
+    Io.hh
+    Model.hh
+    Modules.hh
+    Request.hh
+    ResponseBuilder.hh
+    Response.hh
+    Shortlist.hh
+    Splitter.hh
+    Tensor.hh
+    TextProcessor.hh
+    Transformer.hh
+    Types.hh
+    Vocabulary.hh)
 
 set(SLIMT_SOURCES
     Aligned.cc
