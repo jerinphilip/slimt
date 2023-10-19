@@ -19,27 +19,25 @@ size_t cache_key(size_t model_id, const Words &words) {
   return seed;
 }
 
-namespace rd {
-
 // -----------------------------------------------------------------
-Request::Request(size_t Id, size_t model_id, Segments &&segments,
-                 ResponseBuilder &&responseBuilder,
+Request::Request(size_t id, size_t model_id, Segments &&segments,
+                 ResponseBuilder &&response_builder,
                  std::optional<TranslationCache> &cache)
-    : id_(Id),
+    : id_(id),
       model_id_(model_id),
       segments_(std::move(segments)),
-      responseBuilder_(std::move(responseBuilder)),
+      response_builder_(std::move(response_builder)),
       cache_(cache) {
   counter_ = segments_.size();
   histories_.resize(segments_.size(), nullptr);
 
   // 1. If there are no segments_, we are never able to trigger the
-  // responseBuilder calls from a different thread. This happens when the use
+  // response_builder calls from a different thread. This happens when the use
   // provides empty input, or the unit and subword preprocessing deems no
   // translatable units present. However, in this case we want an empty valid
   // response. There's no need to do any additional processing here.
   if (segments_.empty()) {
-    responseBuilder_(std::move(histories_));
+    response_builder_(std::move(histories_));
   } else {
     counter_ = segments_.size();
     histories_.resize(segments_.size());
@@ -61,7 +59,7 @@ Request::Request(size_t Id, size_t model_id, Segments &&segments,
       // histories, then we'd have to trigger ResponseBuilder as well. No
       // segments go into batching and therefore no complete triggers.
       if (counter_.load() == 0) {
-        responseBuilder_(std::move(histories_));
+        response_builder_(std::move(histories_));
       }
     }
   }
@@ -91,7 +89,7 @@ void Request::complete(size_t index, History history) {
   // In case this is last request in, completeRequest is called, which sets the
   // value of the promise.
   if (--counter_ == 0) {
-    responseBuilder_(std::move(histories_));
+    response_builder_(std::move(histories_));
   }
 }
 
@@ -134,7 +132,7 @@ void Batch::log() {
 void Batch::add(const SegmentRef &segment_ref) {
   segment_refs_.push_back(segment_ref);
   token_count_ += segment_ref.size();
-  max_length_ = std::max(max_length_, static_cast<size_t>(segment_ref.size()));
+  max_length_ = std::max<size_t>(max_length_, segment_ref.size());
 }
 
 void Batch::complete(const Histories &histories) {
@@ -148,7 +146,5 @@ void Batch::clear() {
   token_count_ = 0;
   max_length_ = 0;
 }
-
-}  // namespace rd
 
 }  // namespace slimt

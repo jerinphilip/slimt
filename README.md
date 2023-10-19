@@ -105,6 +105,6 @@ python3 setup.py bdist_wheel
 python3 -m pip install dist/<wheel-name>.whl
 
 # Download en-de-tiny and de-en-tiny models.
-bergamot download -m en-de-tiny
-bergamot download -m de-en-tiny
+slimt download -m en-de-tiny
+slimt download -m de-en-tiny
 ```

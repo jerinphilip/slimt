@@ -2,7 +2,8 @@ import argparse
 import sys
 from collections import Counter, defaultdict
 
-from . import REPOSITORY, Model, Service
+from . import REPOSITORY, Model, Service, Config
+from .utils import package_from_config_path
 
 CMDS = {}
 
@@ -71,18 +72,18 @@ class Translate:
     def execute(args: argparse.Namespace):
         # Build service
 
-        service = Service(num_workers=args.num_workers, log_level=args.log_level)
+        service = Service(workers=args.num_workers)
 
-        models = [
-            Model.from_config_path(REPOSITORY.modelConfigPath(args.repository, model))
-            for model in args.model
-        ]
+        models = []
+        for model in args.model:
+            config_path = REPOSITORY.modelConfigPath(args.repository, model)
+            package = package_from_config_path(config_path)
+            config = Config()
+            models.append(Model(config, package))
 
         # Configure a few options which require how a Response is constructed
         options = {
-            "alignment": args.alignment,
             "html": args.html,
-            "quality_scores": args.quality_scores,
         }
 
         source = sys.stdin.read()

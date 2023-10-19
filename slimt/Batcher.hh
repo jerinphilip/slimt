@@ -11,19 +11,12 @@
 #include <utility>
 #include <vector>
 
-#include "slimt/Batch.hh"
-#include "slimt/Model.hh"
 #include "slimt/Request.hh"
 #include "slimt/Types.hh"
-#include "slimt/Utils.hh"
 
 namespace slimt {
 
 class Model;
-template <class T>
-struct HashPtr;
-
-namespace rd {
 
 class Batcher {
  public:
@@ -112,9 +105,7 @@ class AggregateBatcher {
   /// etc into containers which require the members to be hashable
   /// (std::unordered_set, std::unordered_map).
   struct Hash {
-    size_t operator()(const std::shared_ptr<Model>& model) const {
-      return std::hash<size_t>()(model->id());
-    }
+    size_t operator()(const std::shared_ptr<Model>& model) const;
   };
 
   std::unordered_set<std::shared_ptr<Model>, Hash> queue_;
@@ -203,7 +194,5 @@ class Threadsafe {
   // Signaled when there are sentences to translate.
   std::condition_variable work_;
 };
-
-}  // namespace rd
 
 }  // namespace slimt

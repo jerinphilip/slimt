@@ -11,10 +11,14 @@
 
 namespace py = pybind11;
 
+#define pystdout py::module_::import("sys").attr("stdout")
+#define pystderr py::module_::import("sys").attr("stderr")
+
 using slimt::Alignment;
 using slimt::Alignments;
 using slimt::AnnotatedText;
-using slimt::Config;
+using ServiceConfig = slimt::Config;
+using ModelConfig = slimt::Model::Config;
 using slimt::Options;
 using slimt::Range;
 using slimt::Response;
@@ -27,6 +31,15 @@ PYBIND11_MAKE_OPAQUE(std::vector<Response>);
 PYBIND11_MAKE_OPAQUE(std::vector<std::string>);
 PYBIND11_MAKE_OPAQUE(Alignments);
 
+class Redirect {
+ public:
+  Redirect() : out_(std::cout, pystdout), err_(std::cerr, pystderr) {}
+
+ public:
+  py::scoped_ostream_redirect out_;
+  py::scoped_ostream_redirect err_;
+};
+
 class PyService {
  public:
   PyService(const size_t workers, const size_t cache_size)
@@ -37,16 +50,8 @@ class PyService {
 
   std::vector<Response> translate(std::shared_ptr<Model> model, py::list &texts,
                                   bool html) {
-    py::scoped_ostream_redirect outstream(
-        std::cout,                                 // std::ostream&
-        py::module_::import("sys").attr("stdout")  // Python output
-    );
-    py::scoped_ostream_redirect errstream(
-        std::cerr,                                 // std::ostream&
-        py::module_::import("sys").attr("stderr")  // Python output
-    );
-
     py::call_guard<py::gil_scoped_release> gil_guard;
+    Redirect redirect;
 
     std::vector<std::string> sources;
     for (auto handle : texts) {
@@ -78,23 +83,15 @@ class PyService {
     return responses;
   }
 
-#if 0
-  std::vector<Response> pivot(std::shared_ptr<Model> first, std::shared_ptr<Model> second, py::list &texts,
+  std::vector<Response> pivot(std::shared_ptr<Model> first,
+                              std::shared_ptr<Model> second, py::list &texts,
                               bool html) {
-    py::scoped_ostream_redirect outstream(
-        std::cout,                                 // std::ostream&
-        py::module_::import("sys").attr("stdout")  // Python output
-    );
-    py::scoped_ostream_redirect errstream(
-        std::cerr,                                 // std::ostream&
-        py::module_::import("sys").attr("stderr")  // Python output
-    );
-
     py::call_guard<py::gil_scoped_release> gil_guard;
+    Redirect redirect;
 
-    std::vector<std::string> inputs;
+    std::vector<std::string> sources;
     for (auto handle : texts) {
-      inputs.push_back(py::str(handle));
+      sources.push_back(py::str(handle));
     }
 
     Options options{
@@ -103,23 +100,28 @@ class PyService {
 
     // Prepare promises, save respective futures. Have callback's in async set
     // value to the promises.
-    std::vector<std::future<Response>> futures;
-    std::vector<std::promise<Response>> promises;
-    promises.resize(inputs.size());
+    using Promise = std::promise<Response>;
+    using Future = std::future<Response>;
 
-    for (size_t i = 0; i < inputs.size(); i++) {
-      auto callback = [&promises, i](Response &&response) {
-        promises[i].set_value(std::move(response));
+    std::vector<Promise> promises(sources.size());
+
+    std::vector<Future> futures;
+    for (size_t i = 0; i < sources.size(); i++) {
+      Promise &promise = promises[i];
+      std::string &source = sources[i];
+
+      auto callback = [&promise, i](Response &&response) {
+        promise.set_value(std::move(response));
       };
 
-      service_.pivot(            //
-          first, second,         //
-          std::move(inputs[i]),  //
-          std::move(callback),   //
-          options                //
+      service_.pivot(         //
+          first, second,      //
+          std::move(source),  //
+          options             //
       );
 
-      futures.push_back(std::move(promises[i].get_future()));
+      Future future = promise.get_future();
+      futures.push_back(std::move(future));
     }
 
     // Wait on all futures to be ready.
@@ -132,7 +134,6 @@ class PyService {
 
     return responses;
   }
-#endif
 
  private:
   static Service make_service(size_t workers, size_t cache_size) {
@@ -147,7 +148,7 @@ class PyService {
 
     py::call_guard<py::gil_scoped_release> gil_guard;
 
-    Config config;
+    ServiceConfig config;
     config.workers = workers;
     config.cache_size = cache_size;
 
@@ -213,21 +214,18 @@ PYBIND11_MODULE(_slimt, m) {
       .def_readwrite("vocabulary", &Package::vocabulary)
       .def_readwrite("shortlist", &Package::shortlist);
 
-  py::class_<Config>(m, "Config").def(py::init<>());
+  py::class_<ModelConfig>(m, "Config").def(py::init<>());
 
   py::class_<PyService>(m, "Service")
       .def(py::init<size_t, size_t>(), py::arg("workers") = 1,
            py::arg("cache_size") = 0)
       .def("translate", &PyService::translate, py::arg("model"),
            py::arg("texts"), py::arg("html") = false)
-#if 0
-      .def("pivot", &PyService::pivot, py::arg("first"),
-           py::arg("second"), py::arg("texts"), py::arg("html") = false)
-#endif
-      ;
+      .def("pivot", &PyService::pivot, py::arg("first"), py::arg("second"),
+           py::arg("texts"), py::arg("html") = false);
 
   py::class_<Model, std::shared_ptr<Model>>(m, "Model")
-      .def(py::init<>([](const Config &config, const Package &package) {
+      .def(py::init<>([](const ModelConfig &config, const Package &package) {
              return std::make_shared<Model>(config, package);
            }),
            py::arg("config"), py::arg("package"));
