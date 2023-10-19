@@ -25,6 +25,24 @@ struct Package {
 
 class Model {
  public:
+  struct Config {
+    size_t encoder_layers = 6;
+    size_t decoder_layers = 2;
+    size_t feed_forward_depth = 2;
+    size_t num_heads = 8;
+    std::string split_mode = "sentence";
+    template <class App>
+    void setup_onto(App &app) {
+      // clang-format off
+      app.add_option("--encoder-layers", encoder_layers, "Number of encoder layers");
+      app.add_option("--decoder-layers", decoder_layers, "Number of decoder layers");
+      app.add_option("--num-heads", num_heads, "Number of decoder layers");
+      app.add_option("--ffn-depth", decoder_layers, "Number of feedforward layers");
+      app.add_option("--split-mode", split_mode, "Split mode to go with for sentence-splitter.");
+      // clang-format on
+    }
+  };
+
   explicit Model(const Config &config, const Package<std::string> &package);
   explicit Model(const Config &config, const Package<View> &package);
 
