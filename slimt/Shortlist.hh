@@ -6,7 +6,6 @@
 #include <utility>
 #include <vector>
 
-#include "slimt/Batch.hh"
 #include "slimt/Io.hh"
 #include "slimt/Types.hh"
 #include "slimt/Vocabulary.hh"

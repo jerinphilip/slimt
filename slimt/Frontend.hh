@@ -63,7 +63,7 @@ class Async {
  private:
   Config config_;
   std::optional<TranslationCache> cache_;
-  rd::Threadsafe<rd::AggregateBatcher> batcher_;
+  Threadsafe<AggregateBatcher> batcher_;
   std::vector<std::thread> workers_;
 
   size_t id_ = 0;

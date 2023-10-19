@@ -11,7 +11,6 @@
 #include <utility>
 #include <vector>
 
-#include "slimt/Batch.hh"
 #include "slimt/Request.hh"
 #include "slimt/Types.hh"
 #include "slimt/Utils.hh"
@@ -19,8 +18,6 @@
 namespace slimt {
 
 class Model;
-
-namespace rd {
 
 class Batcher {
  public:
@@ -198,7 +195,5 @@ class Threadsafe {
   // Signaled when there are sentences to translate.
   std::condition_variable work_;
 };
-
-}  // namespace rd
 
 }  // namespace slimt

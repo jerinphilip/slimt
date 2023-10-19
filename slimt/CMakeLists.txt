@@ -10,10 +10,10 @@ set(SLIMT_PUBLIC_HEADERS
 set(SLIMT_SOURCES
     Aligned.cc
     Annotation.cc
-    Batch.cc
     Batcher.cc
     Frontend.cc
     HTML.cc
+    Input.cc
     Io.cc
     Model.cc
     Modules.cc

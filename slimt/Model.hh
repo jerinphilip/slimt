@@ -7,7 +7,7 @@
 #include <vector>
 
 #include "slimt/Annotation.hh"
-#include "slimt/Batch.hh"
+#include "slimt/Input.hh"
 #include "slimt/Shortlist.hh"
 #include "slimt/TextProcessor.hh"
 #include "slimt/Transformer.hh"
@@ -48,7 +48,7 @@ class Model {
   explicit Model(const Config &config, const Package<std::string> &package);
   explicit Model(const Config &config, const Package<View> &package);
 
-  Histories forward(Batch &batch);
+  Histories forward(Input &input);
 
   Config &config() { return config_; }
   Vocabulary &vocabulary() { return vocabulary_; }
@@ -58,7 +58,7 @@ class Model {
   ShortlistGenerator &shortlist_generator() { return shortlist_generator_; }
 
  private:
-  Histories decode(Tensor &encoder_out, Batch &batch);
+  Histories decode(Tensor &encoder_out, Input &input);
 
   size_t id_;
   Config config_;

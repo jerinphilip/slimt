@@ -12,9 +12,7 @@
 #include "slimt/ResponseBuilder.hh"
 #include "slimt/Types.hh"
 
-namespace slimt::rd {
-
-using TranslationCache = slimt::TranslationCache;
+namespace slimt {
 
 /// A Request is an internal representation used to represent a request after
 /// processed by TextProcessor into segments constituted by marian::Words.
@@ -167,4 +165,4 @@ class Batch {
   size_t max_length_ = 0;
 };
 
-}  // namespace slimt::rd
+}  // namespace slimt

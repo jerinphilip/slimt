@@ -8,7 +8,7 @@
 #include "slimt/Model.hh"
 #include "slimt/Utils.hh"
 
-namespace slimt::rd {
+namespace slimt {
 
 size_t AggregateBatcher::Hash::operator()(
     const std::shared_ptr<Model>& model) const {
@@ -142,4 +142,4 @@ std::tuple<Batch, Ptr<Model>> AggregateBatcher::generate() {
 
 void AggregateBatcher::clear() { queue_.clear(); }
 
-}  // namespace slimt::rd
+}  // namespace slimt

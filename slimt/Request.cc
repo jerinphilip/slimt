@@ -19,8 +19,6 @@ size_t cache_key(size_t model_id, const Words &words) {
   return seed;
 }
 
-namespace rd {
-
 // -----------------------------------------------------------------
 Request::Request(size_t Id, size_t model_id, Segments &&segments,
                  ResponseBuilder &&responseBuilder,
@@ -148,7 +146,5 @@ void Batch::clear() {
   token_count_ = 0;
   max_length_ = 0;
 }
-
-}  // namespace rd
 
 }  // namespace slimt

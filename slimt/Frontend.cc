@@ -7,9 +7,9 @@
 #include <utility>
 
 #include "slimt/Annotation.hh"
-#include "slimt/Batch.hh"
 #include "slimt/Batcher.hh"
 #include "slimt/HTML.hh"
+#include "slimt/Input.hh"
 #include "slimt/Model.hh"
 #include "slimt/Request.hh"
 #include "slimt/Response.hh"
@@ -22,54 +22,52 @@ namespace slimt {
 
 namespace {
 
-Batch convert(rd::Batch &rd_batch, uint32_t pad_id, size_t limit_factor) {
-  const auto &segment_refs = rd_batch.segment_refs();
-  Batch batch(rd_batch.size(), rd_batch.max_length(), pad_id, limit_factor);
+Input convert(Batch &batch, uint32_t pad_id, size_t limit_factor) {
+  const auto &segment_refs = batch.segment_refs();
+  Input input(batch.size(), batch.max_length(), pad_id, limit_factor);
   for (const auto &segment_ref : segment_refs) {
     Segment segment = segment_ref.get();
-    batch.add(segment);
+    input.add(segment);
   }
 
-  return batch;
+  return input;
 }
 
-void exhaust(const Config &config, const Ptr<Model> &model,
-             rd::Batcher &batcher) {
+void exhaust(const Config &config, const Ptr<Model> &model, Batcher &batcher) {
   AverageMeter<float> wps;
   AverageMeter<float> occupancy;
-  rd::Batch rd_batch = batcher.generate();
-  while (!rd_batch.empty()) {
+  Batch batch = batcher.generate();
+  while (!batch.empty()) {
     // convert between batches.
     Timer timer;
-    Batch batch = convert(rd_batch, model->vocabulary().pad_id(),
+    Input input = convert(batch, model->vocabulary().pad_id(),
                           config.tgt_length_limit_factor);
-    Histories histories = model->forward(batch);
-    rd_batch.complete(histories);
-    rd_batch = batcher.generate();
+    Histories histories = model->forward(input);
+    batch.complete(histories);
+    batch = batcher.generate();
 
     auto elapsed = static_cast<float>(timer.elapsed());
-    float batch_wps = batch.words().size() / elapsed;
-    wps.record(batch_wps);
-    occupancy.record(batch.occupancy());
+    float sample_wps = input.words().size() / elapsed;
+    wps.record(sample_wps);
+    occupancy.record(input.occupancy());
   }
 }
 
 template <class Continuation>
-Ptr<rd::Request> make_request(size_t id, const Ptr<Model> &model,
-                              std::optional<TranslationCache> &cache,
-                              AnnotatedText &&annotated_text,
-                              Segments &&segments,
-                              Continuation &&continuation) {
+Ptr<Request> make_request(size_t id, const Ptr<Model> &model,
+                          std::optional<TranslationCache> &cache,
+                          AnnotatedText &&annotated_text, Segments &&segments,
+                          Continuation &&continuation) {
   ResponseBuilder response_builder(                                  //
       std::move(annotated_text),                                     //
       model->vocabulary(), std::forward<Continuation>(continuation)  //
   );
 
-  auto request = std::make_shared<rd::Request>(  //
-      id, model->id(),                           //
-      std::move(segments),                       //
-      std::move(response_builder),               //
-      cache                                      //
+  auto request = std::make_shared<Request>(  //
+      id, model->id(),                       //
+      std::move(segments),                   //
+      std::move(response_builder),           //
+      cache                                  //
   );
   return request;
 }
@@ -81,8 +79,8 @@ Blocking::Blocking(const Config &config) : config_(config) {}  // NOLINT
 std::vector<Response> Blocking::translate(const Ptr<Model> &model,
                                           std::vector<std::string> sources,
                                           const Options &options) {
-  rd::Batcher batcher(config_.max_words, config_.wrap_length,
-                      config_.tgt_length_limit_factor);
+  Batcher batcher(config_.max_words, config_.wrap_length,
+                  config_.tgt_length_limit_factor);
 
   std::vector<HTML> htmls;
   if (options.html) {
@@ -159,8 +157,8 @@ std::vector<Response> Blocking::pivot(const Ptr<Model> &first,
   // round.
   std::vector<Response> responses(source_to_pivots.size());
 
-  rd::Batcher batcher(config_.max_words, config_.wrap_length,
-                      config_.tgt_length_limit_factor);
+  Batcher batcher(config_.max_words, config_.wrap_length,
+                  config_.tgt_length_limit_factor);
 
   for (size_t i = 0; i < source_to_pivots.size(); i++) {
     Response &source_to_pivot = source_to_pivots[i];
@@ -198,15 +196,15 @@ Async::Async(const Config &config)
   // Also creates consumers, starts listening.
   for (size_t i = 0; i < config.workers; i++) {
     workers_.emplace_back([this]() {
-      auto [rd_batch, model] = batcher_.generate();
-      while (!rd_batch.empty()) {
+      auto [batch, model] = batcher_.generate();
+      while (!batch.empty()) {
         // convert between batches.
-        Batch batch = convert(rd_batch, model->vocabulary().pad_id(),
+        Input input = convert(batch, model->vocabulary().pad_id(),
                               config_.tgt_length_limit_factor);
-        Histories histories = model->forward(batch);
-        rd_batch.complete(histories);
+        Histories histories = model->forward(input);
+        batch.complete(histories);
         auto [next_batch, next_model] = batcher_.generate();
-        rd_batch = std::move(next_batch);
+        batch = std::move(next_batch);
         model = std::move(next_model);
       }
     });
