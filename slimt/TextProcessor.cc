@@ -84,8 +84,8 @@ TextProcessor::TextProcessor(const std::string &mode,
   //
   // For now, we allow not supplying an ssplit-prefix-file.
 
-  SLIMT_ABORT_IF(memory.empty(),
-                 "ssplit: Empty blob supplied for initialization.");
+  // SLIMT_ABORT_IF(memory.empty(), "ssplit: Empty blob supplied for
+  // initialization.");
   ssplit_ = load_splitter(memory);
 }
 

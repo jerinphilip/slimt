@@ -22,9 +22,9 @@ namespace slimt {
 
 namespace {
 
-Batch convert(rd::Batch &rd_batch) {
+Batch convert(rd::Batch &rd_batch, uint32_t pad_id, size_t limit_factor) {
   const auto &segment_refs = rd_batch.segment_refs();
-  Batch batch(rd_batch.size(), rd_batch.max_length(), 0);
+  Batch batch(rd_batch.size(), rd_batch.max_length(), pad_id, limit_factor);
   for (const auto &segment_ref : segment_refs) {
     Segment segment = segment_ref.get();
     batch.add(segment);
@@ -33,14 +33,16 @@ Batch convert(rd::Batch &rd_batch) {
   return batch;
 }
 
-void exhaust(const Ptr<Model> &model, rd::Batcher &batcher) {
+void exhaust(const Config &config, const Ptr<Model> &model,
+             rd::Batcher &batcher) {
   AverageMeter<float> wps;
   AverageMeter<float> occupancy;
   rd::Batch rd_batch = batcher.generate();
   while (!rd_batch.empty()) {
     // convert between batches.
     Timer timer;
-    Batch batch = convert(rd_batch);
+    Batch batch = convert(rd_batch, model->vocabulary().pad_id(),
+                          config.tgt_length_limit_factor);
     Histories histories = model->forward(batch);
     rd_batch.complete(histories);
     rd_batch = batcher.generate();
@@ -119,7 +121,7 @@ std::vector<Response> Blocking::translate(const Ptr<Model> &model,
     batcher.enqueue(request);
   }
 
-  exhaust(model, batcher);
+  exhaust(config_, model, batcher);
 
   std::vector<Response> responses;
   responses.reserve(futures.size());
@@ -171,17 +173,15 @@ std::vector<Response> Blocking::pivot(const Ptr<Model> &first,
       response = std::move(combined);
     };
 
-    // We cannot eliminate this copy, as we need two versions of intermediate.
-    AnnotatedText copy = source_to_pivot.target;
     TextProcessor &processor = second->processor();
-    auto [annotated, segments] = processor.process(copy);
+    auto [annotated, segments] = processor.process(source_to_pivot.target);
     auto request = make_request(id_, second, cache_, std::move(annotated),
                                 std::move(segments), continuation);
 
     batcher.enqueue(request);
   }
 
-  exhaust(second, batcher);
+  exhaust(config_, second, batcher);
 
   if (options.html) {
     for (size_t i = 0; i < responses.size(); i++) {
@@ -201,7 +201,8 @@ Async::Async(const Config &config)
       auto [rd_batch, model] = batcher_.generate();
       while (!rd_batch.empty()) {
         // convert between batches.
-        Batch batch = convert(rd_batch);
+        Batch batch = convert(rd_batch, model->vocabulary().pad_id(),
+                              config_.tgt_length_limit_factor);
         Histories histories = model->forward(batch);
         rd_batch.complete(histories);
         auto [next_batch, next_model] = batcher_.generate();

@@ -123,8 +123,7 @@ Histories Model::decode(Tensor &encoder_out, Batch &batch) {
   record(previous_slice, sentences);
 
   size_t remaining = sentences.size();
-  float tgt_length_factor = batch.target_limit_factor();
-  size_t max_seq_length = tgt_length_factor * source_sequence_length;
+  size_t max_seq_length = batch.limit_factor() * source_sequence_length;
   for (size_t i = 1; i < max_seq_length && remaining > 0; i++) {
     auto [logits, attn] = decoder.step(encoder_out, batch.mask(), states,
                                        previous_slice, indices);
