@@ -31,10 +31,8 @@ class ResponseBuilder {
   /// or not in the response and any additional configurable parameters.
   /// @param [in] vocabulary: marian vocab object (used in decoding)
   /// @param [in] callback: callback with operates on the constructed Response.
-  /// @param [in] qualityEstimator: the QualityEstimator model that can be used
-  /// to provide translation quality probability.
-  ResponseBuilder(Options options, AnnotatedText &&source,
-                  const Vocabulary &vocabulary, Continuation &&continuation)
+  ResponseBuilder(AnnotatedText &&source, const Vocabulary &vocabulary,
+                  Continuation &&continuation)
       : vocabulary_(vocabulary),
         source_(std::move(source)),
         continuation_(std::move(continuation)) {}
