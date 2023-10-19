@@ -35,8 +35,7 @@ class ResponseBuilder {
   /// to provide translation quality probability.
   ResponseBuilder(Options options, AnnotatedText &&source,
                   const Vocabulary &vocabulary, Continuation &&continuation)
-      : options_(options),
-        vocabulary_(vocabulary),
+      : vocabulary_(vocabulary),
         source_(std::move(source)),
         continuation_(std::move(continuation)) {}
 
@@ -48,7 +47,6 @@ class ResponseBuilder {
 
  private:
   // Data members are context/curried args for the functor.
-  Options options_;
   const Vocabulary &vocabulary_;  // vocabulary are required for decoding
                                   // and any source validation checks.
   AnnotatedText source_;
