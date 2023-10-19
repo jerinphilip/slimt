@@ -1,0 +1,6 @@
+@PACKAGE_INIT@
+include(CMakeFindDependencyMacro)
+# Sentencepiece is used in public headers, so after packaging, this is required.
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(Sentencepiece REQUIRED sentencepiece)
+include("${CMAKE_CURRENT_LIST_DIR}/slimtTargets.cmake")

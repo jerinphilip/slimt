@@ -101,7 +101,7 @@ template <typename T>
 class Reversed {
  public:
   using iterator = typename T::const_reverse_iterator;
-  explicit Reversed(const T &container) : container_(container){};
+  explicit Reversed(const T &container) : container_(container) {}
   iterator begin() const { return container_.rbegin(); }
   iterator end() const { return container_.rend(); }
 
