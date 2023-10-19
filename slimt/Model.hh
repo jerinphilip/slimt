@@ -26,6 +26,7 @@ struct Package {
 class Model {
  public:
   struct Config {
+    // NOLINTBEGIN
     size_t encoder_layers = 6;
     size_t decoder_layers = 2;
     size_t feed_forward_depth = 2;
@@ -41,6 +42,7 @@ class Model {
       app.add_option("--split-mode", split_mode, "Split mode to go with for sentence-splitter.");
       // clang-format on
     }
+    // NOLINTEND
   };
 
   explicit Model(const Config &config, const Package<std::string> &package);
