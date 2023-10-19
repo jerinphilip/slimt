@@ -11,12 +11,74 @@
 #include <utility>
 #include <vector>
 
-#include "slimt/Request.hh"
 #include "slimt/Types.hh"
 
 namespace slimt {
 
 class Model;
+class Request;
+
+/// A SegmentRef provides a view to a segment within a Request. Existence
+/// of this class allows the segments and associated information to be kept
+/// within Request, while batching mechanism (BatchingPool) compiles Batch
+/// from SegmentRef-s coming from different Requests.
+class SegmentRef {
+ public:
+  SegmentRef(size_t, Ptr<Request>);
+
+  /// Number of tokens in the segment this SegmentRef represents. Used to
+  /// order by length in batching.
+  size_t size() const;
+
+  /// Accessor to the segment represented by the SegmentRef.
+  Segment get() const;
+
+  /// Forwards history to Request to set history corresponding to this
+  /// SegmentRef.
+  void complete(History history);
+
+  friend bool operator<(const SegmentRef &a, const SegmentRef &b);
+
+ private:
+  size_t index_;
+  Ptr<Request> request_;
+};
+
+using SegmentRefs = std::vector<SegmentRef>;
+
+// An empty batch is poison.
+class Batch {
+ public:
+  Batch() = default;
+  void clear();
+
+  size_t size() const { return segment_refs_.size(); }
+  bool empty() const { return segment_refs_.empty(); }
+  size_t max_length() const { return max_length_; }
+
+  void add(const SegmentRef &segment_ref);
+
+  // Accessors to read from a Batch. For use in BatchTranslator (consumer on a
+  // PCQueue holding batches).
+  //
+  // segment_refs() are used to access segment_refs to construct marian internal
+  // batch.
+  const SegmentRefs &segment_refs() { return segment_refs_; }
+
+  // On obtaining Histories after translating a batch, complete can be
+  // called with Histories , which forwards the call to Request through
+  // SegmentRef and triggers completion, by setting the promised value to
+  // the future given to client.
+  void complete(const Histories &histories);
+
+  // Convenience function to log batch-statistics. size, max-length.
+  void log();
+
+ private:
+  SegmentRefs segment_refs_;
+  size_t token_count_ = 0;
+  size_t max_length_ = 0;
+};
 
 class Batcher {
  public:
@@ -29,7 +91,7 @@ class Batcher {
   // SegmentRef incorporates (tentative) notions of priority with each
   // sentence. This method inserts the sentence into the internal data-structure
   // which maintains priority among sentences from multiple concurrent requests.
-  size_t enqueue(const Ptr<Request>& request);
+  size_t enqueue(const Ptr<Request> &request);
 
   // Loads sentences with sentences compiled from (tentatively) multiple
   // requests optimizing for both padding and priority.
@@ -82,7 +144,7 @@ class AggregateBatcher {
   /// translation is complete.
   /// @param [in] request: A request to be enqueued to model.
   /// @returns number of sentences added for translation.
-  size_t enqueue(const Ptr<Model>& model, const Ptr<Request>& request);
+  size_t enqueue(const Ptr<Model> &model, const Ptr<Request> &request);
 
   /// Generate a batch from pending requests, obtained from available
   /// Models.
@@ -105,7 +167,7 @@ class AggregateBatcher {
   /// etc into containers which require the members to be hashable
   /// (std::unordered_set, std::unordered_map).
   struct Hash {
-    size_t operator()(const std::shared_ptr<Model>& model) const;
+    size_t operator()(const std::shared_ptr<Model> &model) const;
   };
 
   std::unordered_set<std::shared_ptr<Model>, Hash> queue_;
@@ -144,12 +206,12 @@ class Threadsafe {
   // enqueued, but all enqueued requests will be processed. To prevent this from
   // happening, call `clear()` before `shutdown()`.
   template <class... Args>
-  explicit Threadsafe(Args&&... args) : backend_(std::forward<Args>(args)...) {}
+  explicit Threadsafe(Args &&...args) : backend_(std::forward<Args>(args)...) {}
 
   ~Threadsafe() { shutdown(); }
 
   template <class... Args>
-  void enqueue(Args&&... args) {
+  void enqueue(Args &&...args) {
     std::unique_lock<std::mutex> lock(mutex_);
     assert(!shutdown_);
     enqueued_ += backend_.enqueue(std::forward<Args>(args)...);

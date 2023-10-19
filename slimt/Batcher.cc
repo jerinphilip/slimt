@@ -6,9 +6,64 @@
 
 #include "slimt/Macros.hh"
 #include "slimt/Model.hh"
+#include "slimt/Request.hh"
 #include "slimt/Utils.hh"
 
 namespace slimt {
+
+// ------------------------------------------------------------------
+
+SegmentRef::SegmentRef(size_t index, Ptr<Request> request)
+    : index_(index), request_(std::move(request)) {}
+
+size_t SegmentRef::size() const { return (request_->word_count(index_)); }
+
+void SegmentRef::complete(History history) {
+  // Relays complete into request's complete, using index
+  // information.
+  request_->complete(index_, std::move(history));
+}
+
+Segment SegmentRef::get() const { return request_->segment(index_); }
+
+bool operator<(const Request& a, const Request& b) {
+  // Among Requests, only sequence id is used for obtaining priority.
+  return a.id_ < b.id_;
+}
+
+bool operator<(const SegmentRef& a, const SegmentRef& b) {
+  // Operator overload for usage in priority-queue / set.
+  if (a.request_ == b.request_) {
+    return a.index_ < b.index_;
+  }
+  return a.request_ < b.request_;
+}
+
+// ----------------------------------------------------------------------
+
+void Batch::log() {
+  (void)token_count_;
+  LOG(info, "Batch(tokens={}, max-length={}, segment_refs_={})", token_count_,
+      max_length_, segment_refs_.size());
+}
+
+void Batch::add(const SegmentRef& segment_ref) {
+  segment_refs_.push_back(segment_ref);
+  token_count_ += segment_ref.size();
+  max_length_ = std::max<size_t>(max_length_, segment_ref.size());
+}
+
+void Batch::complete(const Histories& histories) {
+  for (size_t i = 0; i < segment_refs_.size(); i++) {
+    segment_refs_[i].complete(histories[i]);
+  }
+}
+
+void Batch::clear() {
+  segment_refs_.clear();
+  token_count_ = 0;
+  max_length_ = 0;
+}
 
 size_t AggregateBatcher::Hash::operator()(
     const std::shared_ptr<Model>& model) const {

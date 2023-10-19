@@ -15,6 +15,6 @@ SHORTLIST=lex.s2t.bin
 
 set -x
 
-./build/app/slimt --root ${PREFIX} \
+./build/app/slimt-cli --root ${PREFIX} \
   --model ${MODEL} --vocabulary ${VOCAB} --shortlist ${SHORTLIST} \
   < data/sample.txt
