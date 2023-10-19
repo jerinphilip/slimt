@@ -1,7 +1,8 @@
+#include "slimt/Input.hh"
+
 #include <algorithm>
 #include <cassert>
 
-#include "slimt/Input.hh"
 #include "slimt/Tensor.hh"
 
 namespace slimt {
