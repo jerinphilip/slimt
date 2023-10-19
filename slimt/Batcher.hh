@@ -13,7 +13,6 @@
 
 #include "slimt/Request.hh"
 #include "slimt/Types.hh"
-#include "slimt/Utils.hh"
 
 namespace slimt {
 

@@ -17,6 +17,7 @@
 #include "slimt/Tensor.hh"
 #include "slimt/TensorOps.hh"
 #include "slimt/TextProcessor.hh"
+#include "slimt/Utils.hh"
 
 namespace slimt {
 

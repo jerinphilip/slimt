@@ -9,6 +9,7 @@
 
 // Private headers, required for partial testing.
 #include "slimt/TensorOps.hh"
+#include "slimt/Utils.hh"
 
 namespace slimt {
 
