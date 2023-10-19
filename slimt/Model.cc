@@ -39,11 +39,9 @@ Model::Model(const Config &config, const Package<View> &package)
       config_(config),
       view_(package),
       vocabulary_(package.vocabulary),
-      processor_(config.wrap_length, config.split_mode, vocabulary_,
-                 config.prefix_path),
+      processor_(config.split_mode, vocabulary_, Aligned()),
       transformer_(config.encoder_layers, config.decoder_layers,
-                   config.attention_num_heads, config.feed_forward_depth,
-                   package.model),
+                   config.num_heads, config.feed_forward_depth, package.model),
       shortlist_generator_(package.shortlist, vocabulary_, vocabulary_) {}
 
 Model::Model(const Config &config, const Package<std::string> &package)
@@ -52,11 +50,9 @@ Model::Model(const Config &config, const Package<std::string> &package)
       mmap_(mmap_from(package)),
       view_(view_from(*mmap_)),
       vocabulary_(view_.vocabulary),
-      processor_(config.wrap_length, config.split_mode, vocabulary_,
-                 config.prefix_path),
+      processor_(config.split_mode, vocabulary_, Aligned()),
       transformer_(config.encoder_layers, config.decoder_layers,
-                   config.attention_num_heads, config.feed_forward_depth,
-                   view_.model),
+                   config.num_heads, config.feed_forward_depth, view_.model),
       shortlist_generator_(view_.shortlist, vocabulary_, vocabulary_) {}
 
 namespace {
@@ -127,8 +123,7 @@ Histories Model::decode(Tensor &encoder_out, Batch &batch) {
   record(previous_slice, sentences);
 
   size_t remaining = sentences.size();
-  size_t max_seq_length =
-      config_.tgt_length_limit_factor * source_sequence_length;
+  size_t max_seq_length = batch.limit_factor() * source_sequence_length;
   for (size_t i = 1; i < max_seq_length && remaining > 0; i++) {
     auto [logits, attn] = decoder.step(encoder_out, batch.mask(), states,
                                        previous_slice, indices);

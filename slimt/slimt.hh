@@ -1,13 +1,4 @@
 #pragma once
-#include "slimt/Batch.hh"
 #include "slimt/Frontend.hh"
-#include "slimt/Io.hh"
-#include "slimt/Macros.hh"
 #include "slimt/Model.hh"
-#include "slimt/QMM.hh"
-#include "slimt/Shortlist.hh"
-#include "slimt/Tensor.hh"
-#include "slimt/TensorOps.hh"
-#include "slimt/Utils.hh"
 #include "slimt/Version.hh"
-#include "slimt/Vocabulary.hh"

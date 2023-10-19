@@ -17,7 +17,8 @@ namespace py = pybind11;
 using slimt::Alignment;
 using slimt::Alignments;
 using slimt::AnnotatedText;
-using slimt::Config;
+using ServiceConfig = slimt::Config;
+using ModelConfig = slimt::Model::Config;
 using slimt::Options;
 using slimt::Range;
 using slimt::Response;
@@ -147,7 +148,7 @@ class PyService {
 
     py::call_guard<py::gil_scoped_release> gil_guard;
 
-    Config config;
+    ServiceConfig config;
     config.workers = workers;
     config.cache_size = cache_size;
 
@@ -213,7 +214,7 @@ PYBIND11_MODULE(_slimt, m) {
       .def_readwrite("vocabulary", &Package::vocabulary)
       .def_readwrite("shortlist", &Package::shortlist);
 
-  py::class_<Config>(m, "Config").def(py::init<>());
+  py::class_<ModelConfig>(m, "Config").def(py::init<>());
 
   py::class_<PyService>(m, "Service")
       .def(py::init<size_t, size_t>(), py::arg("workers") = 1,
@@ -224,7 +225,7 @@ PYBIND11_MODULE(_slimt, m) {
            py::arg("texts"), py::arg("html") = false);
 
   py::class_<Model, std::shared_ptr<Model>>(m, "Model")
-      .def(py::init<>([](const Config &config, const Package &package) {
+      .def(py::init<>([](const ModelConfig &config, const Package &package) {
              return std::make_shared<Model>(config, package);
            }),
            py::arg("config"), py::arg("package"));

@@ -4,7 +4,11 @@
 #include <iostream>
 #include <unordered_map>
 
+// Public headers.
 #include "slimt/slimt.hh"
+
+// Private headers, required for partial testing.
+#include "slimt/TensorOps.hh"
 
 namespace slimt {
 
@@ -654,9 +658,10 @@ void integration() {
       .shortlist = prefix_browsermt("lex.s2t.bin")            //
   };
 
-  Config config;
-  auto model = std::make_shared<Model>(config, path);
-  Blocking service(config);
+  Model::Config model_config;
+  auto model = std::make_shared<Model>(model_config, path);
+  Config service_config;
+  Blocking service(service_config);
   std::string source = "1 2\n1 2 3\n";
   slimt::Options opts;
   auto responses = service.translate(model, {std::move(source)}, opts);

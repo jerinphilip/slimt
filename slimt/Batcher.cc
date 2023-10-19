@@ -10,6 +10,11 @@
 
 namespace slimt::rd {
 
+size_t AggregateBatcher::Hash::operator()(
+    const std::shared_ptr<Model>& model) const {
+  return std::hash<size_t>()(model->id());
+}
+
 Batcher::Batcher(size_t max_words, size_t wrap_length,
                  float tgt_length_limit_factor)
     : max_words_(max_words) {

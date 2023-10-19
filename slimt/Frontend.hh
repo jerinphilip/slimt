@@ -5,16 +5,34 @@
 #include <string>
 #include <vector>
 
-#include "slimt/Aligned.hh"
 #include "slimt/Batcher.hh"
-#include "slimt/Model.hh"
+#include "slimt/Cache.hh"
 #include "slimt/Response.hh"
-#include "slimt/Shortlist.hh"
-#include "slimt/TextProcessor.hh"
 #include "slimt/Types.hh"
-#include "slimt/Vocabulary.hh"
 
 namespace slimt {
+
+class Model;
+
+struct Config {
+  // NOLINTBEGIN
+  size_t max_words = 1024;
+  size_t cache_size = 1024;
+  size_t workers = 1;
+  float tgt_length_limit_factor = 1.5;
+  size_t wrap_length = 128;
+  // NOLINTEND
+
+  template <class App>
+  void setup_onto(App &app) {
+    // clang-format off
+    app.add_option("--limit-tgt", tgt_length_limit_factor, "Max length proportional to source target can have.");
+    app.add_option("--max-words", max_words, "Maximum words in a batch.");
+    app.add_option("--wrap-length", max_words, "Maximum length allowed for a sample, beyond which hard-wrap.");
+    app.add_option("--workers", workers, "Number of workers threads to launch for translating.");
+    // clang-format on
+  }
+};
 
 class Blocking {
  public:

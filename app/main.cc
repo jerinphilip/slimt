@@ -19,7 +19,8 @@ struct Options {
   bool async = false;
   bool html = false;
   bool version = false;
-  slimt::Config config;
+  slimt::Config service;
+  slimt::Model::Config model;
 
   template <class App>
   void setup_onto(App &app) {
@@ -31,7 +32,8 @@ struct Options {
     app.add_flag("--version", version, "Display version");
     app.add_flag("--html", html, "Whether content is HTML");
     app.add_flag("--async", async, "Try async backend");
-    config.setup_onto(app);
+    service.setup_onto(app);
+    model.setup_onto(app);
     // clang-format on
   }
 };
@@ -60,11 +62,11 @@ void run(const Options &options) {
   // Sample user-operation.
   // We decide the user interface first, ideally nice, clean.
   // There are times when it won't match - EM.
-  auto model = std::make_shared<Model>(options.config, package);
+  auto model = std::make_shared<Model>(options.model, package);
 
   if (options.async) {
     // Async operation.
-    Async service(options.config);
+    Async service(options.service);
 
     std::string source = read_from_stdin();
     slimt::Options opts{
@@ -79,7 +81,7 @@ void run(const Options &options) {
     fprintf(stdout, "%s\n", response.target.text.c_str());
   } else {
     // Blocking operation.
-    Blocking service(options.config);
+    Blocking service(options.service);
 
     std::string source = read_from_stdin();
     slimt::Options opts{

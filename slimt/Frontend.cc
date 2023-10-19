@@ -6,22 +6,25 @@
 #include <memory>
 #include <utility>
 
+#include "slimt/Annotation.hh"
 #include "slimt/Batch.hh"
 #include "slimt/Batcher.hh"
 #include "slimt/HTML.hh"
+#include "slimt/Model.hh"
 #include "slimt/Request.hh"
 #include "slimt/Response.hh"
 #include "slimt/ResponseBuilder.hh"
 #include "slimt/Tensor.hh"
 #include "slimt/TensorOps.hh"
+#include "slimt/TextProcessor.hh"
 
 namespace slimt {
 
 namespace {
 
-Batch convert(rd::Batch &rd_batch) {
+Batch convert(rd::Batch &rd_batch, uint32_t pad_id, size_t limit_factor) {
   const auto &segment_refs = rd_batch.segment_refs();
-  Batch batch(rd_batch.size(), rd_batch.max_length(), 0);
+  Batch batch(rd_batch.size(), rd_batch.max_length(), pad_id, limit_factor);
   for (const auto &segment_ref : segment_refs) {
     Segment segment = segment_ref.get();
     batch.add(segment);
@@ -30,14 +33,16 @@ Batch convert(rd::Batch &rd_batch) {
   return batch;
 }
 
-void exhaust(const Ptr<Model> &model, rd::Batcher &batcher) {
+void exhaust(const Config &config, const Ptr<Model> &model,
+             rd::Batcher &batcher) {
   AverageMeter<float> wps;
   AverageMeter<float> occupancy;
   rd::Batch rd_batch = batcher.generate();
   while (!rd_batch.empty()) {
     // convert between batches.
     Timer timer;
-    Batch batch = convert(rd_batch);
+    Batch batch = convert(rd_batch, model->vocabulary().pad_id(),
+                          config.tgt_length_limit_factor);
     Histories histories = model->forward(batch);
     rd_batch.complete(histories);
     rd_batch = batcher.generate();
@@ -51,14 +56,12 @@ void exhaust(const Ptr<Model> &model, rd::Batcher &batcher) {
 
 template <class Continuation>
 Ptr<rd::Request> make_request(size_t id, const Ptr<Model> &model,
-                              std::string &&source, const Options &options,
-                              std::optional<TranslationCache> &cache_,
+                              std::optional<TranslationCache> &cache,
+                              AnnotatedText &&annotated_text,
+                              Segments &&segments,
                               Continuation &&continuation) {
-  auto [annotated_source, segments] =
-      model->processor().process(std::move(source));
-
   ResponseBuilder response_builder(                                  //
-      options, std::move(annotated_source),                          //
+      std::move(annotated_text),                                     //
       model->vocabulary(), std::forward<Continuation>(continuation)  //
   );
 
@@ -66,7 +69,7 @@ Ptr<rd::Request> make_request(size_t id, const Ptr<Model> &model,
       id, model->id(),                           //
       std::move(segments),                       //
       std::move(response_builder),               //
-      cache_                                     //
+      cache                                      //
   );
   return request;
 }
@@ -109,13 +112,16 @@ std::vector<Response> Blocking::translate(const Ptr<Model> &model,
       promise.set_value(std::move(response));
     };
 
-    auto request = make_request(id_, model, std::move(source), options, cache_,
-                                continuation);
+    auto &processor = model->processor();
+    auto [annotated, segments] =
+        processor.process(std::move(source), config_.wrap_length);
+    auto request = make_request(id_, model, cache_, std::move(annotated),
+                                std::move(segments), continuation);
 
     batcher.enqueue(request);
   }
 
-  exhaust(model, batcher);
+  exhaust(config_, model, batcher);
 
   std::vector<Response> responses;
   responses.reserve(futures.size());
@@ -167,15 +173,15 @@ std::vector<Response> Blocking::pivot(const Ptr<Model> &first,
       response = std::move(combined);
     };
 
-    // We cannot eliminate this copy, as we need two versions of intermediate.
-    std::string target = source_to_pivots[i].target.text;
-    auto request =
-        make_request(id_, second, std::move(target), raw, cache_, continuation);
+    TextProcessor &processor = second->processor();
+    auto [annotated, segments] = processor.process(source_to_pivot.target);
+    auto request = make_request(id_, second, cache_, std::move(annotated),
+                                std::move(segments), continuation);
 
     batcher.enqueue(request);
   }
 
-  exhaust(second, batcher);
+  exhaust(config_, second, batcher);
 
   if (options.html) {
     for (size_t i = 0; i < responses.size(); i++) {
@@ -195,7 +201,8 @@ Async::Async(const Config &config)
       auto [rd_batch, model] = batcher_.generate();
       while (!rd_batch.empty()) {
         // convert between batches.
-        Batch batch = convert(rd_batch);
+        Batch batch = convert(rd_batch, model->vocabulary().pad_id(),
+                              config_.tgt_length_limit_factor);
         Histories histories = model->forward(batch);
         rd_batch.complete(histories);
         auto [next_batch, next_model] = batcher_.generate();
@@ -223,8 +230,11 @@ std::future<Response> Async::translate(const Ptr<Model> &model,
     promise->set_value(std::move(response));
   };
 
-  auto request = make_request(id_, model, std::move(source), options, cache_,
-                              continuation);
+  TextProcessor &processor = model->processor();
+  auto [annotated, segments] =
+      processor.process(std::move(source), config_.wrap_length);
+  auto request = make_request(id_, model, cache_, std::move(annotated),
+                              std::move(segments), continuation);
 
   batcher_.enqueue(model, request);
   return future;
@@ -241,8 +251,8 @@ std::future<Response> Async::pivot(const Ptr<Model> &first,
   Promise promise;
   auto future = promise.get_future();
 
-  auto continuation = [this, &promise, second, html,
-                       options](Response &&source_to_pivot) {
+  auto continuation = [this, &promise, second,
+                       html](Response &&source_to_pivot) {
     // https://stackoverflow.com/a/65606554/4565794
     // Move semantics only work on mutable lambdas, and can only be done once.
     // It's only once in our case, so issok.
@@ -261,20 +271,21 @@ std::future<Response> Async::pivot(const Ptr<Model> &first,
       promise.set_value(std::move(response));
     };
 
-    // Second call.
-    // We cannot eliminate the following copy, as we need two versions of
-    // intermediate. Holding it in a copy allows moving the response into the
-    // lambda below.
-    std::string intermediate = source_to_pivot.target.text;
+    TextProcessor &processor = second->processor();
+    auto [annotated, segments] = processor.process(source_to_pivot.target);
 
-    auto request = make_request(id_, second, std::move(intermediate), options,
-                                cache_, std::move(joining_continuation));
+    auto request =
+        make_request(id_, second, cache_, std::move(annotated),
+                     std::move(segments), std::move(joining_continuation));
 
     batcher_.enqueue(second, request);
   };
 
-  auto request = make_request(id_, first, std::move(source), options, cache_,
-                              continuation);
+  TextProcessor &processor = first->processor();
+  auto [annotated, segments] =
+      processor.process(std::move(source), config_.wrap_length);
+  auto request = make_request(id_, first, cache_, std::move(annotated),
+                              std::move(segments), continuation);
 
   batcher_.enqueue(first, request);
   return future;
