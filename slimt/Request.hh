@@ -39,7 +39,7 @@ class Request {
   /// the Response upon completion of the Request.
   ///
   ///
-  /// @param [in] Id: Identifier assigned to Request by Service.
+  /// @param [in] id: Identifier assigned to Request by Service.
   /// @param [in] model: Model for identifying a unique translation
   /// segment key (model, words in a segment) for cache.
   /// @param [in] segments: Each segment is a segment to be translated.
