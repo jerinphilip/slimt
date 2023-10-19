@@ -7,7 +7,6 @@
 
 #include "slimt/Batcher.hh"
 #include "slimt/Cache.hh"
-#include "slimt/Config.hh"
 #include "slimt/Response.hh"
 #include "slimt/Types.hh"
 

@@ -6,8 +6,8 @@
 #include <unordered_map>
 #include <vector>
 
+#include "slimt/Annotation.hh"
 #include "slimt/Batch.hh"
-#include "slimt/Config.hh"
 #include "slimt/Shortlist.hh"
 #include "slimt/TextProcessor.hh"
 #include "slimt/Transformer.hh"

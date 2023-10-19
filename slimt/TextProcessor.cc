@@ -70,22 +70,12 @@ Segment TextProcessor::tokenize(
   return words;
 }
 
-TextProcessor::TextProcessor(size_t wrap_length, const std::string &mode,
-                             const Vocabulary &vocabulary,
-                             const std::string &prefix_path)
-    : wrap_length_(wrap_length),
-      ssplit_mode_(string2splitmode(mode)),
-      vocabulary_(vocabulary),
-      ssplit_(load_splitter(prefix_path)) {}
-
-TextProcessor::TextProcessor(size_t wrap_length, const std::string &mode,
+TextProcessor::TextProcessor(const std::string &mode,
                              const Vocabulary &vocabulary,
                              const Aligned &memory)
-    : wrap_length_(wrap_length),
-      ssplit_mode_(string2splitmode(mode)),
-      vocabulary_(vocabulary) {
+    : ssplit_mode_(string2splitmode(mode)), vocabulary_(vocabulary) {
   // This is not the best of the solutions at the moment, but is consistent
-  // with // what happens among other structures like model, vocabulary or
+  // with what happens among other structures like model, vocabulary or
   // shortlist.  First, we check if the bytearray is empty. If not, we load
   // from ByteArray.  In case empty, the string based loader which reads from
   // file is called.  However, ssplit allows for not supplying
@@ -100,7 +90,7 @@ TextProcessor::TextProcessor(size_t wrap_length, const std::string &mode,
 }
 
 std::tuple<AnnotatedText, Segments> TextProcessor::process(
-    std::string &&input) const {
+    std::string &&input, size_t wrap_length) const {
   AnnotatedText source(std::move(input));
   Segments segments;
   std::string_view input_converted(source.text.data(), source.text.size());
@@ -120,7 +110,7 @@ std::tuple<AnnotatedText, Segments> TextProcessor::process(
     if (!segment.empty()) {
       // Wrap segment into sentences of at most wrap_length_ tokens and
       // tell source about them.
-      wrap(segment, word_ranges, segments, source);
+      wrap(segment, word_ranges, segments, source, wrap_length);
     }
   }
   return {std::move(source), std::move(segments)};
@@ -128,14 +118,15 @@ std::tuple<AnnotatedText, Segments> TextProcessor::process(
 
 void TextProcessor::wrap(Segment &segment,
                          std::vector<std::string_view> &word_ranges,
-                         Segments &segments, AnnotatedText &source) const {
+                         Segments &segments, AnnotatedText &source,
+                         size_t wrap_length) const {
   // There's an EOS token added to the words, manually.
   // SentencePiece/marian-vocab is set to not append EOS. Marian requires EOS to
   // be at the end as a marker to start translating. So while we're supplied
   // wrap_length_ from outside, we need to ensure there's space for EOS in
   // each wrapped segment.
   Word eos_id = vocabulary_.eos_id();
-  size_t wrap_step_size = wrap_length_ - 1;
+  size_t wrap_step_size = wrap_length - 1;
 
   for (size_t offset = 0; offset < segment.size(); offset += wrap_step_size) {
     auto start = segment.begin() + offset;
@@ -161,8 +152,10 @@ void TextProcessor::wrap(Segment &segment,
   }
 }
 
-void TextProcessor::process_from_annotation(AnnotatedText &source,
-                                            Segments &segments) const {
+std::tuple<AnnotatedText, Segments> TextProcessor::process(
+    AnnotatedText &source) const {
+  // The difference here is that there is no wrap involved.
+  Segments segments;
   std::string text = source.text;
   AnnotatedText replacement(std::move(text));
 
@@ -198,7 +191,7 @@ void TextProcessor::process_from_annotation(AnnotatedText &source,
                                          word_ranges.begin()->data());
   }
 
-  source = replacement;
+  return {std::move(replacement), std::move(segments)};
 }
 
 }  // namespace slimt

@@ -18,6 +18,7 @@ class Batch {
   std::vector<size_t> &lengths() { return lengths_; }
   size_t index() const { return index_; }
   float occupancy();
+  float target_limit_factor() const;
 
  private:
   std::vector<uint32_t> words_;
