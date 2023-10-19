@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include <utility>
 
+#include "slimt/Input.hh"
 #include "slimt/Modules.hh"
 #include "slimt/TensorOps.hh"
 #include "slimt/Vocabulary.hh"

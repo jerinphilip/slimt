@@ -7,7 +7,6 @@
 #include <vector>
 
 #include "slimt/Annotation.hh"
-#include "slimt/Input.hh"
 #include "slimt/Shortlist.hh"
 #include "slimt/TextProcessor.hh"
 #include "slimt/Transformer.hh"
@@ -15,6 +14,8 @@
 #include "slimt/Vocabulary.hh"
 
 namespace slimt {
+
+class Input;
 
 template <class Field>
 struct Package {
