@@ -8,6 +8,7 @@
 #include "slimt/slimt.hh"
 
 // Private headers, required for partial testing.
+#include "slimt/Macros.hh"
 #include "slimt/TensorOps.hh"
 #include "slimt/Utils.hh"
 

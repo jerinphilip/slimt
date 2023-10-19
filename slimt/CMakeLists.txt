@@ -1,11 +1,4 @@
-set(SLIMT_PUBLIC_HEADERS
-    Aligned.hh
-    Annotation.hh
-    Frontend.hh
-    Model.hh
-    Splitter.hh
-    TextProcessor.hh
-    slimt.hh)
+set(SLIMT_PUBLIC_HEADERS slimt.hh Frontend.hh Model.hh)
 
 set(SLIMT_SOURCES
     Aligned.cc
@@ -44,12 +37,14 @@ foreach(SLIMT_LIB IN LISTS SLIMT_LIBRIARIES)
   target_link_options(${SLIMT_LIB} PUBLIC ${SLIMT_LINK_OPTIONS})
 endforeach()
 
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Version.hh.in
+               ${CMAKE_CURRENT_BINARY_DIR}/Version.hh @ONLY)
+
 if(UNIX)
   install(FILES ${SLIMT_PUBLIC_HEADERS}
           DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/slimt)
+  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/Version.hh}
+          DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/slimt/)
   install(TARGETS ${SLIMT_LIBRIARIES} DESTINATION ${CMAKE_INSTALL_LIBDIR})
   message(STATUS "Exports: ${SLIMT_PUBLIC_HEADERS} ${SLIMT_LIBRIARIES}")
 endif(UNIX)
-
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Version.hh.in
-               ${CMAKE_CURRENT_BINARY_DIR}/Version.hh @ONLY)

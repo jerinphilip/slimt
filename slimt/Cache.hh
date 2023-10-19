@@ -4,8 +4,6 @@
 #include <mutex>
 #include <vector>
 
-#include "slimt/Macros.hh"
-
 namespace slimt {
 
 template <class Key, class Value, class Hash = std::hash<Key>,
