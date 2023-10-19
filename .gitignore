@@ -42,3 +42,12 @@ build/
 blobs/
 data/wngt20
 traces/
+
+
+# Python
+__pycache__
+*.pyc 
+
+slimt.egg-info
+env
+dist

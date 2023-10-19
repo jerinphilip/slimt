@@ -12,9 +12,7 @@
 #include "slimt/ResponseBuilder.hh"
 #include "slimt/Types.hh"
 
-namespace slimt::rd {
-
-using TranslationCache = slimt::TranslationCache;
+namespace slimt {
 
 /// A Request is an internal representation used to represent a request after
 /// processed by TextProcessor into segments constituted by marian::Words.
@@ -30,7 +28,7 @@ using TranslationCache = slimt::TranslationCache;
 ///          -> Request::complete(...)
 /// ```
 ///
-/// When all segments in a Request are completed, responseBuilder is
+/// When all segments in a Request are completed, response_builder is
 /// triggered with the compiled Histories, to construct the Response
 /// corresponding to the Request and set value of the promise which triggers
 /// the future at client.
@@ -41,17 +39,17 @@ class Request {
   /// the Response upon completion of the Request.
   ///
   ///
-  /// @param [in] Id: Identifier assigned to Request by Service.
+  /// @param [in] id: Identifier assigned to Request by Service.
   /// @param [in] model: Model for identifying a unique translation
   /// segment key (model, words in a segment) for cache.
   /// @param [in] segments: Each segment is a segment to be translated.
-  /// @param [in] responseBuilder: Callback function (of ResponseBuilder type)
+  /// @param [in] response_builder: Callback function (of ResponseBuilder type)
   /// to be triggered upon the completion of translation of all segments in a
   /// Request.
   /// @param [in] cache: Cache supplied externally to attempt to fetch
   /// translations or store them after completion for reuse later.
   Request(size_t Id, size_t model_id, Segments &&segments,
-          ResponseBuilder &&responseBuilder,
+          ResponseBuilder &&response_builder,
           std::optional<TranslationCache> &cache);
 
   /// Obtain the count of tokens in the segment correponding to index. Used to
@@ -98,8 +96,7 @@ class Request {
   Histories histories_;
 
   /// Constructing Response requires the vocabs_ used to generate Request.
-  /// std::vector<Ptr<Vocab const>> *vocabs_;
-  ResponseBuilder responseBuilder_;
+  ResponseBuilder response_builder_;
 
   /// Cache used to hold segment translations. If nullopt, means no-caching.
   std::optional<TranslationCache> &cache_;
@@ -167,4 +164,4 @@ class Batch {
   size_t max_length_ = 0;
 };
 
-}  // namespace slimt::rd
+}  // namespace slimt

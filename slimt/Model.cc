@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include <utility>
 
+#include "slimt/Input.hh"
 #include "slimt/Modules.hh"
 #include "slimt/TensorOps.hh"
 #include "slimt/Vocabulary.hh"
@@ -39,11 +40,9 @@ Model::Model(const Config &config, const Package<View> &package)
       config_(config),
       view_(package),
       vocabulary_(package.vocabulary),
-      processor_(config.wrap_length, config.split_mode, vocabulary_,
-                 config.prefix_path),
+      processor_(config.split_mode, vocabulary_, Aligned()),
       transformer_(config.encoder_layers, config.decoder_layers,
-                   config.attention_num_heads, config.feed_forward_depth,
-                   package.model),
+                   config.num_heads, config.feed_forward_depth, package.model),
       shortlist_generator_(package.shortlist, vocabulary_, vocabulary_) {}
 
 Model::Model(const Config &config, const Package<std::string> &package)
@@ -52,11 +51,9 @@ Model::Model(const Config &config, const Package<std::string> &package)
       mmap_(mmap_from(package)),
       view_(view_from(*mmap_)),
       vocabulary_(view_.vocabulary),
-      processor_(config.wrap_length, config.split_mode, vocabulary_,
-                 config.prefix_path),
+      processor_(config.split_mode, vocabulary_, Aligned()),
       transformer_(config.encoder_layers, config.decoder_layers,
-                   config.attention_num_heads, config.feed_forward_depth,
-                   view_.model),
+                   config.num_heads, config.feed_forward_depth, view_.model),
       shortlist_generator_(view_.shortlist, vocabulary_, vocabulary_) {}
 
 namespace {
@@ -87,12 +84,12 @@ void update_alignment(const std::vector<size_t> &lengths,
 }
 }  // namespace
 
-Histories Model::decode(Tensor &encoder_out, Batch &batch) {
-  // Prepare a shortlist for the entire batch.
+Histories Model::decode(Tensor &encoder_out, Input &input) {
+  // Prepare a shortlist for the entire input.
   size_t batch_size = encoder_out.dim(-3);
   size_t source_sequence_length = encoder_out.dim(-2);
 
-  Shortlist shortlist = shortlist_generator_.generate(batch.words());
+  Shortlist shortlist = shortlist_generator_.generate(input.words());
   Words indices = shortlist.words();
   // The following can be used to check if shortlist is going wrong.
   // std::vector<uint32_t> indices(vocabulary_.size());
@@ -120,20 +117,19 @@ Histories Model::decode(Tensor &encoder_out, Batch &batch) {
   Words previous_slice = {};
   std::vector<Tensor> states = decoder.start_states(batch_size);
   auto [logits, attn] =
-      decoder.step(encoder_out, batch.mask(), states, previous_slice, indices);
+      decoder.step(encoder_out, input.mask(), states, previous_slice, indices);
 
   previous_slice = greedy_sample(logits, indices, batch_size);
-  update_alignment(batch.lengths(), complete, attn, alignments);
+  update_alignment(input.lengths(), complete, attn, alignments);
   record(previous_slice, sentences);
 
   size_t remaining = sentences.size();
-  size_t max_seq_length =
-      config_.tgt_length_limit_factor * source_sequence_length;
+  size_t max_seq_length = input.limit_factor() * source_sequence_length;
   for (size_t i = 1; i < max_seq_length && remaining > 0; i++) {
-    auto [logits, attn] = decoder.step(encoder_out, batch.mask(), states,
+    auto [logits, attn] = decoder.step(encoder_out, input.mask(), states,
                                        previous_slice, indices);
     previous_slice = greedy_sample(logits, indices, batch_size);
-    update_alignment(batch.lengths(), complete, attn, alignments);
+    update_alignment(input.lengths(), complete, attn, alignments);
     remaining = record(previous_slice, sentences);
   }
 
@@ -150,9 +146,9 @@ Histories Model::decode(Tensor &encoder_out, Batch &batch) {
   return histories;
 }
 
-Histories Model::forward(Batch &batch) {
-  Tensor &indices = batch.indices();
-  Tensor &mask = batch.mask();
+Histories Model::forward(Input &input) {
+  Tensor &indices = input.indices();
+  Tensor &mask = input.mask();
 
   // uint64_t batch_size = indices.dim(-2);
   // uint64_t sequence_length = indices.dim(-1);
@@ -166,7 +162,7 @@ Histories Model::forward(Batch &batch) {
   // https://github.com/browsermt/marian-dev/blob/14c9d9b0e732f42674e41ee138571d5a7bf7ad94/src/models/transformer.h#L133
   modify_mask_for_pad_tokens_in_attention(mask.data<float>(), mask.size());
   Tensor encoder_out = transformer_.encoder().forward(word_embedding, mask);
-  Histories histories = decode(encoder_out, batch);
+  Histories histories = decode(encoder_out, input);
   return histories;
 }
 }  // namespace slimt

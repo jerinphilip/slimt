@@ -1,4 +1,4 @@
-#include "slimt/Batch.hh"
+#include "slimt/Input.hh"
 
 #include <algorithm>
 #include <cassert>
@@ -8,12 +8,14 @@
 namespace slimt {
 
 // Tensor(Type type, Shape shape, std::string name);
-Batch::Batch(size_t batch_size, size_t sequence_length, uint32_t pad_id)
+Input::Input(size_t batch_size, size_t sequence_length, uint32_t pad_id,
+             size_t limit_factor)
     : batch_(Type::u32, Shape({batch_size, sequence_length}), "batch"),
       mask_(Type::f32, Shape({batch_size, sequence_length}), "mask"),
-      pad_id_(pad_id) {}
+      pad_id_(pad_id),
+      limit_factor_(limit_factor) {}
 
-void Batch::add(std::vector<uint32_t> &words) {
+void Input::add(std::vector<uint32_t> &words) {
   size_t sequence_length = batch_.dim(-1);
   size_t batch_size = batch_.dim(-2);
 
@@ -42,7 +44,9 @@ void Batch::add(std::vector<uint32_t> &words) {
   used_ += words.size();
 }
 
-float Batch::occupancy() {
+float Input::limit_factor() const { return limit_factor_; }
+
+float Input::occupancy() {
   size_t sequence_length = batch_.dim(-1);
   size_t batch_size = batch_.dim(-2);
   return used_ / static_cast<float>(batch_size * sequence_length);

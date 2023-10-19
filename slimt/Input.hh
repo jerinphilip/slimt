@@ -7,9 +7,10 @@
 
 namespace slimt {
 
-class Batch {
+class Input {
  public:
-  Batch(size_t batch_size, size_t sequence_length, uint32_t pad_id);
+  Input(size_t batch_size, size_t sequence_length, uint32_t pad_id,
+        size_t limit_factor);
 
   void add(std::vector<uint32_t> &words);
   Tensor &indices() { return batch_; }
@@ -18,6 +19,7 @@ class Batch {
   std::vector<size_t> &lengths() { return lengths_; }
   size_t index() const { return index_; }
   float occupancy();
+  float limit_factor() const;
 
  private:
   std::vector<uint32_t> words_;
@@ -27,5 +29,6 @@ class Batch {
   size_t index_ = 0;
   uint32_t pad_id_ = 0;
   size_t used_ = 0;
+  size_t limit_factor_;
 };
 }  // namespace slimt
