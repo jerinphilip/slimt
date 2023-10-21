@@ -26,7 +26,7 @@ extern "C" {
 
 namespace slimt {
 
-Tensor index_select(Tensor& x, const Tensor& indices,
+Tensor index_select(const Tensor& x, const Tensor& indices,
                     const std::string& name /*= "selected"*/) {
   uint64_t sequence_length = indices.dim(-1);
   uint64_t batch_size = indices.dim(-2);
@@ -38,7 +38,7 @@ Tensor index_select(Tensor& x, const Tensor& indices,
   Shape selected_shape = Shape({batch_size, sequence_length, x_cols});
   Tensor selected(x.type(), selected_shape, name);
 
-  auto* x_ptr = x.data<float>();
+  const auto* x_ptr = x.data<float>();
   auto* selected_ptr = selected.data<float>();
   const auto* indices_ptr = indices.data<int>();
   index_select(x_ptr, indices_ptr, batch_size, sequence_length, x_cols, x_rows,

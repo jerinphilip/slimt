@@ -10,6 +10,7 @@ class Encoder {
   explicit Encoder(size_t layers, size_t num_heads, size_t feed_forward_depth);
   Tensor forward(Tensor &embedding, Tensor &mask) const;
   void register_parameters(const std::string &prefix, ParameterMap &parameters);
+  const std::vector<EncoderLayer> &encoder() const { return encoder_; }
 
  private:
   std::vector<EncoderLayer> encoder_;

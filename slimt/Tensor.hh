@@ -96,7 +96,7 @@ class Tensor {
     return reinterpret_cast<Scalar *>(view_.data);
   }
   template <class Scalar>
-  Scalar item() {
+  Scalar item() const {
     return *(data<Scalar>());
   }
 
@@ -109,6 +109,17 @@ class Tensor {
   Scalar *end() {
     size_t bsize = size_in_bytes(type_) * shape().elements();
     return reinterpret_cast<Scalar *>(data<char>() + bsize);
+  }
+
+  template <class Scalar>
+  const Scalar *begin() const {
+    return data<Scalar>();
+  }
+
+  template <class Scalar>
+  const Scalar *end() const {
+    size_t bsize = size_in_bytes(type_) * shape().elements();
+    return reinterpret_cast<const Scalar *>(data<char>() + bsize);
   }
 
   template <class Scalar>

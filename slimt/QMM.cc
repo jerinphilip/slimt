@@ -42,12 +42,12 @@
 namespace slimt::qmm::detail {
 template <>
 Tensor affine_with_select<Provider::Intgemm>(
-    Tensor& x, Tensor& W, Tensor& b, float a_quant, float b_quant,
+    Tensor& x, const Tensor& W, const Tensor& b, float a_quant, float b_quant,
     const std::vector<uint32_t>& indices, const std::string& name) {
   // Naming is to simplify thinking with the intgemm API below.
-  Tensor& A = x;  // NOLINT
-  Tensor& B = W;  // NOLINT
-  Tensor& bias = b;
+  Tensor& A = x;        // NOLINT
+  const Tensor& B = W;  // NOLINT
+  const Tensor& bias = b;
 
   size_t A_cols = A.dim(-1);          // NOLINT
   size_t B_cols = B.dim(-1);          // NOLINT
@@ -125,12 +125,13 @@ Tensor affine_with_select<Provider::Intgemm>(
 }
 
 template <>
-Tensor affine<Provider::Intgemm>(Tensor& x, Tensor& W, Tensor& b, float a_quant,
-                                 float b_quant, const std::string& name) {
+Tensor affine<Provider::Intgemm>(Tensor& x, const Tensor& W, const Tensor& b,
+                                 float a_quant, float b_quant,
+                                 const std::string& name) {
   // Naming is to simplify thinking with the intgemm API below.
-  Tensor& A = x;  // NOLINT
-  Tensor& B = W;  // NOLINT
-  Tensor& bias = b;
+  Tensor& A = x;        // NOLINT
+  const Tensor& B = W;  // NOLINT
+  const Tensor& bias = b;
 
   size_t A_cols = A.dim(-1);          // NOLINT
   size_t B_cols = B.dim(-1);          // NOLINT
@@ -190,11 +191,11 @@ Tensor affine<Provider::Intgemm>(Tensor& x, Tensor& W, Tensor& b, float a_quant,
 }
 
 template <>
-Tensor dot<Provider::Intgemm>(Tensor& x, Tensor& W, float a_quant,
+Tensor dot<Provider::Intgemm>(Tensor& x, const Tensor& W, float a_quant,
                               float b_quant, const std::string& name) {
   // Naming is to simplify thinking with the intgemm API below.
-  Tensor& A = x;  // NOLINT
-  Tensor& B = W;  // NOLINT
+  Tensor& A = x;        // NOLINT
+  const Tensor& B = W;  // NOLINT
 
   size_t A_cols = A.dim(-1);          // NOLINT
   size_t B_cols = B.dim(-1);          // NOLINT
@@ -333,11 +334,12 @@ void unquantizeAddBias(const int32_t* input, const float* input_bias_prepared,
 
 // Ruy.
 template <>
-Tensor affine<Provider::Ruy>(Tensor& x, Tensor& W, Tensor& b, float a_quant,
-                             float b_quant, const std::string& name) {
-  Tensor& A = x;  // NOLINT
-  Tensor& B = W;  // NOLINT
-  Tensor& bias = b;
+Tensor affine<Provider::Ruy>(Tensor& x, const Tensor& W, const Tensor& b,
+                             float a_quant, float b_quant,
+                             const std::string& name) {
+  Tensor& A = x;        // NOLINT
+  const Tensor& B = W;  // NOLINT
+  const Tensor& bias = b;
 
   size_t A_cols = A.dim(-1);          // NOLINT
   size_t B_cols = B.dim(-1);          // NOLINT
@@ -367,7 +369,7 @@ Tensor affine<Provider::Ruy>(Tensor& x, Tensor& W, Tensor& b, float a_quant,
 
   // PrepareBias: ?
   // Actualyl there is no need.
-  Tensor& prepared_bias = bias;
+  const Tensor& prepared_bias = bias;
 
   ruy::Matrix<std::int32_t> dst;
   ruy::MakeSimpleLayout(A_rows, B_cols, ruy::Order::kRowMajor,
@@ -393,13 +395,14 @@ Tensor affine<Provider::Ruy>(Tensor& x, Tensor& W, Tensor& b, float a_quant,
 }
 
 template <>
-Tensor affine_with_select<Provider::Ruy>(Tensor& x, Tensor& W, Tensor& b,
-                                         float a_quant, float b_quant,
+Tensor affine_with_select<Provider::Ruy>(Tensor& x, const Tensor& W,
+                                         const Tensor& b, float a_quant,
+                                         float b_quant,
                                          const std::vector<uint32_t>& indices,
                                          const std::string& name) {
-  Tensor& A = x;  // NOLINT
-  Tensor& B = W;  // NOLINT
-  Tensor& bias = b;
+  Tensor& A = x;        // NOLINT
+  const Tensor& B = W;  // NOLINT
+  const Tensor& bias = b;
 
   size_t A_cols = A.dim(-1);          // NOLINT
   size_t B_cols = B.dim(-1);          // NOLINT
@@ -432,8 +435,8 @@ Tensor affine_with_select<Provider::Ruy>(Tensor& x, Tensor& W, Tensor& b,
   auto B_data = B.data<int8_t>();            // NOLINT
   auto sB_data = selected_B.data<int8_t>();  // NOLINT
   for (size_t c = 0; c < indices.size(); ++c) {
-    int8_t* sB_begin = &(sB_data[c * width]);         // NOLINT
-    int8_t* B_begin = &(B_data[indices[c] * width]);  // NOLINT
+    int8_t* sB_begin = &(sB_data[c * width]);               // NOLINT
+    const int8_t* B_begin = &(B_data[indices[c] * width]);  // NOLINT
     std::memcpy(sB_begin, B_begin, width);
   }
 
@@ -443,7 +446,7 @@ Tensor affine_with_select<Provider::Ruy>(Tensor& x, Tensor& W, Tensor& b,
   rhs.set_data(selected_B.data<int8_t>());
 
   // Once again, bias needn't be prepared. But needs to be selected.
-  Tensor& prepared_bias = bias;
+  const Tensor& prepared_bias = bias;
   Tensor selected_bias(Type::f32, Shape({indices.size()}), "selected_bias");
   auto* selected_bias_ptr = selected_bias.data<float>();
   for (uint32_t index : indices) {
@@ -477,10 +480,10 @@ Tensor affine_with_select<Provider::Ruy>(Tensor& x, Tensor& W, Tensor& b,
 }
 
 template <>
-Tensor dot<Provider::Ruy>(Tensor& x, Tensor& W, float a_quant, float b_quant,
-                          const std::string& name) {
-  Tensor& A = x;  // NOLINT
-  Tensor& B = W;  // NOLINT
+Tensor dot<Provider::Ruy>(Tensor& x, const Tensor& W, float a_quant,
+                          float b_quant, const std::string& name) {
+  Tensor& A = x;        // NOLINT
+  const Tensor& B = W;  // NOLINT
 
   size_t A_cols = A.dim(-1);          // NOLINT
   size_t B_cols = B.dim(-1);          // NOLINT
@@ -636,12 +639,12 @@ namespace slimt::qmm::detail {
 
 template <>
 Tensor affine_with_select<Provider::Gemmology>(
-    Tensor& x, Tensor& W, Tensor& b, float a_quant, float b_quant,
+    Tensor& x, const Tensor& W, const Tensor& b, float a_quant, float b_quant,
     const std::vector<uint32_t>& indices, const std::string& name) {
   // Naming is to simplify thinking with the gemmology API below.
-  Tensor& A = x;  // NOLINT
-  Tensor& B = W;  // NOLINT
-  Tensor& bias = b;
+  Tensor& A = x;        // NOLINT
+  const Tensor& B = W;  // NOLINT
+  const Tensor& bias = b;
 
   size_t A_cols = A.dim(-1);          // NOLINT
   size_t B_cols = B.dim(-1);          // NOLINT
@@ -724,13 +727,13 @@ Tensor affine_with_select<Provider::Gemmology>(
 }
 
 template <>
-Tensor affine<Provider::Gemmology>(Tensor& x, Tensor& W, Tensor& b,
+Tensor affine<Provider::Gemmology>(Tensor& x, const Tensor& W, const Tensor& b,
                                    float a_quant, float b_quant,
                                    const std::string& name) {
   // Naming is to simplify thinking with the gemmology API below.
-  Tensor& A = x;  // NOLINT
-  Tensor& B = W;  // NOLINT
-  Tensor& bias = b;
+  Tensor& A = x;        // NOLINT
+  const Tensor& B = W;  // NOLINT
+  const Tensor& bias = b;
 
   size_t A_cols = A.dim(-1);          // NOLINT
   size_t B_cols = B.dim(-1);          // NOLINT
@@ -794,11 +797,11 @@ Tensor affine<Provider::Gemmology>(Tensor& x, Tensor& W, Tensor& b,
 }
 
 template <>
-Tensor dot<Provider::Gemmology>(Tensor& x, Tensor& W, float a_quant,
+Tensor dot<Provider::Gemmology>(Tensor& x, const Tensor& W, float a_quant,
                                 float b_quant, const std::string& name) {
   // Naming is to simplify thinking with the gemmology API below.
-  Tensor& A = x;  // NOLINT
-  Tensor& B = W;  // NOLINT
+  Tensor& A = x;        // NOLINT
+  const Tensor& B = W;  // NOLINT
 
   size_t A_cols = A.dim(-1);          // NOLINT
   size_t B_cols = B.dim(-1);          // NOLINT
@@ -888,15 +891,16 @@ void prepare_weight_quantized_transposed<Provider::Gemmology>(
 #endif  // SLIMT_HAS_GEMMOLOGY
 
 namespace slimt::qmm {
-Tensor affine(Tensor& x, Tensor& W, Tensor& b, float a_quant, float b_quant,
-              const std::string& name) {
+Tensor affine(Tensor& x, const Tensor& W, const Tensor& b, float a_quant,
+              float b_quant, const std::string& name) {
   using detail::affine;
   using detail::kAutoProvider;
   return affine<kAutoProvider>(x, W, b, a_quant, b_quant, name);
 }
 
-Tensor affine_with_select(Tensor& x, Tensor& W, Tensor& b, float a_quant,
-                          float b_quant, const std::vector<uint32_t>& indices,
+Tensor affine_with_select(Tensor& x, const Tensor& W, const Tensor& b,
+                          float a_quant, float b_quant,
+                          const std::vector<uint32_t>& indices,
                           const std::string& name) {
   using detail::affine_with_select;
   using detail::kAutoProvider;
@@ -904,7 +908,7 @@ Tensor affine_with_select(Tensor& x, Tensor& W, Tensor& b, float a_quant,
                                            name);
 }
 
-Tensor dot(Tensor& x, Tensor& W, float a_quant, float b_quant,
+Tensor dot(Tensor& x, const Tensor& W, float a_quant, float b_quant,
            const std::string& name) {
   using detail::dot;
   using detail::kAutoProvider;
