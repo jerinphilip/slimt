@@ -8,7 +8,7 @@ namespace slimt {
 class Encoder {
  public:
   explicit Encoder(size_t layers, size_t num_heads, size_t feed_forward_depth);
-  Tensor forward(Tensor &embedding, Tensor &mask);
+  Tensor forward(Tensor &embedding, Tensor &mask) const;
   void register_parameters(const std::string &prefix, ParameterMap &parameters);
 
  private:
@@ -22,10 +22,10 @@ class Decoder {
 
   void register_parameters(const std::string &prefix, ParameterMap &parameters);
 
-  std::vector<Tensor> start_states(size_t batch_size);
+  std::vector<Tensor> start_states(size_t batch_size) const;
   std::tuple<Tensor, Tensor> step(Tensor &encoder_out, Tensor &mask,
                                   std::vector<Tensor> &states,
-                                  Words &previous_step, Words &shortlist);
+                                  Words &previous_step, Words &shortlist) const;
 
  private:
   Tensor &embedding_;
@@ -41,9 +41,9 @@ class Transformer {
   explicit Transformer(size_t encoder_layers, size_t decoder_layers,
                        size_t num_heads, size_t feed_forward_depth, View model);
 
-  Tensor &embedding() { return embedding_; }
-  Encoder &encoder() { return encoder_; }
-  Decoder &decoder() { return decoder_; }
+  const Tensor &embedding() const { return embedding_; }
+  const Encoder &encoder() const { return encoder_; }
+  const Decoder &decoder() const { return decoder_; }
 
  private:
   void register_parameters(const std::string &prefix, ParameterMap &parameters);

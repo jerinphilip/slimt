@@ -84,7 +84,7 @@ void update_alignment(const std::vector<size_t> &lengths,
 }
 }  // namespace
 
-Histories Model::decode(Tensor &encoder_out, Input &input) {
+Histories Model::decode(Tensor &encoder_out, Input &input) const {
   // Prepare a shortlist for the entire input.
   size_t batch_size = encoder_out.dim(-3);
   size_t source_sequence_length = encoder_out.dim(-2);
@@ -113,7 +113,7 @@ Histories Model::decode(Tensor &encoder_out, Input &input) {
   Sentences sentences(batch_size);
   Alignments alignments(sentences.size());
 
-  Decoder &decoder = transformer_.decoder();
+  const Decoder &decoder = transformer_.decoder();
   Words previous_slice = {};
   std::vector<Tensor> states = decoder.start_states(batch_size);
   auto [logits, attn] =
@@ -146,7 +146,7 @@ Histories Model::decode(Tensor &encoder_out, Input &input) {
   return histories;
 }
 
-Histories Model::forward(Input &input) {
+Histories Model::forward(Input &input) const {
   const Tensor &indices = input.indices();
   Tensor &mask = input.mask();
 
@@ -155,7 +155,7 @@ Histories Model::forward(Input &input) {
   // uint64_t embed_dim = embedding_.dim(-1);
 
   Tensor word_embedding =
-      index_select(transformer_.embedding(), indices, "word_embedding");
+      index_select(transformer().embedding(), indices, "word_embedding");
   transform_embedding(word_embedding);
 
   // https://github.com/browsermt/marian-dev/blob/14c9d9b0e732f42674e41ee138571d5a7bf7ad94/src/models/transformer.h#L570

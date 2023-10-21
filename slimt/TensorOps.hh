@@ -8,7 +8,7 @@
 
 namespace slimt {
 
-Tensor index_select(Tensor& x, const Tensor& indices,
+Tensor index_select(const Tensor& x, const Tensor& indices,
                     const std::string& name = "selected");
 
 void modify_mask_for_pad_tokens_in_attention(float* mask, size_t size);

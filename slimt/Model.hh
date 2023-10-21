@@ -49,7 +49,7 @@ class Model {
   explicit Model(const Config &config, const Package<std::string> &package);
   explicit Model(const Config &config, const Package<View> &package);
 
-  Histories forward(Input &input);
+  Histories forward(Input &input) const;
 
   const Config &config() const { return config_; }
   const Vocabulary &vocabulary() const { return vocabulary_; }
@@ -61,7 +61,7 @@ class Model {
   }
 
  private:
-  Histories decode(Tensor &encoder_out, Input &input);
+  Histories decode(Tensor &encoder_out, Input &input) const;
 
   size_t id_;
   Config config_;
