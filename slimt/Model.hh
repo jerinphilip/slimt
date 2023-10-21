@@ -51,12 +51,14 @@ class Model {
 
   Histories forward(Input &input);
 
-  Config &config() { return config_; }
-  Vocabulary &vocabulary() { return vocabulary_; }
-  TextProcessor &processor() { return processor_; }
-  Transformer &transformer() { return transformer_; }
+  const Config &config() const { return config_; }
+  const Vocabulary &vocabulary() const { return vocabulary_; }
+  const TextProcessor &processor() const { return processor_; }
+  const Transformer &transformer() const { return transformer_; }
   size_t id() const { return id_; }  // NOLINT
-  ShortlistGenerator &shortlist_generator() { return shortlist_generator_; }
+  const ShortlistGenerator &shortlist_generator() const {
+    return shortlist_generator_;
+  }
 
  private:
   Histories decode(Tensor &encoder_out, Input &input);

@@ -172,7 +172,7 @@ std::vector<Response> Blocking::pivot(const Ptr<Model> &first,
       response = std::move(combined);
     };
 
-    TextProcessor &processor = second->processor();
+    const TextProcessor &processor = second->processor();
     auto [annotated, segments] = processor.process(source_to_pivot.target);
     auto request = make_request(id_, second, cache_, std::move(annotated),
                                 std::move(segments), continuation);
@@ -229,7 +229,7 @@ std::future<Response> Async::translate(const Ptr<Model> &model,
     promise->set_value(std::move(response));
   };
 
-  TextProcessor &processor = model->processor();
+  const TextProcessor &processor = model->processor();
   auto [annotated, segments] =
       processor.process(std::move(source), config_.wrap_length);
   auto request = make_request(id_, model, cache_, std::move(annotated),
@@ -270,7 +270,7 @@ std::future<Response> Async::pivot(const Ptr<Model> &first,
       promise.set_value(std::move(response));
     };
 
-    TextProcessor &processor = second->processor();
+    const TextProcessor &processor = second->processor();
     auto [annotated, segments] = processor.process(source_to_pivot.target);
 
     auto request =
@@ -280,7 +280,7 @@ std::future<Response> Async::pivot(const Ptr<Model> &first,
     batcher_.enqueue(second, request);
   };
 
-  TextProcessor &processor = first->processor();
+  const TextProcessor &processor = first->processor();
   auto [annotated, segments] =
       processor.process(std::move(source), config_.wrap_length);
   auto request = make_request(id_, first, cache_, std::move(annotated),
