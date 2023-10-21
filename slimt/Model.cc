@@ -147,7 +147,7 @@ Histories Model::decode(Tensor &encoder_out, Input &input) {
 }
 
 Histories Model::forward(Input &input) {
-  Tensor &indices = input.indices();
+  const Tensor &indices = input.indices();
   Tensor &mask = input.mask();
 
   // uint64_t batch_size = indices.dim(-2);

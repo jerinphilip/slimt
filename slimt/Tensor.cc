@@ -89,7 +89,7 @@ void Tensor::load(View view, Type type, Shape shape, std::string name) {
   name_ = std::move(name);
 }
 
-uint64_t Tensor::dim(int index) { return shape_.dim(index); }
+uint64_t Tensor::dim(int index) const { return shape_.dim(index); }
 
 std::string to_string(Type type) {
   switch (type) {

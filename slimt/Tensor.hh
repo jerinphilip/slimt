@@ -119,7 +119,7 @@ class Tensor {
 
   bool standalone() const { return aligned_.data() != nullptr; }
   size_t size() const { return shape_.elements(); }
-  uint64_t dim(int index);
+  uint64_t dim(int index) const;
   Shape &shape() { return shape_; }
   const Shape &shape() const { return shape_; }
   Type type() const { return type_; }
