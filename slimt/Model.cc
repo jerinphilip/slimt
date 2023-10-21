@@ -155,7 +155,7 @@ Histories Model::forward(Input &input) const {
   // uint64_t embed_dim = embedding_.dim(-1);
 
   Tensor word_embedding =
-      index_select(transformer().embedding(), indices, "word_embedding");
+      index_select(transformer_.embedding(), indices, "word_embedding");
   transform_embedding(word_embedding);
 
   // https://github.com/browsermt/marian-dev/blob/14c9d9b0e732f42674e41ee138571d5a7bf7ad94/src/models/transformer.h#L570
