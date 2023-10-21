@@ -170,7 +170,7 @@ Tensor linear(Linear &parameters, Tensor &x, const std::string &name = "") {
   return y;
 }
 
-Tensor SSRU::start_state(size_t batch_size) {
+Tensor SSRU::start_state(size_t batch_size) const {
   // auto start = graph->constant({1, 1, dimBatch, dim}, inits::zeros());
   size_t feature_dim = O_.W.dim(-1);
   Tensor start(Type::f32, Shape({batch_size, feature_dim}), "start");

@@ -51,7 +51,7 @@ class SSRU {
   explicit SSRU() = default;
   void register_parameters(const std::string &prefix, ParameterMap &parameters);
   Tensor forward(Tensor &state, Tensor &x);
-  Tensor start_state(size_t batch_size);
+  Tensor start_state(size_t batch_size) const;
 
  private:
   Affine F_;
@@ -89,7 +89,9 @@ class DecoderLayer {
   void register_parameters(const std::string &prefix, ParameterMap &parameters);
   std::tuple<Tensor, Tensor> forward(Tensor &encoder_out, Tensor &mask,
                                      Tensor &state, Tensor &x);
-  Tensor start_state(size_t batch_size) { return rnn_.start_state(batch_size); }
+  Tensor start_state(size_t batch_size) const {
+    return rnn_.start_state(batch_size);
+  }
 
  private:
   size_t depth_;

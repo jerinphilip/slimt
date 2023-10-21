@@ -111,7 +111,7 @@ std::vector<Response> Blocking::translate(const Ptr<Model> &model,
       promise.set_value(std::move(response));
     };
 
-    auto &processor = model->processor();
+    const auto &processor = model->processor();
     auto [annotated, segments] =
         processor.process(std::move(source), config_.wrap_length);
     auto request = make_request(id_, model, cache_, std::move(annotated),

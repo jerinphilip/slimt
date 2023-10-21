@@ -40,7 +40,7 @@ Tensor index_select(Tensor& x, const Tensor& indices,
 
   auto* x_ptr = x.data<float>();
   auto* selected_ptr = selected.data<float>();
-  auto* indices_ptr = indices.data<int>();
+  const auto* indices_ptr = indices.data<int>();
   index_select(x_ptr, indices_ptr, batch_size, sequence_length, x_cols, x_rows,
                selected_ptr);
   return selected;
