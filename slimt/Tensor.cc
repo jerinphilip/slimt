@@ -30,10 +30,10 @@ size_t size_in_bytes(Type type) {
   return scalar_size;
 }
 
-bool operator==(Shape &lhs, Shape &rhs) {
-  if (lhs.dims_.size() != rhs.dims_.size()) return false;
-  for (size_t i = 0; i < lhs.dims_.size(); i++) {
-    if (lhs.dims_[i] != rhs.dims_[i]) return false;
+bool operator==(const Shape &lhs, const Shape &rhs) {
+  if (lhs.dims().size() != rhs.dims().size()) return false;
+  for (size_t i = 0; i < lhs.dims().size(); i++) {
+    if (lhs.dims()[i] != rhs.dims()[i]) return false;
   }
   return true;
 }
@@ -188,11 +188,11 @@ std::ostream &operator<<(std::ostream &out, const Tensor &tensor) {
   return out;
 }
 
-bool operator==(Tensor &lhs, Tensor &rhs) {
+bool operator==(const Tensor &lhs, const Tensor &rhs) {
   // Can't always rely on size, because sometimes we do aligned loads. So
   // something that is 256 bytes could only be 16 bytes w.r.t actual elements.
   // if (lhs.view_.size != rhs.view_.size) return false;
-  if (lhs.type_ != rhs.type_) return false;
+  if (lhs.type() != rhs.type()) return false;
   if (lhs.shape() != rhs.shape()) return false;
   const void *lhs_ptr = lhs.data<char>();
   const void *rhs_ptr = rhs.data<char>();
@@ -211,7 +211,7 @@ bool operator==(Tensor &lhs, Tensor &rhs) {
   // Special cause for float32.
   // Can use this when suspect inconsistent values.
   const char *env_eps = std::getenv("SLIMT_EPS");
-  if (env_eps != nullptr and lhs.type_ == Type::f32) {  // NOLINT
+  if (env_eps != nullptr and lhs.type() == Type::f32) {  // NOLINT
     size_t size = lhs.size();
     const auto *l = lhs.data<float>();
     const auto *r = rhs.data<float>();
@@ -233,7 +233,7 @@ bool operator==(Tensor &lhs, Tensor &rhs) {
     return true;
   }
 
-  size_t size_in_memory = std::min(lhs.view_.size, rhs.view_.size);
+  size_t size_in_memory = std::min(lhs.view().size, rhs.view().size);
   int retval = memcmp(lhs_ptr, rhs_ptr, size_in_memory);
   // -1, 0 +1 if < = > respectively C-API, so.
   bool eq = (retval == 0);
