@@ -15,7 +15,7 @@ Input::Input(size_t batch_size, size_t sequence_length, uint32_t pad_id,
       pad_id_(pad_id),
       limit_factor_(limit_factor) {}
 
-void Input::add(std::vector<uint32_t> &words) {
+void Input::add(const std::vector<uint32_t> &words) {
   size_t sequence_length = batch_.dim(-1);
   size_t batch_size = batch_.dim(-2);
 

@@ -12,7 +12,7 @@ class Input {
   Input(size_t batch_size, size_t sequence_length, uint32_t pad_id,
         size_t limit_factor);
 
-  void add(std::vector<uint32_t> &words);
+  void add(const std::vector<uint32_t> &words);
   Tensor &indices() { return batch_; }
   Tensor &mask() { return mask_; }
   std::vector<uint32_t> &words() { return words_; }
