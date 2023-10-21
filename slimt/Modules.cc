@@ -9,9 +9,9 @@
 
 namespace slimt {
 
-float retrieve_quantization_multiplier(Tensor &W) {
-  auto *b_end = W.end<int8_t>();
-  float b_quant = *(reinterpret_cast<float *>(b_end));
+float retrieve_quantization_multiplier(const Tensor &W) {
+  const auto *b_end = W.end<int8_t>();
+  float b_quant = *(reinterpret_cast<const float *>(b_end));
   return b_quant;
 }
 
@@ -135,7 +135,8 @@ Tensor join_heads(Tensor &x) {
   return y;
 }
 
-Tensor affine(Affine &parameters, Tensor &x, const std::string &name = "") {
+Tensor affine(const Affine &parameters, Tensor &x,
+              const std::string &name = "") {
   Tensor y = qmm::affine(                              //
       x,                                               //
       parameters.W, parameters.b,                      //
@@ -146,7 +147,7 @@ Tensor affine(Affine &parameters, Tensor &x, const std::string &name = "") {
   return y;
 }
 
-Tensor affine_with_select(Affine &parameters, Tensor &x,
+Tensor affine_with_select(const Affine &parameters, Tensor &x,
                           const std::vector<uint32_t> &indices,
                           const std::string &name /*= ""*/) {
   Tensor y = qmm::affine_with_select(                  //
@@ -160,7 +161,8 @@ Tensor affine_with_select(Affine &parameters, Tensor &x,
   return y;
 }
 
-Tensor linear(Linear &parameters, Tensor &x, const std::string &name = "") {
+Tensor linear(const Linear &parameters, Tensor &x,
+              const std::string &name = "") {
   Tensor y = qmm::dot(                                 //
       x, parameters.W,                                 //
       parameters.quant.item<float>(),                  //
@@ -170,7 +172,7 @@ Tensor linear(Linear &parameters, Tensor &x, const std::string &name = "") {
   return y;
 }
 
-Tensor SSRU::start_state(size_t batch_size) {
+Tensor SSRU::start_state(size_t batch_size) const {
   // auto start = graph->constant({1, 1, dimBatch, dim}, inits::zeros());
   size_t feature_dim = O_.W.dim(-1);
   Tensor start(Type::f32, Shape({batch_size, feature_dim}), "start");
@@ -178,7 +180,7 @@ Tensor SSRU::start_state(size_t batch_size) {
   return start;
 }
 
-Tensor SSRU::forward(Tensor &state, Tensor &x) {
+Tensor SSRU::forward(Tensor &state, Tensor &x) const {
   // From Research to Production and Back: Ludicrously Fast Neural Machine
   // Translation (https://aclanthology.org/D19-5632.pdf) Section 3.1 describes
   // SSRU. SSRU is described by the following recurrent equations - which
@@ -235,7 +237,7 @@ Tensor SSRU::forward(Tensor &state, Tensor &x) {
 
 std::tuple<Tensor, Tensor> DecoderLayer::forward(Tensor &encoder_out,
                                                  Tensor &mask, Tensor &state,
-                                                 Tensor &x) {
+                                                 Tensor &x) const {
   Tensor decoder_out = rnn_.forward(state, x);
 
   // Assign query, key, value for cross-attention.
@@ -272,12 +274,12 @@ DecoderLayer::DecoderLayer(size_t depth, size_t ffn_count, size_t num_heads)
 
 FFN::FFN(size_t depth) : depth_(depth) {}
 
-Tensor FFN::forward(Tensor &x) {
+Tensor FFN::forward(Tensor &x) const {
   Tensor y = affine(O_, x, "ffn" + std::to_string(depth_));
   return y;
 }
 
-Tensor LayerNorm::forward(Tensor &x) {
+Tensor LayerNorm::forward(Tensor &x) const {
   Tensor y = x.like("ln_out");
   size_t cols = x.dim(-1);
   size_t rows = x.size() / cols;
@@ -299,7 +301,7 @@ Tensor LayerNorm::forward(Tensor &x) {
 }
 
 std::tuple<Tensor, Tensor> Attention::forward(Tensor &q, Tensor &k, Tensor &v,
-                                              Tensor &mask) {
+                                              Tensor &mask) const {
   // We have a B x T x H sequence comoing in, for q, k and v.
   Tensor yq = affine(Q_, q, "q");
   Tensor yk = affine(K_, k, "k");
@@ -331,7 +333,8 @@ std::tuple<Tensor, Tensor> Attention::forward(Tensor &q, Tensor &k, Tensor &v,
   return std::make_tuple(std::move(y), std::move(attn));
 }
 
-std::tuple<Tensor, Tensor> EncoderLayer::forward(Tensor &x, Tensor &mask) {
+std::tuple<Tensor, Tensor> EncoderLayer::forward(Tensor &x,
+                                                 Tensor &mask) const {
   // TODO(fill code):
   auto [out, attention] = attention_.forward(x, x, x, mask);
 

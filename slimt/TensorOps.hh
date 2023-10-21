@@ -8,7 +8,7 @@
 
 namespace slimt {
 
-Tensor index_select(Tensor& x, Tensor& indices,
+Tensor index_select(const Tensor& x, const Tensor& indices,
                     const std::string& name = "selected");
 
 void modify_mask_for_pad_tokens_in_attention(float* mask, size_t size);
@@ -53,13 +53,13 @@ void layer_norm(const float* in, const float* scale, const float* bias,
                 float eps, size_t rows, size_t cols, size_t scale_stride,
                 size_t bias_stride, bool has_bias, float* out);
 
-Tensor transpose_3120(Tensor& x);
-float mse(Tensor& x, Tensor& y);
-Tensor relu(Tensor& x);
-Tensor sigmoid(Tensor& x);
-Tensor add(Tensor& x, Tensor& y);
-Tensor sub(Tensor& x, Tensor& y);
-Tensor mul(Tensor& x, Tensor& y);
+Tensor transpose_3120(const Tensor& x);
+float mse(const Tensor& x, const Tensor& y);
+Tensor relu(const Tensor& x);
+Tensor sigmoid(const Tensor& x);
+Tensor add(const Tensor& x, const Tensor& y);
+Tensor sub(const Tensor& x, const Tensor& y);
+Tensor mul(const Tensor& x, const Tensor& y);
 
 Tensor fast_select(Tensor& source, const std::vector<uint32_t>& indices);
 

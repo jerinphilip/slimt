@@ -55,7 +55,6 @@ class Shape {
   size_t size() const { return dims_.size(); };
 
   Shape transpose(int x, int y) const;
-  friend bool operator==(Shape &lhs, Shape &rhs);
   friend std::ostream &operator<<(std::ostream &out, const Shape &shape);
 
   void set_dim(int idx, int value) {
@@ -97,7 +96,7 @@ class Tensor {
     return reinterpret_cast<Scalar *>(view_.data);
   }
   template <class Scalar>
-  Scalar item() {
+  Scalar item() const {
     return *(data<Scalar>());
   }
 
@@ -113,17 +112,29 @@ class Tensor {
   }
 
   template <class Scalar>
+  const Scalar *begin() const {
+    return data<Scalar>();
+  }
+
+  template <class Scalar>
+  const Scalar *end() const {
+    size_t bsize = size_in_bytes(type_) * shape().elements();
+    return reinterpret_cast<const Scalar *>(data<char>() + bsize);
+  }
+
+  template <class Scalar>
   void fill_in_place(Scalar value) {
     std::fill(data<Scalar>(), data<Scalar>() + size(), value);
   }
 
   bool standalone() const { return aligned_.data() != nullptr; }
   size_t size() const { return shape_.elements(); }
-  uint64_t dim(int index);
+  uint64_t dim(int index) const;
   Shape &shape() { return shape_; }
   const Shape &shape() const { return shape_; }
   Type type() const { return type_; }
   const std::string &name() const { return name_; }
+  const View &view() const { return view_; }
 
   Tensor like(const std::string &name) const;
 
@@ -132,7 +143,6 @@ class Tensor {
   Tensor clone(const std::string &name = "") const;
   Tensor transpose_2d();
 
-  friend bool operator==(Tensor &lhs, Tensor &rhs);
   friend std::ostream &operator<<(std::ostream &out, const Tensor &tensor);
 
  private:
@@ -143,8 +153,8 @@ class Tensor {
   std::string name_;
 };
 
-bool operator==(Shape &lhs, Shape &rhs);
-bool operator==(Tensor &lhs, Tensor &rhs);
+bool operator==(const Shape &lhs, const Shape &rhs);
+bool operator==(const Tensor &lhs, const Tensor &rhs);
 
 std::string to_string(Type type);
 
