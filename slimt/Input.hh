@@ -13,10 +13,10 @@ class Input {
         size_t limit_factor);
 
   void add(const std::vector<uint32_t> &words);
-  const Tensor &indices() { return batch_; }
+  const Tensor &indices() const { return batch_; }
   Tensor &mask() { return mask_; }
-  std::vector<uint32_t> &words() { return words_; }
-  std::vector<size_t> &lengths() { return lengths_; }
+  const std::vector<uint32_t> &words() const { return words_; }
+  const std::vector<size_t> &lengths() const { return lengths_; }
   size_t index() const { return index_; }
   float occupancy();
   float limit_factor() const;
