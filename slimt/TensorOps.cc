@@ -26,7 +26,7 @@ extern "C" {
 
 namespace slimt {
 
-Tensor index_select(Tensor& x, Tensor& indices,
+Tensor index_select(const Tensor& x, const Tensor& indices,
                     const std::string& name /*= "selected"*/) {
   uint64_t sequence_length = indices.dim(-1);
   uint64_t batch_size = indices.dim(-2);
@@ -38,9 +38,9 @@ Tensor index_select(Tensor& x, Tensor& indices,
   Shape selected_shape = Shape({batch_size, sequence_length, x_cols});
   Tensor selected(x.type(), selected_shape, name);
 
-  auto* x_ptr = x.data<float>();
+  const auto* x_ptr = x.data<float>();
   auto* selected_ptr = selected.data<float>();
-  auto* indices_ptr = indices.data<int>();
+  const auto* indices_ptr = indices.data<int>();
   index_select(x_ptr, indices_ptr, batch_size, sequence_length, x_cols, x_rows,
                selected_ptr);
   return selected;
@@ -590,13 +590,13 @@ void layer_norm(const float* in, const float* scale, const float* bias,
   }
 }
 
-float mse(Tensor& x, Tensor& y) {
+float mse(const Tensor& x, const Tensor& y) {
   assert(x.type() == Type::f32);
   assert(y.type() == Type::f32);
   assert(x.size() == y.size());
 
-  auto* p = x.data<float>();
-  auto* q = y.data<float>();
+  const auto* p = x.data<float>();
+  const auto* q = y.data<float>();
   float sum = 0;
   for (size_t i = 0; i < x.size(); i++) {
     float x = (*p) - (*q);
@@ -606,7 +606,7 @@ float mse(Tensor& x, Tensor& y) {
   return sum / x.size();
 }
 
-Tensor transpose_3120(Tensor& x) {
+Tensor transpose_3120(const Tensor& x) {
   Tensor y(x.type(), x.shape().transpose(-3, -2), x.name() + "transpose12");
   size_t d3 = x.dim(-3);
   size_t d2 = x.dim(-2);
@@ -616,21 +616,21 @@ Tensor transpose_3120(Tensor& x) {
   return y;
 }
 
-Tensor relu(Tensor& x) {
+Tensor relu(const Tensor& x) {
   assert(x.type() == Type::f32);
   Tensor y = x.like(x.name() + "_relu");
   relu(x.data<float>(), x.size(), y.data<float>());
   return y;
 }
 
-Tensor sigmoid(Tensor& x) {
+Tensor sigmoid(const Tensor& x) {
   assert(x.type() == Type::f32);
   Tensor y = x.like(x.name() + "_sigmoid");
   sigmoid(x.data<float>(), x.size(), y.data<float>());
   return y;
 }
 
-Tensor add(Tensor& x, Tensor& y) {
+Tensor add(const Tensor& x, const Tensor& y) {
   assert(x.type() == Type::f32);
   assert(x.size() == y.size());
   Tensor x_plus_y = x.like("x_plus_y");
@@ -638,7 +638,7 @@ Tensor add(Tensor& x, Tensor& y) {
   return x_plus_y;
 }
 
-Tensor sub(Tensor& x, Tensor& y) {
+Tensor sub(const Tensor& x, const Tensor& y) {
   assert(x.type() == Type::f32);
   assert(x.size() == y.size());
   Tensor x_plus_y = x.like("x_plus_y");
@@ -646,7 +646,7 @@ Tensor sub(Tensor& x, Tensor& y) {
   return x_plus_y;
 }
 
-Tensor mul(Tensor& x, Tensor& y) {
+Tensor mul(const Tensor& x, const Tensor& y) {
   assert(x.type() == Type::f32);
   assert(x.size() == y.size());
   Tensor x_plus_y = x.like("x_times_y");

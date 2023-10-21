@@ -22,16 +22,17 @@ enum class Provider {
 };
 
 template <enum Provider>
-Tensor affine(Tensor& x, Tensor& W, Tensor& b, float a_quant, float b_quant,
-              const std::string& name = "");
+Tensor affine(Tensor& x, const Tensor& W, const Tensor& b, float a_quant,
+              float b_quant, const std::string& name = "");
 
 template <enum Provider>
-Tensor affine_with_select(Tensor& x, Tensor& W, Tensor& b, float a_quant,
-                          float b_quant, const std::vector<uint32_t>& indices,
+Tensor affine_with_select(Tensor& x, const Tensor& W, const Tensor& b,
+                          float a_quant, float b_quant,
+                          const std::vector<uint32_t>& indices,
                           const std::string& name = "");
 
 template <enum Provider>
-Tensor dot(Tensor& x, Tensor& W, float a_quant, float b_quant,
+Tensor dot(Tensor& x, const Tensor& W, float a_quant, float b_quant,
            const std::string& name = "");
 
 template <enum Provider>
@@ -56,14 +57,15 @@ constexpr Provider kAutoProvider = Provider::Gemmology;
 
 }  // namespace detail
 
-Tensor affine(Tensor& x, Tensor& W, Tensor& b, float a_quant, float b_quant,
-              const std::string& name = "");
+Tensor affine(Tensor& x, const Tensor& W, const Tensor& b, float a_quant,
+              float b_quant, const std::string& name = "");
 
-Tensor affine_with_select(Tensor& x, Tensor& W, Tensor& b, float a_quant,
-                          float b_quant, const std::vector<uint32_t>& indices,
+Tensor affine_with_select(Tensor& x, const Tensor& W, const Tensor& b,
+                          float a_quant, float b_quant,
+                          const std::vector<uint32_t>& indices,
                           const std::string& name = "");
 
-Tensor dot(Tensor& x, Tensor& W, float a_quant, float b_quant,
+Tensor dot(Tensor& x, const Tensor& W, float a_quant, float b_quant,
            const std::string& name = "");
 
 void prepare_weight_transposed(const float* weights, int8_t* prepared,

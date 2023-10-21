@@ -40,11 +40,11 @@ Encoder::Encoder(size_t layers, size_t num_heads, size_t feed_forward_depth) {
   }
 }
 
-Tensor Encoder::forward(Tensor &word_embedding, Tensor &mask) {
-  auto [x, attn] = encoder_[0].forward(word_embedding, mask);
+Tensor Encoder::forward(Tensor &word_embedding, Tensor &mask) const {
+  auto [x, attn] = encoder()[0].forward(word_embedding, mask);
 
   for (size_t i = 1; i < encoder_.size(); i++) {
-    EncoderLayer &layer = encoder_[i];
+    const EncoderLayer &layer = encoder()[i];
     auto [y, attn_y] = layer.forward(x, mask);
 
     // Overwriting x so that x is destroyed and we need lesser working memory.
@@ -60,9 +60,9 @@ void Encoder::register_parameters(const std::string &prefix,
   }
 }
 
-std::vector<Tensor> Decoder::start_states(size_t batch_size) {
+std::vector<Tensor> Decoder::start_states(size_t batch_size) const {
   std::vector<Tensor> states;
-  for (auto &layer : decoder_) {
+  for (const auto &layer : decoder_) {
     Tensor state = layer.start_state(batch_size);
     states.push_back(std::move(state));
   }
@@ -102,7 +102,7 @@ void Decoder::register_parameters(const std::string &prefix,
 std::tuple<Tensor, Tensor> Decoder::step(Tensor &encoder_out, Tensor &mask,
                                          std::vector<Tensor> &states,
                                          Words &previous_step,
-                                         Words &shortlist) {
+                                         Words &shortlist) const {
   // Infer batch-size from encoder_out.
   size_t encoder_feature_dim = encoder_out.dim(-1);
   size_t source_sequence_length = encoder_out.dim(-2);
