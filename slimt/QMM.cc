@@ -10,7 +10,8 @@
 namespace slimt::qmm::detail {
 constexpr Provider kAutoProvider = Provider::Intgemm;
 }
-#include "slimt/qmm/Intgemm.inl.hh"
+// NOLINTNEXTLINE: The C++ file inclusion is intended.
+#include "slimt/qmm/Intgemm.inl.cc"
 #endif
 
 #ifdef SLIMT_HAS_RUY
@@ -18,7 +19,8 @@ constexpr Provider kAutoProvider = Provider::Intgemm;
 namespace slimt::qmm::detail {
 constexpr Provider kAutoProvider = Provider::Ruy;
 }
-#include "slimt/qmm/Ruy.inl.hh"
+// NOLINTNEXTLINE: The C++ file inclusion is intended.
+#include "slimt/qmm/Ruy.inl.cc"
 #endif
 
 #ifdef SLIMT_HAS_GEMMOLOGY
@@ -28,7 +30,8 @@ constexpr Provider kAutoProvider = Provider::Ruy;
 namespace slimt::qmm::detail {
 constexpr Provider kAutoProvider = Provider::Gemmology;
 }
-#include "slimt/qmm/Gemmology.inl.hh"
+// NOLINTNEXTLINE: The C++ file inclusion is intended.
+#include "slimt/qmm/Gemmology.inl.cc"
 #pragma GCC diagnostic pop
 #endif
 
