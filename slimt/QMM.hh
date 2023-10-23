@@ -43,18 +43,6 @@ template <enum Provider>
 void prepare_weight_quantized_transposed(const int8_t* input, int8_t* output,
                                          size_t rows, size_t cols);
 
-#ifdef SLIMT_HAS_INTGEMM
-constexpr Provider kAutoProvider = Provider::Intgemm;
-#endif
-
-#ifdef SLIMT_HAS_RUY
-constexpr Provider kAutoProvider = Provider::Ruy;
-#endif
-
-#ifdef SLIMT_HAS_GEMMOLOGY
-constexpr Provider kAutoProvider = Provider::Gemmology;
-#endif
-
 }  // namespace detail
 
 Tensor affine(Tensor& x, const Tensor& W, const Tensor& b, float a_quant,
