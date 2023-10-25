@@ -14,9 +14,10 @@ def jaccard_similarity(string1, string2):
 
 
 def test_pivot(service, models, source_and_target):
-    source, target = source_and_target
+    source, _, html = source_and_target
+    target = str(source)
     for model in models:
-        responses = service.translate(model, [source], html=False)
+        responses = service.translate(model, [source], html=html)
         for response in responses:
             source = json.loads(toJSON(response, indent=4))["target"]["text"]
     assert jaccard_similarity(source, target) > 0.3

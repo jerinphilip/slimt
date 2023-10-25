@@ -2,9 +2,9 @@
 from slimt.utils import toJSON
 
 
-def test_basic(service, models):
-    source = "1 2 3 4 5 6 7 8 9"
+def test_basic(service, models, source_and_target):
+    source, _, html = source_and_target
     model = models[0]
-    responses = service.translate(model, [source], html=False)
+    responses = service.translate(model, [source], html=html)
     for response in responses:
         print(toJSON(response, indent=4))

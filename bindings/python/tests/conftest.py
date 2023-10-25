@@ -39,8 +39,17 @@ def models():
     yield models_
 
 
-@pytest.fixture
-def source_and_target():
-    source = "How embarrassing. A fridge full of condiments and no food."
-    target = str(source)
-    return source, target
+@pytest.fixture(
+    scope="session",
+    params=[
+        ("1 2 3 4 5 6 7 8 9", "1 2 3 4 5 6 7 8 9", False),
+        (
+            "How embarrassing. A fridge full of condiments and no food.",
+            "Que embarazoso. Una nevera llena de condimentos y nada de comida.",
+            False,
+        ),
+        # ("<div>Hello</div>", "<div>Hola</div>", True),
+    ],
+)
+def source_and_target(request):
+    yield request.param
