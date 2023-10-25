@@ -6,23 +6,16 @@ from slimt import REPOSITORY, Model, Service, Package, Config
 
 
 @pytest.fixture(scope="session")
-def service_instance():
-    service = Service(workers=1, cache_size=1024)
-    return service
+def service():
+    service_ = Service(workers=1, cache_size=1024)
+    return service_
 
 
 @pytest.fixture(scope="session")
-def service_instance():
-    service = Service(workers=1, cache_size=1024)
-    return service
-
-
-@pytest.fixture(scope="session")
-def model_instances():
-    print("model created")
+def models():
     keys = ["browsermt"]
     model_ids = ["en-es-tiny", "es-en-tiny"]
-    models = []
+    models_ = []
 
     for repository in keys:
         for model_id in model_ids:
@@ -42,9 +35,8 @@ def model_instances():
             )
             config = Config()
             model = Model(config, package)
-            models.append(model)
-    yield models
-    print("model deleted")
+            models_.append(model)
+    yield models_
 
 
 @pytest.fixture
