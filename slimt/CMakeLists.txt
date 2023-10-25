@@ -78,9 +78,12 @@ foreach(SLIMT_LIB IN LISTS SLIMT_LIBRARIES)
   target_compile_options(${SLIMT_LIB} PRIVATE ${SLIMT_COMPILE_OPTIONS})
   set_target_properties(${SLIMT_LIB} PROPERTIES OUTPUT_NAME "slimt")
   target_compile_definitions(${SLIMT_LIB} PRIVATE ${SLIMT_COMPILE_DEFINITIONS})
-  target_link_libraries(${SLIMT_LIB} PUBLIC ${SLIMT_PUBLIC_LIBS})
-  target_link_libraries(${SLIMT_LIB} INTERFACE ${SLIMT_INTERFACE_LIBS})
-  target_link_libraries(${SLIMT_LIB} PRIVATE ${SLIMT_PRIVATE_LIBS})
+  target_link_libraries(${SLIMT_LIB}
+                        PUBLIC $<BUILD_INTERFACE:${SLIMT_PUBLIC_LIBS}>)
+  target_link_libraries(${SLIMT_LIB}
+                        INTERFACE $<BUILD_INTERFACE:${SLIMT_INTERFACE_LIBS}>)
+  target_link_libraries(${SLIMT_LIB}
+                        PRIVATE $<BUILD_INTERFACE:${SLIMT_PRIVATE_LIBS}>)
   target_link_options(${SLIMT_LIB} PUBLIC ${SLIMT_LINK_OPTIONS})
   target_include_directories(
     ${SLIMT_LIB}
@@ -113,7 +116,7 @@ if(EXPORT_CMAKE_FILE)
 
   # This will double install, but is-ok.
   install(
-    TARGETS slimt-shared
+    TARGETS slimt-shared slimt-static
     EXPORT slimtTargets
     LIBRARY COMPONENT slimt-lib DESTINATION ${CMAKE_INSTALL_LIBDIR}
     PUBLIC_HEADER COMPONENT slimt-dev
