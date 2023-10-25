@@ -51,5 +51,5 @@ def models():
         ("<div>Hello</div>", "<div>Hola</div>", True),
     ],
 )
-def source_and_target(request):
+def sample(request):
     yield request.param

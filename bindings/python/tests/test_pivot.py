@@ -14,8 +14,8 @@ def jaccard_similarity(string1, string2):
     return common_words / total_words
 
 
-def test_pivot(service, models, source_and_target):
-    source, _, html = source_and_target
+def test_pivot(service, models, sample):
+    source, _, html = sample
 
     # Ignore test fails for html sources.
     if html:
