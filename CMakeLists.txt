@@ -56,7 +56,7 @@ find_package(PCRE2 REQUIRED)
 if(USE_BUILTIN_SENTENCEPIECE)
   list(APPEND SLIMT_PUBLIC_LIBS SentencePiece::SentencePiece)
 else(USE_BUILTIN_SENTENCEPIECE)
-  list(APPEND SLIMT_INTERFACE_LIBS SentencePiece::SentencePiece)
+  list(APPEND SLIMT_PRIVATE_LIBS SentencePiece::SentencePiece)
   list(APPEND SLIMT_PRIVATE_LIBS SentencePiece::Protobuf)
 endif(USE_BUILTIN_SENTENCEPIECE)
 
