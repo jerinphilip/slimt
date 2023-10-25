@@ -114,7 +114,7 @@ if(EXPORT_CMAKE_FILE)
 
   # This will double install, but is-ok.
   install(
-    TARGETS slimt-shared sentencepiece
+    TARGETS slimt-shared
     EXPORT slimtTargets
     LIBRARY COMPONENT slimt-lib DESTINATION ${CMAKE_INSTALL_LIBDIR}
     PUBLIC_HEADER COMPONENT slimt-dev
