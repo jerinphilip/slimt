@@ -48,7 +48,7 @@ def models():
             "Que embarazoso. Una nevera llena de condimentos y nada de comida.",
             False,
         ),
-        # ("<div>Hello</div>", "<div>Hola</div>", True),
+        ("<div>Hello</div>", "<div>Hola</div>", True),
     ],
 )
 def source_and_target(request):
