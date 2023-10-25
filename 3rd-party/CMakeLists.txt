@@ -30,12 +30,14 @@ else(USE_BUILTIN_SENTENCEPIECE)
   # SentencepieceText, which is required to look into the original source
   # surface, it becomes a problem. See:
   # https://github.com/google/sentencepiece/issues/922
-  target_include_directories(sentencepiece
+  add_library(sentencepiece_pb INTERFACE)
+  target_include_directories(sentencepiece_pb
                              INTERFACE sentencepiece/third_party/protobuf-lite)
-  target_include_directories(sentencepiece
+  target_include_directories(sentencepiece_pb
                              INTERFACE sentencepiece/src/builtin_pb)
 
   add_library(SentencePiece::SentencePiece ALIAS sentencepiece)
+  add_library(SentencePiece::Protobuf ALIAS sentencepiece_pb)
 endif(USE_BUILTIN_SENTENCEPIECE)
 
 # intgemm
