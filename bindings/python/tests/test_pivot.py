@@ -4,13 +4,25 @@ import json
 import pytest
 
 
-def jaccard_similarity(string1, string2):
-    lowercase_string1 = string1.lower()
-    lowercase_string2 = string2.lower()
-    words_set1 = set(lowercase_string1.split())
-    words_set2 = set(lowercase_string2.split())
-    common_words = len(words_set1.intersection(words_set2))
-    total_words = len(words_set1.union(words_set2))
+def tokens(response):
+    text = response["text"]
+    annotations = response["annotation"][0]
+    print(text, annotations)
+    tokens_ = []
+    for annotation in annotations:
+        if annotation[0] == annotation[1]:
+            continue
+        tokens_.append(text[annotation[0] : annotation[1]])
+    return tokens_
+
+
+def jaccard_similarity(source, target):
+    source_tokens = tokens(source)
+    target_tokens = tokens(target)
+    tokens1 = set(source_tokens)
+    tokens2 = set(target_tokens)
+    common_words = len(tokens1.intersection(tokens2))
+    total_words = len(tokens1.union(tokens2))
     return common_words / total_words
 
 
@@ -21,9 +33,13 @@ def test_pivot(service, models, sample):
     if html:
         pytest.xfail("html sources are expected to fail")
 
-    target = str(source)
+    responses_ = []
     for model in models:
         responses = service.translate(model, [source], html=html)
         for response in responses:
-            source = json.loads(toJSON(response, indent=4))["target"]["text"]
-    assert jaccard_similarity(source, target) > 0.3
+            responseJSON = json.loads((toJSON(response, indent=4)))
+            source = responseJSON["target"]["text"]
+            responses_.append(responseJSON)
+    sources_response = responses_[0]["source"]
+    target_response = responses_[-1]["target"]
+    assert jaccard_similarity(sources_response, target_response) >= 0.3
