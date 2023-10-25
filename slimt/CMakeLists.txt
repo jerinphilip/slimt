@@ -85,8 +85,7 @@ foreach(SLIMT_LIB IN LISTS SLIMT_LIBRARIES)
   target_include_directories(
     ${SLIMT_LIB}
     PUBLIC $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>
-           $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}>
-           $<INSTALL_INTERFACE:include/slimt>)
+           $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}> $<INSTALL_INTERFACE:include/>)
 endforeach()
 
 if(UNIX)
