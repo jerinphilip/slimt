@@ -2,9 +2,13 @@ cmake_minimum_required(VERSION 3.5.1...3.27)
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 project(slimt CXX C)
+set(PROJECT_DESCRIPTION "Inference frontend for bergamot models.")
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+set(CMAKE_CXX_VISIBLITY_PRESET hidden)
+set(CMAKE_VISIBILITY_INLINE_HIDDEN YES)
 
 option(WITH_ASAN "Enable AddressSanitizer in builds" OFF)
 option(WITH_TESTS "Enable building tests (requires a few extra libraries)" OFF)
@@ -13,6 +17,8 @@ option(WITH_INTGEMM "Use intgemm" ON)
 option(WITH_RUY "Use ruy" OFF)
 option(WITH_GEMMOLOGY "Use gemmology" OFF)
 option(WITH_BLAS "Use BLAS. Otherwise moves to ruy" ON)
+
+option(USE_BUILTIN_SENTENCEPIECE "Use SentencePiece supplied as 3rd-party" ON)
 
 option(USE_AVX512 "Use AVX512" OFF)
 option(USE_AVX2 "Use AVX2" OFF)
@@ -29,22 +35,34 @@ set(SLIMT_COMPILE_OPTIONS
     -Werror
     -Wno-missing-field-initializers
     -Wno-unused-function
-    -pedantic)
+    -pedantic
+    # -pedantic fires `;` on older systems, not on new. Might as well remove.
+    # See: https://stackoverflow.com/q/77254582/4565794
+    -Wextra-semi)
 
+set(SLIMT_PUBLIC_LIBS "")
+set(SLIMT_INTERFACE_LIBS "")
+set(SLIMT_PRIVATE_LIBS "")
 set(SLIMT_COMPILE_DEFINITIONS "")
 set(SLIMT_LINK_OPTIONS "")
 
 if(WITH_ASAN)
-  set(SLIMT_COMPILE_OPTIONS ${SLIMT_COMPILE_OPTIONS} -fsanitize=address
-                            -fsanitize=undefined)
-  set(SLIMT_LINK_OPTIONS ${SLIMT_LINK_OPTIONS} -fsanitize=address
-                         -fsanitize=undefined)
+  list(APPEND SLIMT_COMPILE_OPTIONS -fsanitize=address -fsanitize=undefined)
+  list(APPEND SLIMT_LINK_OPTIONS -fsanitize=address -fsanitize=undefined)
 endif(WITH_ASAN)
 
 find_package(PCRE2 REQUIRED)
-add_subdirectory(3rd-party)
 
-set(SLIMT_EXTERNAL_LIBS SentencePiece::SentencePiece PCRE2::PCRE2)
+if(USE_BUILTIN_SENTENCEPIECE)
+  list(APPEND SLIMT_PUBLIC_LIBS SentencePiece::SentencePiece)
+else(USE_BUILTIN_SENTENCEPIECE)
+  list(APPEND SLIMT_PRIVATE_LIBS SentencePiece::SentencePiece)
+  list(APPEND SLIMT_PRIVATE_LIBS SentencePiece::Protobuf)
+endif(USE_BUILTIN_SENTENCEPIECE)
+
+list(APPEND SLIMT_PRIVATE_LIBS PCRE2::PCRE2)
+
+add_subdirectory(3rd-party)
 
 if(WITH_BLAS)
   find_package(BLAS REQUIRED)
@@ -59,7 +77,7 @@ if(WITH_BLAS)
                  INTERFACE_LINK_LIBRARIES "${BLAS_LIBRARIES}")
   endif()
 
-  set(SLIMT_EXTERNAL_LIBS ${SLIMT_EXTERNAL_LIBS} BLAS::BLAS)
+  list(APPEND SLIMT_PRIVATE_LIBS BLAS::BLAS)
   set(SLIMT_COMPILE_DEFINITIONS ${SLIMT_COMPILE_DEFINITIONS} SLIMT_HAS_BLAS)
 
   if(APPLE)
@@ -76,19 +94,19 @@ if(WITH_BLAS)
         "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks/Accelerate.framework/Frameworks/vecLib.framework/Headers"
     )
     add_library(AppleLibs::accelerate ALIAS apple_accelerate)
-    set(SLIMT_EXTERNAL_LIBS ${SLIMT_EXTERNAL_LIBS} AppleLibs::accelerate)
+    list(APPEND SLIMT_PRIVATE_LIBS AppleLibs::accelerate)
   endif(APPLE)
 endif(WITH_BLAS)
 
 if(WITH_INTGEMM)
-  set(SLIMT_EXTERNAL_LIBS ${SLIMT_EXTERNAL_LIBS} intgemm)
-  set(SLIMT_COMPILE_DEFINITIONS ${SLIMT_COMPILE_DEFINITIONS} SLIMT_HAS_INTGEMM)
-  set(SLIMT_COMPILE_OPTIONS ${SLIMT_COMPILE_OPTIONS} -march=native)
+  list(APPEND SLIMT_PRIVATE_LIBS intgemm)
+  list(APPEND SLIMT_COMPILE_DEFINITIONS SLIMT_HAS_INTGEMM)
+  list(APPEND SLIMT_COMPILE_OPTIONS -march=native)
 endif(WITH_INTGEMM)
 
 if(WITH_RUY)
-  set(SLIMT_COMPILE_DEFINITIONS ${SLIMT_COMPILE_DEFINITIONS} SLIMT_HAS_RUY)
-  set(SLIMT_EXTERNAL_LIBS ${SLIMT_EXTERNAL_LIBS} ruy)
+  list(APPEND SLIMT_COMPILE_DEFINITIONS SLIMT_HAS_RUY)
+  list(APPEND SLIMT_PRIVATE_LIBS ruy)
 endif(WITH_RUY)
 
 if(WITH_GEMMOLOGY)
@@ -97,9 +115,8 @@ if(WITH_GEMMOLOGY)
   target_link_libraries(gemmology INTERFACE xsimd)
   target_include_directories(gemmology
                              INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/3rd-party")
-  set(SLIMT_EXTERNAL_LIBS ${SLIMT_EXTERNAL_LIBS} gemmology)
-  set(SLIMT_COMPILE_DEFINITIONS ${SLIMT_COMPILE_DEFINITIONS}
-                                SLIMT_HAS_GEMMOLOGY)
+  list(APPEND SLIMT_PRIVATE_LIBS gemmology)
+  list(APPEND SLIMT_COMPILE_DEFINITIONS SLIMT_HAS_GEMMOLOGY)
 endif(WITH_GEMMOLOGY)
 
 if(USE_AVX512)
@@ -145,11 +162,31 @@ set(PROJECT_VERSION_FILE ${CMAKE_CURRENT_SOURCE_DIR}/slimt.version)
 include(GetVersionFromFile)
 message(STATUS "Project version: ${PROJECT_VERSION_STRING_FULL}")
 
+if(UNIX)
+  include(GNUInstallDirs)
+  if(BUILD_CPACK)
+    # cmake-format: off
+    set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
+    set(CPACK_PACKAGE_CONTACT "Jerin Philip <jerinphilip@live.in>")
+    set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Jerin Philip")
+    set(CPACK_PACKAGE_DIRECTORY ${CMAKE_BINARY_DIR}/deb)
+    set(CPACK_GENERATOR "DEB")
+    set(CPACK_DEBIAN_PACKAGE_DEPENDS libsentencepiece-dev)
+    set(CPACK_PACKAGE_NAME ${PROJECT_NAME})
+    set(CPACK_PACKAGE_FILE_NAME ${PROJECT_NAME})
+    set(CPACK_PACKAGE_VERSION ${PROJECT_VERSION_STRING})
+    set(CPACK_DEBIAN_PACKAGE_NAME ${PROJECT_NAME})
+    set(CPACK_DEBIAN_PACKAGE_VERSION "${PROJECT_VERSION_STRING}")
+    set(CPACK_PACKAGE_VERSION_MAJOR ${PROJECT_VERSION_MAJOR})
+    set(CPACK_PACKAGE_VERSION_MINOR ${PROJECT_VERSION_MINOR})
+    set(CPACK_PACKAGE_VERSION_PATCH ${PROJECT_VERSION_PATCH})
+    set(CPACK_DEBIAN_PACKAGE_DESCRIPTION "slimt: Inference library for tiny translation models.")
+    # cmake-format: on
+    include(CPack)
+  endif(BUILD_CPACK)
+endif(UNIX)
+
 add_subdirectory(slimt)
-target_include_directories(slimt-static PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-target_include_directories(slimt-static PUBLIC ${CMAKE_BINARY_DIR})
-target_include_directories(slimt-shared PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-target_include_directories(slimt-shared PUBLIC ${CMAKE_BINARY_DIR})
 add_subdirectory(app)
 
 if(BUILD_PYTHON)
@@ -162,25 +199,3 @@ if(BUILD_PYTHON)
 
   add_subdirectory(bindings/python)
 endif(BUILD_PYTHON)
-
-# configure_file("${PROJECT_SOURCE_DIR}/slimt.pc.in" "slimt.pc" @ONLY)
-
-if(UNIX)
-  include(GNUInstallDirs)
-
-  if(BUILD_CPACK)
-    # cmake-format: off
-    set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
-    set(CPACK_PACKAGE_CONTACT "Jerin Philip <jerinphilip@live.in>")
-    set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Jerin Philip")
-    set(CPACK_PACKAGE_DIRECTORY ${CMAKE_BINARY_DIR}/deb)
-    set(CPACK_GENERATOR "DEB")
-    set(CPACK_PACKAGE_NAME ${PROJECT_NAME})
-    set(CPACK_PACKAGE_FILE_NAME ${PROJECT_NAME})
-    set(CPACK_DEBIAN_PACKAGE_NAME ${PROJECT_NAME})
-    set(CPACK_DEBIAN_PACKAGE_VERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH})
-    set(CPACK_DEBIAN_PACKAGE_DESCRIPTION "slimt: Inference library for tiny translation models.")
-    # cmake-format: on
-    include(CPack)
-  endif(BUILD_CPACK)
-endif(UNIX)

@@ -7,6 +7,7 @@
 
 #include "slimt/Batcher.hh"
 #include "slimt/Cache.hh"
+#include "slimt/Export.hh"
 #include "slimt/Response.hh"
 #include "slimt/Types.hh"
 
@@ -14,7 +15,7 @@ namespace slimt {
 
 class Model;
 
-struct Config {
+struct SLIMT_EXPORT Config {
   // NOLINTBEGIN
   size_t max_words = 1024;
   size_t cache_size = 1024;
@@ -34,7 +35,7 @@ struct Config {
   }
 };
 
-class Blocking {
+class SLIMT_EXPORT Blocking {
  public:
   explicit Blocking(const Config &config);
   std::vector<Response> translate(const Ptr<Model> &model,
@@ -50,7 +51,7 @@ class Blocking {
   size_t id_ = 0;
 };
 
-class Async {
+class SLIMT_EXPORT Async {
  public:
   explicit Async(const Config &config);
   ~Async();

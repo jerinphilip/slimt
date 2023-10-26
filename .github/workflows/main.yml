@@ -74,6 +74,10 @@ jobs:
           run:
             bash scripts/ci/${{ matrix.name }}/03-test.sh
 
+        - name: Package
+          run:
+            bash scripts/ci/${{ matrix.name }}/04-package.sh
+
   build-wheels:
       strategy:
         matrix:

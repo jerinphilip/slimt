@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "slimt/Annotation.hh"
+#include "slimt/Export.hh"
 #include "slimt/Shortlist.hh"
 #include "slimt/TextProcessor.hh"
 #include "slimt/Transformer.hh"
@@ -24,9 +25,9 @@ struct Package {
   Field shortlist;
 };
 
-class Model {
+class SLIMT_EXPORT Model {
  public:
-  struct Config {
+  struct SLIMT_EXPORT Config {
     // NOLINTBEGIN
     size_t encoder_layers = 6;
     size_t decoder_layers = 2;

@@ -52,7 +52,7 @@ class Shape {
   uint64_t *data() { return dims_.data(); }
   uint64_t dim(int idx) const;
   const std::vector<uint64_t> &dims() const { return dims_; }
-  size_t size() const { return dims_.size(); };
+  size_t size() const { return dims_.size(); }
 
   Shape transpose(int x, int y) const;
   friend std::ostream &operator<<(std::ostream &out, const Shape &shape);
