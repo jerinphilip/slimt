@@ -49,17 +49,22 @@ More information on the models are described in the following papers:
 The large-list of dependencies from bergamot-translator have currently been
 reduced to:
 
-* For `int8_t` matrix-multiply [intgemm](https://github.com/kpu/intgemm) (`x86_64`) or
-  [ruy](https://github.com/google/ruy) (`aarch64`).
+* For `int8_t` matrix-multiply [intgemm](https://github.com/kpu/intgemm)
+  (`x86_64`) or [ruy](https://github.com/google/ruy) (`aarch64`) or
+  [xsimd](https://github.com/xtensor-stack/xsimd) via
+  [gemmology](https://github.com/mozilla/gemmology).
 * For vocabulary - [sentencepiece](https://github.com/browsermt/sentencepiece). 
-* For `sgemm` - Whatever BLAS provider is found via CMake. 
-* CLI11 (only a dependency for cmdline) 
+* For sentence-splitting using regular-expressions
+  [PCRE2](https://github.com/PCRE2Project/pcre2).
+* For `sgemm` - Whatever BLAS provider is found via CMake (openblas,
+  intel-oneapimkl, cblas).  Feel free to provide
+  [hints](https://cmake.org/cmake/help/latest/module/FindBLAS.html#blas-lapack-vendors). 
+* [CLI11](https://github.com/CLIUtils/CLI11/) (only a dependency for cmdline) 
 
 Source code is made public where basic functionality (text-translation) works
 for English-German tiny models. Parity in features and speed with marian and
 bergamot-translator (where relevant) is a work-in-progress. Eventual support for
 `base` models are planned. Contributions are welcome and appreciated.
-
 
 
 ## Getting started
@@ -70,32 +75,80 @@ Clone with submodules.
 git clone --recursive https://github.com/jerinphilip/slimt.git
 ```
 
-Configure and build.
+Configure and build. `slimt` is still experimenting with CMake and
+dependencies. The following should work at the moment:
+
 
 ```bash
-# Configure
-cmake -B build -S $PWD -DCMAKE_BUILD_TYPE=Release 
+
+# Configure intgemm
+cmake -B build -S $PWD -DCMAKE_BUILD_TYPE=Release -DWITH_INTGEMM=ON 
+# Configure ruy instead of intgemm
+cmake -B build -S $PWD -DCMAKE_BUILD_TYPE=Release -DWITH_RUY=ON
 
 # Build
 cmake --build build --target all --parallel 4
 ```
 
-Successful build generate two executables `slimt` and `slimt_test` for
+Successful build generate two executables `slimt-cli` and `slimt-test` for
 command-line usage and testing respectively.
 
 ```bash
-build/bin/slimt                               \
+build/bin/slimt-cli                           \
     --root <path/to/folder>                   \
     --model </relative/path/to/model>         \
     --vocabulary </relative/path/to/vocab>    \
     --shortlist </relative/path/to/shortlist>
 
-build/slimt_test <test-name>
+build/slimt-test <test-name>
 ```
+
+### Distribution
+
+There is a build-path being prepared towards packaging on Linux. To use this,
+configure with the following args:
+
+```bash
+# Configure to use xsimd via gemmology
+ARGS=(
+    # Use gemmology
+    -DWITH_GEMMOLOGY=ON               
+
+    # -DUSE_AVX512 -DUSE_SSSE3 ... -DUSE_NEON also available.
+    -DUSE_AVX2=ON                          
+
+    # Use sentencepiece installed via system.
+    -DUSE_BUILTIN_SENTENCEPIECE=OFF        
+
+    -DCMAKE_INSTALL_PREFIX=/path/to/prefix
+)
+
+cmake -B build -S $PWD -DCMAKE_BUILD_TYPE=Release "${ARGS[@]}"
+cmake --build build --target all
+
+# May require if prefix is writable only by root.
+cmake --build build --target install 
+```
+
+The above run expects the packages `sentencepiece`, `xsimd` and a BLAS provider
+to come from the system's package manager. Examples of this in distributions
+include:
+
+```bash
+# Debian based systems
+sudo apt-get install -y libxsimd-dev libsentencepiece-dev libopenblas-dev
+
+# ArchLinux
+pacman -S openblas xsimd
+yay -S sentencepiece-git
+```
+
 
 ### Python
 
-Python bindings to the C++ code are available. 
+Python bindings to the C++ code are available.  Python bindings provide a layer
+to download models and use-them via command line entrypoint `slimt` (the core
+slimt library only has the inference code).
 
 ```bash
 python3 -m venv env
@@ -107,4 +160,10 @@ python3 -m pip install dist/<wheel-name>.whl
 # Download en-de-tiny and de-en-tiny models.
 slimt download -m en-de-tiny
 slimt download -m de-en-tiny
+```
+
+You may pass customizing cmake-variables via `CMAKE_ARGS` environment variable.
+
+```bash
+CMAKE_ARGS='-D...' python3 setup.py bdist_wheel
 ```

@@ -31,10 +31,9 @@ else(USE_BUILTIN_SENTENCEPIECE)
   # surface, it becomes a problem. See:
   # https://github.com/google/sentencepiece/issues/922
   add_library(sentencepiece_pb INTERFACE)
-  target_include_directories(sentencepiece_pb
-                             INTERFACE sentencepiece/third_party/protobuf-lite)
-  target_include_directories(sentencepiece_pb
-                             INTERFACE sentencepiece/src/builtin_pb)
+  target_include_directories(
+    sentencepiece_pb INTERFACE sentencepiece/third_party/protobuf-lite
+                               sentencepiece/src/builtin_pb)
 
   add_library(SentencePiece::SentencePiece ALIAS sentencepiece)
   add_library(SentencePiece::Protobuf ALIAS sentencepiece_pb)
