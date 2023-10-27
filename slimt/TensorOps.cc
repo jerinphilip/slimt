@@ -1,5 +1,11 @@
 #include "slimt/TensorOps.hh"
 
+#include <cstddef>
+#include <cstdint>
+#include <string>
+
+#include "slimt/Tensor.hh"
+
 #ifdef SLIMT_HAS_BLAS
 
 #ifdef __cplusplus

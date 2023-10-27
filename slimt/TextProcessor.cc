@@ -1,8 +1,11 @@
 #include "slimt/TextProcessor.hh"
 
 #include <algorithm>
+#include <cstddef>
 #include <iterator>
 #include <string>
+#include <string_view>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -10,6 +13,7 @@
 #include "slimt/Annotation.hh"
 #include "slimt/Macros.hh"
 #include "slimt/Splitter.hh"
+#include "slimt/Types.hh"
 #include "slimt/Vocabulary.hh"
 
 namespace slimt {

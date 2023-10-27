@@ -8,6 +8,7 @@
 
 #include "slimt/Annotation.hh"
 #include "slimt/Export.hh"
+#include "slimt/Io.hh"
 #include "slimt/Shortlist.hh"
 #include "slimt/TextProcessor.hh"
 #include "slimt/Transformer.hh"
@@ -17,6 +18,7 @@
 namespace slimt {
 
 class Input;
+class Tensor;
 
 template <class Field>
 struct Package {

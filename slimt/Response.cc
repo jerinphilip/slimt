@@ -2,7 +2,9 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cstddef>
 #include <utility>
+#include <vector>
 
 #include "slimt/Annotation.hh"
 #include "slimt/Types.hh"

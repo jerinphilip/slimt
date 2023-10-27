@@ -1,6 +1,13 @@
 #include "slimt/Regex.hh"
 
+#include <pcre2.h>
+
+#include <cassert>
+#include <cstddef>
+#include <cstdint>
 #include <sstream>
+#include <string>
+#include <string_view>
 
 namespace slimt {
 

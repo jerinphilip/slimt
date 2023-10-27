@@ -1,11 +1,12 @@
 #include "slimt/QMM.hh"
 
-#include <cassert>
-#include <cmath>
-
 #ifdef SLIMT_HAS_INTGEMM
-#include "intgemm/callbacks/configs.h"
-#include "intgemm/intgemm.h"
+#include <cstddef>
+#include <cstdint>
+#include <string>
+#include <vector>
+
+#include "slimt/Tensor.hh"
 
 namespace slimt::qmm::detail {
 constexpr Provider kAutoProvider = Provider::Intgemm;
@@ -15,7 +16,7 @@ constexpr Provider kAutoProvider = Provider::Intgemm;
 #endif
 
 #ifdef SLIMT_HAS_RUY
-#include "ruy/ruy.h"
+
 namespace slimt::qmm::detail {
 constexpr Provider kAutoProvider = Provider::Ruy;
 }
@@ -24,18 +25,12 @@ constexpr Provider kAutoProvider = Provider::Ruy;
 #endif
 
 #ifdef SLIMT_HAS_GEMMOLOGY
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-#include "gemmology/gemmology.h"
+
 namespace slimt::qmm::detail {
 constexpr Provider kAutoProvider = Provider::Gemmology;
 }
 // NOLINTNEXTLINE: The C++ file inclusion is intended.
 #include "slimt/qmm/Gemmology.inl.cc"
-#pragma GCC diagnostic pop
-#endif
-
-#ifdef SLIMT_HAS_GEMMOLOGY
 #endif
 
 namespace slimt::qmm {

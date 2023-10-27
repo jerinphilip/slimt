@@ -5,6 +5,9 @@
 #define PCRE2_CODE_UNIT_WIDTH 8
 #include <pcre2.h>
 
+#include <cstddef>
+#include <cstdint>
+
 namespace slimt {
 
 // Inspired by https://github.com/luvit/pcre2/blob/master/src/pcre2demo.c

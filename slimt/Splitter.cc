@@ -1,9 +1,10 @@
-#include <cassert>
-#include <cstdio>
+#include <cstddef>
 #include <fstream>
+#include <ostream>
 #include <sstream>
 #include <string>
 #include <string_view>
+#include <utility>
 
 #define PCRE2_CODE_UNIT_WIDTH 8
 #include <pcre2.h>

@@ -2,9 +2,15 @@
 
 #include <cassert>
 #include <cmath>
+#include <cstddef>
+#include <cstdint>
+#include <string>
+#include <tuple>
 #include <utility>
+#include <vector>
 
 #include "slimt/QMM.hh"
+#include "slimt/Tensor.hh"
 #include "slimt/TensorOps.hh"
 
 namespace slimt {

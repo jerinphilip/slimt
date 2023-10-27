@@ -1,8 +1,14 @@
 #pragma once
+#include <stddef.h>
+
+#include <functional>
+#include <iosfwd>
 #include <map>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <unordered_map>
+#include <utility>
 
 namespace slimt {
 

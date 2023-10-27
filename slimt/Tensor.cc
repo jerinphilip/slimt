@@ -1,14 +1,20 @@
 #include "slimt/Tensor.hh"
 
+#include <algorithm>
 #include <bitset>
+#include <cstdint>
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
 #include <limits>
+#include <string>
 #include <utility>
+#include <vector>
 
+#include "slimt/Aligned.hh"
 #include "slimt/Macros.hh"
 #include "slimt/TensorOps.hh"
+#include "slimt/Types.hh"
 #include "slimt/Utils.hh"
 
 namespace slimt {

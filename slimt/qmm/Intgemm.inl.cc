@@ -1,3 +1,8 @@
+
+#include "intgemm/intgemm.h"
+
+#include "intgemm/callbacks/configs.h"
+
 namespace slimt::qmm::detail {
 template <>
 Tensor affine_with_select<Provider::Intgemm>(

@@ -19,10 +19,12 @@ function slimt-check-clang-tidy {
 
     # Gemmology, which is default on has to be turned off.
     -DWITH_GEMMOLOGY=OFF
+    -DEXPORT_CMAKE_FILE=OFF
   )
+
   cmake -B build -S . "${ARGS[@]}"
-  run-clang-tidy -p build -header-filter="$PWD/slimt" "$PWD/slimt/.*"
-  run-clang-tidy -p build -header-filter="$PWD/slimt" "$PWD/app/.*"
+  run-clang-tidy -export-fixes build/clang-tidy.slimt.yml -p build -header-filter="$PWD/slimt" "$PWD/slimt/.*"
+  run-clang-tidy -export-fixes build/clang-tidy.app.yml -p build -header-filter="$PWD/slimt" "$PWD/app/.*"
 
 }
 

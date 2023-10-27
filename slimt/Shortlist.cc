@@ -1,6 +1,12 @@
 #include "slimt/Shortlist.hh"
 
+#include <cstddef>
+#include <cstdint>
+#include <utility>
+#include <vector>
+
 #include "slimt/Macros.hh"
+#include "slimt/Types.hh"
 #include "slimt/Utils.hh"
 #include "slimt/Vocabulary.hh"
 
