@@ -1,9 +1,16 @@
-#include <fstream>
+#include <cstdio>
+#include <cstdlib>
+#include <future>
 #include <iostream>
+#include <memory>
 #include <sstream>
+#include <string>
+#include <utility>
 
 #include "3rd-party/CLI11.hpp"
-#include "slimt/slimt.hh"
+#include "slimt/Frontend.hh"
+#include "slimt/Model.hh"
+#include "slimt/Response.hh"
 
 inline std::string read_from_stdin() {
   // Read a large input text blob from stdin

@@ -1,5 +1,11 @@
 #include "slimt/TensorOps.hh"
 
+#include <cstddef>
+#include <cstdint>
+#include <string>
+
+#include "slimt/Tensor.hh"
+
 #ifdef SLIMT_HAS_BLAS
 
 #ifdef __cplusplus
@@ -21,8 +27,6 @@ extern "C" {
 #include <cmath>
 #include <limits>
 #include <utility>
-
-#include "slimt/Simd.hh"
 
 namespace slimt {
 

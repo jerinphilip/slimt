@@ -1,14 +1,22 @@
 #include "slimt/Vocabulary.hh"
 
+#include <sentencepiece_processor.h>
+
+#include <cstddef>
 #include <cstdint>
+#include <string>
 #include <string_view>
+#include <tuple>
 #include <utility>
 #include <vector>
+
+#include "slimt/Types.hh"
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #include "sentencepiece.pb.h"
+
 #pragma GCC diagnostic pop
 
 namespace slimt {

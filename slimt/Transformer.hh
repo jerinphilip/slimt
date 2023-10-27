@@ -1,7 +1,13 @@
 #pragma once
+#include <cstddef>
+#include <string>
+#include <tuple>
+#include <vector>
+
 #include "slimt/Io.hh"
 #include "slimt/Modules.hh"
 #include "slimt/Tensor.hh"
+#include "slimt/Types.hh"
 
 namespace slimt {
 

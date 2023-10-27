@@ -1,11 +1,12 @@
 #include "slimt/Request.hh"
 
-#include <algorithm>
-#include <compare>
+#include <cstddef>
+#include <optional>
 #include <utility>
+#include <vector>
 
 #include "slimt/Cache.hh"
-#include "slimt/Macros.hh"
+#include "slimt/ResponseBuilder.hh"
 #include "slimt/Types.hh"
 #include "slimt/Utils.hh"
 

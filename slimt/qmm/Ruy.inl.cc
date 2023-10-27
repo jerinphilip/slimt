@@ -1,3 +1,4 @@
+#include "ruy/ruy.h"
 
 namespace slimt::qmm::detail {
 

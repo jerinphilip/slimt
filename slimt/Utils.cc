@@ -3,13 +3,14 @@
 #include <unistd.h>
 
 #include <algorithm>
-#include <csignal>
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
 #include <functional>
 #include <iostream>
 #include <stdexcept>
+#include <string>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -154,7 +155,7 @@ std::tuple<Tensor, float> quantized_tensor_from_file(const std::string &fpath,
   };
 
   if (!file_exists(fpath)) {
-    std::cerr << "File " << fpath << " not found on disk." << std::endl;
+    std::cerr << "File " << fpath << " not found on disk." << '\n';
   }
 
   io::MmapFile file(fpath);
@@ -187,7 +188,7 @@ Tensor tensor_from_file(const std::string &fpath, const Shape &shape,
   };
 
   if (!file_exists(fpath)) {
-    std::cerr << "File " << fpath << " not found on disk." << std::endl;
+    std::cerr << "File " << fpath << " not found on disk." << '\n';
   }
 
   io::MmapFile file(fpath);

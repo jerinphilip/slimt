@@ -3,6 +3,7 @@
 #include <future>
 #include <optional>
 #include <string>
+#include <thread>
 #include <vector>
 
 #include "slimt/Batcher.hh"
@@ -14,6 +15,8 @@
 namespace slimt {
 
 class Model;
+struct Options;
+struct Response;
 
 struct SLIMT_EXPORT Config {
   // NOLINTBEGIN

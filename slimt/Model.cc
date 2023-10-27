@@ -1,14 +1,21 @@
 #include "slimt/Model.hh"
 
-#include <cmath>
+#include <algorithm>
+#include <cstddef>
 #include <cstdint>
-#include <iostream>
-#include <unordered_map>
+#include <memory>
+#include <string>
 #include <utility>
+#include <vector>
 
+#include "slimt/Aligned.hh"
 #include "slimt/Input.hh"
-#include "slimt/Modules.hh"
+#include "slimt/Io.hh"
+#include "slimt/Shortlist.hh"
+#include "slimt/Tensor.hh"
 #include "slimt/TensorOps.hh"
+#include "slimt/Transformer.hh"
+#include "slimt/Types.hh"
 #include "slimt/Vocabulary.hh"
 
 namespace slimt {
