@@ -28,8 +28,6 @@ extern "C" {
 #include <limits>
 #include <utility>
 
-#include "slimt/Simd.hh"
-
 namespace slimt {
 
 Tensor index_select(const Tensor& x, const Tensor& indices,

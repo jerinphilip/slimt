@@ -32,8 +32,7 @@ jobs:
           run: |
             sudo apt-get update
             sudo apt-get install -y build-essential cmake
-            # Remove existing installation
-            sudo apt-get purge llvm clang
+
             python3 -m pip install black isort
             python3 -m pip install cmake-format
             sudo apt-get install -y shfmt
