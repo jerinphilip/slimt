@@ -237,6 +237,8 @@ jobs:
 
               chmod -R a+rwx /host/${{ env.ccache_dir }}
 
+              lscpu
+
               ccache -s # Print current cache stats
               ccache -z # Zero cache entry
 
