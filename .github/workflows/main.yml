@@ -32,14 +32,23 @@ jobs:
           run: |
             sudo apt-get update
             sudo apt-get install -y build-essential cmake
-            sudo apt-get install -y clang-format clang-tidy
             python3 -m pip install black isort
             python3 -m pip install cmake-format
             sudo apt-get install -y shfmt
 
+        - name: Setup latest clang
+          run: |
+           sudo bash scripts/ci/update-alternatives-clang.sh 17 100
+
         - name: Run format-script
           run:
             bash scripts/ci/format-check.sh
+
+        - uses: actions/upload-artifact@v2
+          if: always()
+          with:
+            name: format
+            path: ${{ github.workspace }}/build/clang-tidy.*.yml
 
   build-test:
       name: "build-test"

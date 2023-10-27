@@ -11,14 +11,20 @@ function slimt-check-clang-format {
 function slimt-check-clang-tidy {
   # clang-tidy
   mkdir -p build
-  pushd build
-  cmake \
-    -DCMAKE_EXPORT_COMPILE_COMMANDS=on \
-    -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ \
-    ..
-  popd
-  run-clang-tidy -p build -header-filter="$PWD/slimt" "$PWD/slimt/.*"
-  run-clang-tidy -p build -header-filter="$PWD/slimt" "$PWD/app/.*"
+  ARGS=(
+    -DCMAKE_EXPORT_COMPILE_COMMANDS=on
+    -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++
+    -DUSE_BUILTIN_SENTENCEPIECE=ON
+    -DWITH_INTGEMM=ON -DUSE_AVX2=ON -DUSE_SSE2=ON
+
+    # Gemmology, which is default on has to be turned off.
+    -DWITH_GEMMOLOGY=OFF
+    -DEXPORT_CMAKE_FILE=OFF
+  )
+
+  cmake -B build -S . "${ARGS[@]}"
+  run-clang-tidy -export-fixes build/clang-tidy.slimt.yml -p build -header-filter="$PWD/slimt" "$PWD/slimt/.*"
+  run-clang-tidy -export-fixes build/clang-tidy.app.yml -p build -header-filter="$PWD/slimt" "$PWD/app/.*"
 
 }
 

@@ -1,6 +1,8 @@
 #include "slimt/Aligned.hh"
 
 #include <cassert>
+#include <cstddef>
+#include <cstdlib>
 
 namespace slimt {
 

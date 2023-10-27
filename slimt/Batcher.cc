@@ -2,12 +2,16 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cstddef>
+#include <functional>
+#include <memory>
+#include <tuple>
 #include <utility>
 
 #include "slimt/Macros.hh"
 #include "slimt/Model.hh"
 #include "slimt/Request.hh"
-#include "slimt/Utils.hh"
+#include "slimt/Types.hh"
 
 namespace slimt {
 

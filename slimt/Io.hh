@@ -12,6 +12,7 @@
 
 #include "slimt/Aligned.hh"
 #include "slimt/Tensor.hh"
+#include "slimt/Types.hh"
 
 namespace slimt {
 

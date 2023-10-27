@@ -3,17 +3,21 @@
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
+#include <unistd.h>
 
 #include <cassert>
 #include <cstdint>
 #include <cstdlib>
 #include <iostream>
 #include <stdexcept>
+#include <string>
 #include <utility>
 #include <vector>
 
+#include "slimt/Aligned.hh"
 #include "slimt/QMM.hh"
 #include "slimt/Tensor.hh"
+#include "slimt/Types.hh"
 
 namespace slimt::io {
 

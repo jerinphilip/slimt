@@ -5,6 +5,7 @@
 
 #include <cctype>
 #include <cstring>
+#include <string_view>
 
 namespace {
 
@@ -76,6 +77,8 @@ Scanner::TokenType Scanner::scan_body() {
       return scan_tag();
     case '&':
       return scan_entity(TT_TEXT);
+    default:
+      break;
   }
 
   while (true) {
@@ -144,6 +147,8 @@ Scanner::TokenType Scanner::scan_attribute() {
       } else {  // NOLINT
         return TT_ERROR;
       }
+    default:
+      break;
   }
 
   attribute_ = StringRef{input_.pos(), 0};

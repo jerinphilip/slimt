@@ -15,6 +15,7 @@
 namespace slimt {
 
 class Tensor;
+
 class Shape;
 
 std::string checked_fpath();

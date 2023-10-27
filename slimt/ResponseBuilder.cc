@@ -1,13 +1,14 @@
 #include "slimt/ResponseBuilder.hh"
 
 #include <cstddef>
-#include <memory>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 #include "slimt/Macros.hh"
 #include "slimt/Response.hh"
+#include "slimt/Types.hh"
 #include "slimt/Vocabulary.hh"
 
 namespace slimt {

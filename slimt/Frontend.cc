@@ -1,10 +1,15 @@
 #include "slimt/Frontend.hh"
 
-#include <algorithm>
+#include <cassert>
+#include <cstddef>
 #include <cstdint>
 #include <future>
 #include <memory>
+#include <optional>
+#include <string>
+#include <thread>
 #include <utility>
+#include <vector>
 
 #include "slimt/Annotation.hh"
 #include "slimt/Batcher.hh"
@@ -14,10 +19,10 @@
 #include "slimt/Request.hh"
 #include "slimt/Response.hh"
 #include "slimt/ResponseBuilder.hh"
-#include "slimt/Tensor.hh"
-#include "slimt/TensorOps.hh"
 #include "slimt/TextProcessor.hh"
+#include "slimt/Types.hh"
 #include "slimt/Utils.hh"
+#include "slimt/Vocabulary.hh"
 
 namespace slimt {
 
@@ -247,16 +252,15 @@ std::future<Response> Async::pivot(const Ptr<Model> &first,
   }
 
   // This is callback chaining or CPS due to async.
-  Promise promise;
-  auto future = promise.get_future();
+  auto promise = std::make_shared<Promise>();
+  auto future = promise->get_future();
 
-  auto continuation = [this, &promise, second,
-                       html](Response &&source_to_pivot) {
+  auto continuation = [this, promise, second, html](Response &&partial) {
     // https://stackoverflow.com/a/65606554/4565794
     // Move semantics only work on mutable lambdas, and can only be done once.
     // It's only once in our case, so issok.
-    auto joining_continuation = [source_to_pivot = std::move(source_to_pivot),
-                                 &promise,
+    AnnotatedText intermediate = partial.target;
+    auto joining_continuation = [source_to_pivot = std::move(partial), &promise,
                                  html](Response &&pivot_to_target) mutable {
       // We have both Responses at this callback, source_to_pivot is moved in,
       // second half will be available when complete.
@@ -267,11 +271,11 @@ std::future<Response> Async::pivot(const Ptr<Model> &first,
       if (html) {
         html->restore(response);
       }
-      promise.set_value(std::move(response));
+      promise->set_value(std::move(response));
     };
 
     const TextProcessor &processor = second->processor();
-    auto [annotated, segments] = processor.process(source_to_pivot.target);
+    auto [annotated, segments] = processor.process(intermediate);
 
     auto request =
         make_request(id_, second, cache_, std::move(annotated),

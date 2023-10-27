@@ -1,9 +1,19 @@
 #include "slimt/Transformer.hh"
 
 #include <cmath>
+#include <cstddef>
+#include <cstdint>
+#include <iostream>
+#include <string>
+#include <tuple>
+#include <utility>
+#include <vector>
 
 #include "slimt/Io.hh"
+#include "slimt/Modules.hh"
+#include "slimt/Tensor.hh"
 #include "slimt/TensorOps.hh"
+#include "slimt/Types.hh"
 
 namespace slimt {
 

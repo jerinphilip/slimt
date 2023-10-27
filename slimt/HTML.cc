@@ -3,10 +3,16 @@
 #include <algorithm>
 #include <cassert>
 #include <cctype>
-#include <compare>
+#include <cstddef>
 #include <iterator>
+#include <ostream>
 #include <sstream>
+#include <string>
+#include <string_view>
+#include <utility>
+#include <vector>
 
+#include "slimt/Annotation.hh"
 #include "slimt/Macros.hh"
 #include "slimt/Response.hh"
 #include "slimt/Types.hh"
@@ -386,7 +392,8 @@ HTML::HTML(std::string &source, Options &&options)
   bool add_word_break = false;  // whether to add a word break next text segment
 
   // Starting point: an empty span with no open tags.
-  spans_.push_back(Span{0, 0, {}});
+  Span start{.begin = 0, .end = 0, .tags = {}};
+  spans_.push_back(std::move(start));
 
   bool stop = false;
   while (!stop) {
