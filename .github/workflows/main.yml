@@ -242,6 +242,8 @@ jobs:
               
               # Install CBLAS
               # yum install -y atlas-devel blas-devel
+              
+              yum install libasan
 
               chmod -R a+rwx /host/${{ env.ccache_dir }}
 
