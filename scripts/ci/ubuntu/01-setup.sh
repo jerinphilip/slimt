@@ -10,3 +10,13 @@ tar xf xsimd.tar.gz
 (cd xsimd-${XSIMD_VERSION} && cmake -DCMAKE_INSTALL_PREFIX=/usr/ && sudo make install)
 
 lscpu
+
+# Prepare core-dumps
+COREDUMP_DIR="$PWD/slimt-coredump"
+mkdir -p "${COREDUMP_DIR}"
+COREDUMP_PATTERN="${COREDUMP_DIR}/core-%e-%p-%t"
+
+echo "${COREDUMP_PATTERN}" |
+  sudo tee /proc/sys/kernel/core_pattern
+
+echo "coredumps: ${COREDUMP_PATTERN}"

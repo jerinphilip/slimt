@@ -88,6 +88,15 @@ jobs:
           run:
             bash scripts/ci/${{ matrix.name }}/04-package.sh
 
+        - uses: actions/upload-artifact@v2
+          if: ${{ failure() }}
+          with:
+            name: slimt
+            path: |
+              ${{ github.workspace }}/slimt-coredump
+
+
+
   build-wheels:
       strategy:
         matrix:
