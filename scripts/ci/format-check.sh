@@ -19,7 +19,6 @@ function slimt-check-clang-tidy {
 
     # Gemmology, which is default on has to be turned off.
     -DWITH_GEMMOLOGY=OFF
-    -DEXPORT_CMAKE_FILE=OFF
   )
 
   cmake -B build -S . "${ARGS[@]}"

@@ -106,7 +106,7 @@ endif(UNIX)
 # The following is partial code for enabling `find_package(slimt ...)` Not
 # working at the moment, due to the inablility to export sentencepiece
 # (accounting for it as an installed target).
-if(EXPORT_CMAKE_FILE)
+if(SLIMT_PACKAGE)
   # Export cmake
   include(CMakePackageConfigHelpers)
   configure_package_config_file(
@@ -150,4 +150,4 @@ if(EXPORT_CMAKE_FILE)
     FILES ${CMAKE_CURRENT_BINARY_DIR}/slimt.pc
     COMPONENT slimt-dev
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig/)
-endif(EXPORT_CMAKE_FILE)
+endif(SLIMT_PACKAGE)

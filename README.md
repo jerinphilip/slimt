@@ -120,6 +120,9 @@ ARGS=(
     # Use sentencepiece installed via system.
     -DUSE_BUILTIN_SENTENCEPIECE=OFF        
 
+    # Exports slimtConfig.cmake (cmake) and slimt.pc.in (pkg-config)
+    -DSLIMT_PACKAGE=ON 
+
     -DCMAKE_INSTALL_PREFIX=/path/to/prefix
 )
 
@@ -143,6 +146,9 @@ pacman -S openblas xsimd
 yay -S sentencepiece-git
 ```
 
+This is still very much a work in progress, towards being able to make
+[lemonade](https://github.com/jerinphilip/lemonade) available in distributions.
+Help is much appreciated here, please get in touch if you can help here.
 
 ### Python
 
