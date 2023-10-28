@@ -11,10 +11,6 @@ enum class VExt {
   w8,  //
 };
 
-enum class VectorOp {
-
-};
-
 // NOLINTEND
 template <enum VExt>
 struct VDatum;
