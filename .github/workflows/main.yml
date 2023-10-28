@@ -72,7 +72,7 @@ jobs:
           with:
             submodules: recursive
 
-        - name: Install dependencies
+        - name: Setup
           run: |
             bash scripts/ci/${{ matrix.name }}/01-setup.sh
 
