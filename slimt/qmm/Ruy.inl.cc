@@ -1,5 +1,7 @@
 #include "ruy/ruy.h"
 
+#include <cmath>
+
 namespace slimt::qmm::detail {
 
 using Index = uint64_t;
