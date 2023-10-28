@@ -49,6 +49,21 @@ if(WITH_ASAN)
   list(APPEND SLIMT_LINK_OPTIONS -fsanitize=address -fsanitize=undefined)
 endif(WITH_ASAN)
 
+if(WITH_TCMALLOC)
+  find_library(
+    TCMALLOC_LIBRARIES
+    NAMES tcmalloc_minimal
+    PATHS /usr/lib /usr/local/lib)
+
+  if(TCMALLOC_LIBRARIES)
+    message(STATUS "tcmalloc found: ${TCMALLOC_LIBRARIES}")
+  else(TCMALLOC_LIBRARIES)
+    message(FATAL_ERROR "tcmalloc not found")
+  endif(TCMALLOC_LIBRARIES)
+
+  list(APPEND SLIMT_PRIVATE_LIBS ${TCMALLOC_LIBRARIES})
+endif(WITH_TCMALLOC)
+
 find_package(PCRE2 REQUIRED)
 add_subdirectory(3rd-party)
 
