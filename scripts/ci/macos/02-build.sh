@@ -9,12 +9,9 @@ ARGS=(
   -DWITH_GEMMOLOGY=ON
   -DUSE_AVX2=ON -DUSE_SSE2=ON
   -DUSE_BUILTIN_SENTENCEPIECE=OFF
-
-  -DCMAKE_BUILD_TYPE=Debug
-  -DWITH_ASAN=ON
 )
 
-cmake -B build -S $PWD "${ARGS[@]}"
+cmake -B build -S $PWD -DCMAKE_BUILD_TYPE=Release "${ARGS[@]}"
 
 # Build
 cmake --build build --target all
