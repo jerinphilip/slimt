@@ -7,11 +7,3 @@ pkg_check_modules(Sentencepiece REQUIRED sentencepiece)
 
 # Exports slimt::slimt-shared target.
 include("${CMAKE_CURRENT_LIST_DIR}/slimtTargets.cmake")
-
-# Sentencepiece has to be picked up by CMake, as it is not exported by
-# slimtTargets.cmake.
-add_library(slimt_export INTERFACE)
-target_link_libraries(slimt_export INTERFACE slimt::slimt-shared
-                                             ${Sentencepiece_LIBRARIES})
-target_include_directories(slimt_export INTERFACE ${Sentencepiece_INCLUDE_DIRS})
-add_library(slimt::slimt ALIAS slimt_export)

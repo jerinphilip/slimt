@@ -13,9 +13,9 @@ set(CMAKE_VISIBILITY_INLINE_HIDDEN YES)
 option(WITH_ASAN "Enable AddressSanitizer in builds" OFF)
 option(WITH_TESTS "Enable building tests (requires a few extra libraries)" OFF)
 
-option(WITH_INTGEMM "Use intgemm" ON)
+option(WITH_INTGEMM "Use intgemm" OFF)
 option(WITH_RUY "Use ruy" OFF)
-option(WITH_GEMMOLOGY "Use gemmology" OFF)
+option(WITH_GEMMOLOGY "Use gemmology" ON)
 option(WITH_BLAS "Use BLAS. Otherwise moves to ruy" ON)
 
 option(USE_BUILTIN_SENTENCEPIECE "Use SentencePiece supplied as 3rd-party" ON)
@@ -26,7 +26,7 @@ option(USE_SSSE3 "Use SSSE3" OFF)
 option(USE_SSE2 "Use SSE2" OFF)
 option(USE_NEON "Use NEON" OFF)
 
-option(SLIMT_SIMD "Use SLIMT SIMD" OFF)
+option(SLIMT_PACKAGE "Package for cmake, pkgconfig" OFF)
 
 set(SLIMT_COMPILE_OPTIONS
     -Wall
@@ -51,30 +51,41 @@ if(WITH_ASAN)
   list(APPEND SLIMT_LINK_OPTIONS -fsanitize=address -fsanitize=undefined)
 endif(WITH_ASAN)
 
-find_package(PCRE2 REQUIRED)
+if(WITH_TCMALLOC)
+  find_library(
+    TCMALLOC_LIBRARIES
+    NAMES tcmalloc_minimal
+    PATHS /usr/lib /usr/local/lib)
 
-if(USE_BUILTIN_SENTENCEPIECE)
-  list(APPEND SLIMT_PUBLIC_LIBS SentencePiece::SentencePiece)
-else(USE_BUILTIN_SENTENCEPIECE)
-  list(APPEND SLIMT_PRIVATE_LIBS SentencePiece::SentencePiece)
-  list(APPEND SLIMT_PRIVATE_LIBS SentencePiece::Protobuf)
-endif(USE_BUILTIN_SENTENCEPIECE)
+  if(TCMALLOC_LIBRARIES)
+    message(STATUS "tcmalloc found: ${TCMALLOC_LIBRARIES}")
+  else(TCMALLOC_LIBRARIES)
+    message(FATAL_ERROR "tcmalloc not found")
+  endif(TCMALLOC_LIBRARIES)
+
+  list(APPEND SLIMT_PRIVATE_LIBS ${TCMALLOC_LIBRARIES})
+endif(WITH_TCMALLOC)
+
+find_package(PCRE2 REQUIRED)
+add_subdirectory(3rd-party)
 
 list(APPEND SLIMT_PRIVATE_LIBS PCRE2::PCRE2)
+list(APPEND SLIMT_PUBLIC_LIBS SentencePiece::SentencePiece)
 
-add_subdirectory(3rd-party)
+if(NOT USE_BUILTIN_SENTENCEPIECE)
+  list(APPEND SLIMT_PRIVATE_LIBS SentencePiece::Protobuf)
+endif(NOT USE_BUILTIN_SENTENCEPIECE)
 
 if(WITH_BLAS)
   find_package(BLAS REQUIRED)
-  find_path(CBLAS_INCLUDE_DIR cblas.h)
 
+  # The above defines BLAS::BLAS only one recent cmakes, the following code
+  # detects if the target is available if not creates an alias target.
   if(BLAS_FOUND AND NOT TARGET BLAS::BLAS)
     add_library(BLAS::BLAS INTERFACE IMPORTED)
     set_target_properties(
-      BLAS::BLAS
-      PROPERTIES INTERFACE_INCLUDE_DIRECTORIES
-                 "${BLAS_INCLUDE_DIR} ${CBLAS_INCLUDE_DIR}"
-                 INTERFACE_LINK_LIBRARIES "${BLAS_LIBRARIES}")
+      BLAS::BLAS PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "${BLAS_INCLUDE_DIR} "
+                            INTERFACE_LINK_LIBRARIES "${BLAS_LIBRARIES}")
   endif()
 
   list(APPEND SLIMT_PRIVATE_LIBS BLAS::BLAS)
@@ -164,26 +175,24 @@ message(STATUS "Project version: ${PROJECT_VERSION_STRING_FULL}")
 
 if(UNIX)
   include(GNUInstallDirs)
-  if(BUILD_CPACK)
-    # cmake-format: off
-    set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
-    set(CPACK_PACKAGE_CONTACT "Jerin Philip <jerinphilip@live.in>")
-    set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Jerin Philip")
-    set(CPACK_PACKAGE_DIRECTORY ${CMAKE_BINARY_DIR}/deb)
-    set(CPACK_GENERATOR "DEB")
-    set(CPACK_DEBIAN_PACKAGE_DEPENDS libsentencepiece-dev)
-    set(CPACK_PACKAGE_NAME ${PROJECT_NAME})
-    set(CPACK_PACKAGE_FILE_NAME ${PROJECT_NAME})
-    set(CPACK_PACKAGE_VERSION ${PROJECT_VERSION_STRING})
-    set(CPACK_DEBIAN_PACKAGE_NAME ${PROJECT_NAME})
-    set(CPACK_DEBIAN_PACKAGE_VERSION "${PROJECT_VERSION_STRING}")
-    set(CPACK_PACKAGE_VERSION_MAJOR ${PROJECT_VERSION_MAJOR})
-    set(CPACK_PACKAGE_VERSION_MINOR ${PROJECT_VERSION_MINOR})
-    set(CPACK_PACKAGE_VERSION_PATCH ${PROJECT_VERSION_PATCH})
-    set(CPACK_DEBIAN_PACKAGE_DESCRIPTION "slimt: Inference library for tiny translation models.")
-    # cmake-format: on
-    include(CPack)
-  endif(BUILD_CPACK)
+  # cmake-format: off
+  set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
+  set(CPACK_PACKAGE_CONTACT "Jerin Philip <jerinphilip@live.in>")
+  set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Jerin Philip")
+  set(CPACK_PACKAGE_DIRECTORY ${CMAKE_BINARY_DIR}/deb)
+  set(CPACK_GENERATOR "DEB")
+  set(CPACK_DEBIAN_PACKAGE_DEPENDS libsentencepiece-dev)
+  set(CPACK_PACKAGE_NAME ${PROJECT_NAME})
+  set(CPACK_PACKAGE_FILE_NAME ${PROJECT_NAME})
+  set(CPACK_PACKAGE_VERSION ${PROJECT_VERSION_STRING})
+  set(CPACK_DEBIAN_PACKAGE_NAME ${PROJECT_NAME})
+  set(CPACK_DEBIAN_PACKAGE_VERSION "${PROJECT_VERSION_STRING}")
+  set(CPACK_PACKAGE_VERSION_MAJOR ${PROJECT_VERSION_MAJOR})
+  set(CPACK_PACKAGE_VERSION_MINOR ${PROJECT_VERSION_MINOR})
+  set(CPACK_PACKAGE_VERSION_PATCH ${PROJECT_VERSION_PATCH})
+  set(CPACK_DEBIAN_PACKAGE_DESCRIPTION "slimt: Inference library for tiny translation models.")
+  # cmake-format: on
+  include(CPack)
 endif(UNIX)
 
 add_subdirectory(slimt)

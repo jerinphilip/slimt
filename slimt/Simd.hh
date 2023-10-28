@@ -11,10 +11,6 @@ enum class VExt {
   w8,  //
 };
 
-enum class VectorOp {
-
-};
-
 // NOLINTEND
 template <enum VExt>
 struct VDatum;
@@ -26,7 +22,7 @@ struct Ops;
 
 // Naive implementation
 
-#if defined(USE_AVX2) && defined(SLIMT_SIMD)
+#if defined(USE_AVX2)
 #include "slimt/simd/avx2.h"
 #define VEXT_W8_AVAILABLE
 
@@ -36,7 +32,7 @@ using F32x8 = VDatum<VExt::w8>;
 
 #endif
 
-#if defined(USE_SSE2) && defined(SLIMT_SIMD)
+#if defined(USE_SSE2)
 #include "slimt/simd/sse.h"
 #define VEXT_W4_AVAILABLE
 
@@ -45,7 +41,7 @@ using F32x4 = VDatum<VExt::w4>;
 }
 #endif
 
-#if defined(USE_NEON) && defined(SLIMT_SIMD)
+#if defined(USE_NEON)
 #include "slimt/simd/neon.h"
 #define VEXT_W4_AVAILABLE
 namespace slimt {

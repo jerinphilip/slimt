@@ -32,6 +32,7 @@ jobs:
           run: |
             sudo apt-get update
             sudo apt-get install -y build-essential cmake
+
             python3 -m pip install black isort
             python3 -m pip install cmake-format
             sudo apt-get install -y shfmt
@@ -71,7 +72,7 @@ jobs:
           with:
             submodules: recursive
 
-        - name: Install dependencies
+        - name: Setup
           run: |
             bash scripts/ci/${{ matrix.name }}/01-setup.sh
 
@@ -86,6 +87,15 @@ jobs:
         - name: Package
           run:
             bash scripts/ci/${{ matrix.name }}/04-package.sh
+
+        - uses: actions/upload-artifact@v2
+          if: ${{ failure() }}
+          with:
+            name: slimt
+            path: |
+              ${{ github.workspace }}/slimt-coredump
+
+
 
   build-wheels:
       strategy:
@@ -199,7 +209,7 @@ jobs:
               PYTHON_LOCAL_VERSION_IDENTIFIER=${{ env.PYTHON_LOCAL_VERSION_IDENTIFIER }}
               CCACHE_DIR=/host/${{ env.ccache_dir }}
               CCACHE_BASEDIR=/host/${{ env.ccache_basedir }}
-              CMAKE_ARGS="-DUSE_PYBIND11_SOURCE=ON -DBLA_VENDOR=OpenBLAS"
+              CMAKE_ARGS="-DUSE_PYBIND11_SOURCE=ON -DBLA_VENDOR=OpenBLAS -DUSE_BUILTIN_SENTENCEPIECE=ON -DWITH_GEMMOLOGY=OFF -DWITH_INTGEMM=ON -DUSE_SSE2=ON"
 
             CIBW_ENVIRONMENT_MACOS:
               USE_CCACHE=1
@@ -232,8 +242,10 @@ jobs:
               
               # Install CBLAS
               # yum install -y atlas-devel blas-devel
-
+              
               chmod -R a+rwx /host/${{ env.ccache_dir }}
+
+              lscpu
 
               ccache -s # Print current cache stats
               ccache -z # Zero cache entry
