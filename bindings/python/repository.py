@@ -104,7 +104,7 @@ class TranslateLocallyLike(Repository):
                 return json.load(model_file)
 
     def update(self) -> None:
-        response = urllib.request.urlopen(url)
+        response = urllib.request.urlopen(self.url)
         content = response.read()
         inventory = content.decode("utf-8")
         with open(self.models_file_path, "w+") as models_file:
