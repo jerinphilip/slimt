@@ -5,6 +5,7 @@ import typing as t
 from abc import ABC, abstractmethod
 from functools import partial
 from urllib.parse import urlparse
+import urllib
 
 from appdirs import AppDirs
 
