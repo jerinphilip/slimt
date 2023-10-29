@@ -15,7 +15,7 @@ def download_resource(url: URL, save_location: PathLike, force_download=False):
     force_download is true.
     """
     if force_download or not os.path.exists(save_location):
-        urllib.request.urlretrieve(file_url, filename=save_location)
+        urllib.request.urlretrieve(url, filename=save_location)
 
 
 def patch_marian_for_slimt(
