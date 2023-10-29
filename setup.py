@@ -212,7 +212,7 @@ setup(
     python_requires=">=3.6",
     packages=["slimt", "slimt.tests"],
     package_dir={"slimt": "bindings/python"},
-    install_requires=["requests", "pyyaml>=5.1", "appdirs"],
+    install_requires=["pyyaml>=5.1", "appdirs"],
     entry_points={
         "console_scripts": [
             "slimt = slimt.__main__:main",
