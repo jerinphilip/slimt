@@ -5,8 +5,8 @@ import typing as t
 from abc import ABC, abstractmethod
 from functools import partial
 from urllib.parse import urlparse
+import urllib
 
-import requests
 from appdirs import AppDirs
 
 from .typing_utils import URL, PathLike
@@ -104,7 +104,9 @@ class TranslateLocallyLike(Repository):
                 return json.load(model_file)
 
     def update(self) -> None:
-        inventory = requests.get(self.url).text
+        response = urllib.request.urlopen(self.url)
+        content = response.read()
+        inventory = content.decode("utf-8")
         with open(self.models_file_path, "w+") as models_file:
             models_file.write(inventory)
 

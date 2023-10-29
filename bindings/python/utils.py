@@ -2,7 +2,7 @@ import json
 import os
 import typing as t
 
-import requests
+import urllib.request
 import yaml
 
 from . import Alignments, AnnotatedText, Response, Package
@@ -15,12 +15,7 @@ def download_resource(url: URL, save_location: PathLike, force_download=False):
     force_download is true.
     """
     if force_download or not os.path.exists(save_location):
-        response = requests.get(url, stream=True)
-        # Throw an error for bad status codes
-        response.raise_for_status()
-        with open(save_location, "wb") as handle:
-            for block in response.iter_content(1024):
-                handle.write(block)
+        urllib.request.urlretrieve(url, filename=save_location)
 
 
 def patch_marian_for_slimt(
