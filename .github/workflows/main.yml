@@ -231,7 +231,7 @@ jobs:
 
 
             CIBW_BEFORE_BUILD_LINUX: |
-              yum install -y ccache
+              yum install -y ccache wget
               yum install -y gdb
 
               # Install Intel MKL.
