@@ -15,6 +15,8 @@ SHORTLIST=lex.s2t.bin
 #   --model ${MODEL} --vocabulary ${VOCAB} --shortlist ${SHORTLIST} \
 #   < data/sample.txt
 
-lldb --batch -o "run" -o "bt" -o "exit" -- build/app/slimt-cli --root "${PREFIX}" \
+lldb --batch \
+  -o "settings set target.input-path data/sample.text" \
+  -o "run" -o "bt" -o "exit" \
+  -- build/app/slimt-cli --root "${PREFIX}" \
   --model ${MODEL} --vocabulary ${VOCAB} --shortlist ${SHORTLIST} \
-  < data/sample.txt
