@@ -22,7 +22,7 @@ struct Ops;
 
 // Naive implementation
 
-#if defined(USE_AVX2)
+#if defined(USE_AVX2) && defined(USE_FLOATOPS_SIMD)
 #include "slimt/simd/avx2.h"
 #define VEXT_W8_AVAILABLE
 
@@ -32,6 +32,7 @@ using F32x8 = VDatum<VExt::w8>;
 
 #endif
 
+// SSE2 is given for x86-64.
 #if defined(USE_SSE2)
 #include "slimt/simd/sse.h"
 #define VEXT_W4_AVAILABLE
@@ -41,6 +42,7 @@ using F32x4 = VDatum<VExt::w4>;
 }
 #endif
 
+// NEON is expected by default for aarch64.
 #if defined(USE_NEON)
 #include "slimt/simd/neon.h"
 #define VEXT_W4_AVAILABLE
