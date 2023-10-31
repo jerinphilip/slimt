@@ -277,7 +277,7 @@ jobs:
             CIBW_TEST_EXTRAS: test
             CIBW_TEST_COMMAND: |
               # python -m pytest --pyargs slimt -s
-              gdb -batch -ex 'set follow-fork-mode child' -ex 'run' -ex 'bt' -ex 'quit' --args python -m pytest --pyargs slimt -s
+              gdb -return-child-result -batch -ex 'set follow-fork-mode child' -ex 'run' -ex 'bt' -ex 'quit' --args python -m pytest --pyargs slimt -s
 
 
         - uses: actions/upload-artifact@v2
