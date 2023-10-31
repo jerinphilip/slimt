@@ -18,8 +18,6 @@
 #error no supported architecture
 #endif
 
-namespace gemmology {}  // namespace gemmology
-
 // Dispatch *at runtime* based on run-time hardware and compile-time
 // architectures.
 //
