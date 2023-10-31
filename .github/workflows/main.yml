@@ -240,7 +240,7 @@ jobs:
               XSIMD_VERSION="11.1.0"
               wget https://github.com/xtensor-stack/xsimd/archive/refs/tags/${XSIMD_VERSION}.tar.gz -O xsimd.tar.gz
               tar xf xsimd.tar.gz
-              (cd xsimd-${XSIMD_VERSION} && cmake -DCMAKE_INSTALL_PREFIX=/usr/ -B build -S . && make install)
+              (cd xsimd-${XSIMD_VERSION} && cmake -DCMAKE_INSTALL_PREFIX=/usr/ -B build -S . && cmake --build build --target all && make -C build install)
 
               
               # Install OpenBLAS
