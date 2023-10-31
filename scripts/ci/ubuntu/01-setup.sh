@@ -9,9 +9,9 @@ wget https://github.com/xtensor-stack/xsimd/archive/refs/tags/${XSIMD_VERSION}.t
 tar xf xsimd.tar.gz
 
 (
-  cd xsimd-${XSIMD_VERSION} &&
-    cmake -DCMAKE_INSTALL_PREFIX=/usr/ -B build -S . &&
-    cmake --build build --target all && sudo make -C build install
+  cd xsimd-${XSIMD_VERSION} \
+    && cmake -DCMAKE_INSTALL_PREFIX=/usr/ -B build -S . \
+    && cmake --build build --target all && sudo make -C build install
 )
 
 lscpu
