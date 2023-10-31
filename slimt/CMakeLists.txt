@@ -54,8 +54,11 @@ set(SLIMT_SOURCES
     Vocabulary.cc
     XHScanner.cc)
 
-set_source_files_properties(QMM.cc PROPERTIES COMPILE_OPTIONS
-                                              "${SLIMT_QMM_COMPILE_OPTIONS}")
+if(WITH_GEMMOLOGY)
+  list(APPEND SLIMT_SOURCES qmm/Gemmology.cc)
+  set_source_files_properties(
+    qmm/Gemmology.cc PROPERTIES COMPILE_OPTIONS "${SLIMT_QMM_COMPILE_OPTIONS}")
+endif(WITH_GEMMOLOGY)
 
 set(SLIMT_LIBRARIES slimt-static slimt-shared)
 add_library(slimt-static STATIC ${SLIMT_SOURCES} ${SLIMT_PUBLIC_HEADERS}
