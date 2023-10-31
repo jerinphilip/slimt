@@ -54,6 +54,9 @@ set(SLIMT_SOURCES
     Vocabulary.cc
     XHScanner.cc)
 
+set_source_files_properties(QMM.cc PROPERTIES COMPILE_OPTIONS
+                                              ${SLIMT_QMM_COMPILE_OPTIONS})
+
 set(SLIMT_LIBRARIES slimt-static slimt-shared)
 add_library(slimt-static STATIC ${SLIMT_SOURCES} ${SLIMT_PUBLIC_HEADERS}
                                 ${SLIMT_PRIVATE_HEADERS})
