@@ -36,6 +36,7 @@ Input convert(Batch &batch, uint32_t pad_id, size_t limit_factor) {
     input.add(segment);
   }
 
+  input.finalize();
   return input;
 }
 
