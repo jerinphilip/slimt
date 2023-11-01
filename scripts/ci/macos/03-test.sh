@@ -14,3 +14,11 @@ SHORTLIST=lex.s2t.bin
 ./build/app/slimt-cli --root "${PREFIX}" \
   --model ${MODEL} --vocabulary ${VOCAB} --shortlist ${SHORTLIST} \
   < data/sample.txt
+
+# For cursed debugging on CI
+# lldb --batch \
+#   -o "settings set target.input-path ${PWD}/data/sample.txt" \
+#   -o "settings set -- target.run-args --root \"${PREFIX}\" --model \"${MODEL}\" --vocabulary \"${VOCAB}\" --shortlist \"${SHORTLIST}\"" \
+#   -o "process launch" \
+#   -o "bt" -o "exit" \
+#   -- ./build/app/slimt-cli

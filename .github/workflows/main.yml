@@ -209,7 +209,7 @@ jobs:
               PYTHON_LOCAL_VERSION_IDENTIFIER=${{ env.PYTHON_LOCAL_VERSION_IDENTIFIER }}
               CCACHE_DIR=/host/${{ env.ccache_dir }}
               CCACHE_BASEDIR=/host/${{ env.ccache_basedir }}
-              CMAKE_ARGS="-DUSE_PYBIND11_SOURCE=ON -DBLA_VENDOR=OpenBLAS -DUSE_BUILTIN_SENTENCEPIECE=ON -DWITH_GEMMOLOGY=OFF -DWITH_INTGEMM=ON -DUSE_AVX2=ON -DUSE_SSE2=ON"
+              CMAKE_ARGS="-DUSE_PYBIND11_SOURCE=ON -DBLA_VENDOR=OpenBLAS -DUSE_BUILTIN_SENTENCEPIECE=ON -DWITH_GEMMOLOGY=ON -DUSE_AVX512=ON -DUSE_AVX2=ON -DUSE_SSSE3=ON -DUSE_SSE2=ON"
 
             CIBW_ENVIRONMENT_MACOS:
               USE_CCACHE=1
@@ -231,11 +231,17 @@ jobs:
 
 
             CIBW_BEFORE_BUILD_LINUX: |
-              yum install -y ccache
+              yum install -y ccache wget
+              yum install -y gdb
 
               # Install Intel MKL.
               # yum-config-manager -y --add-repo https://yum.repos.intel.com/mkl/setup/intel-mkl.repo
               # yum install -y intel-mkl
+              XSIMD_VERSION="11.1.0"
+              wget https://github.com/xtensor-stack/xsimd/archive/refs/tags/${XSIMD_VERSION}.tar.gz -O xsimd.tar.gz
+              tar xf xsimd.tar.gz
+              (cd xsimd-${XSIMD_VERSION} && cmake -DCMAKE_INSTALL_PREFIX=/usr/ -B build -S . && cmake --build build --target all && make -C build install)
+
               
               # Install OpenBLAS
               yum install -y openblas-devel atlas-devel
@@ -276,6 +282,7 @@ jobs:
             CIBW_TEST_EXTRAS: test
             CIBW_TEST_COMMAND: |
               python -m pytest --pyargs slimt -s
+              # gdb -return-child-result -batch -ex 'set follow-fork-mode child' -ex 'run' -ex 'bt' -ex 'quit' --args python -m pytest --pyargs slimt -s
 
 
         - uses: actions/upload-artifact@v2

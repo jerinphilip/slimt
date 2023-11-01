@@ -28,6 +28,11 @@ option(USE_NEON "Use NEON" OFF)
 
 option(SLIMT_PACKAGE "Package for cmake, pkgconfig" OFF)
 
+include(MacroEnsureOutOfSourceBuild)
+macro_ensure_out_of_source_build(
+  "${PROJECT_NAME} requires an out of source build. Please create a separate build directory and run 'cmake /path/to/${PROJECT_NAME} [options]' there."
+)
+
 set(SLIMT_COMPILE_OPTIONS
     -Wall
     -Wextra
@@ -133,7 +138,8 @@ endif(WITH_GEMMOLOGY)
 
 if(USE_AVX512)
   list(APPEND SLIMT_COMPILE_DEFINITIONS USE_AVX512)
-  list(APPEND SLIMT_QMM_COMPILE_OPTIONS -march=skylake-avx512)
+  list(APPEND SLIMT_QMM_COMPILE_OPTIONS -mavx512f -mavx512dq -mavx512cd
+       -mavx512bw)
 endif(USE_AVX512)
 
 if(USE_AVX2)
