@@ -242,15 +242,16 @@ Tensor SSRU::forward(Tensor &state, const Tensor &x) const {
   return h;
 }
 
-std::tuple<Tensor, Tensor> DecoderLayer::forward(Tensor &encoder_out,
-                                                 Tensor &mask, Tensor &state,
+std::tuple<Tensor, Tensor> DecoderLayer::forward(const Tensor &encoder_out,
+                                                 const Tensor &mask,
+                                                 Tensor &state,
                                                  const Tensor &x) const {
   Tensor decoder_out = rnn_.forward(state, x);
 
   // Assign query, key, value for cross-attention.
-  Tensor &q = decoder_out;
-  Tensor &k = encoder_out;
-  Tensor &v = encoder_out;
+  const Tensor &q = decoder_out;
+  const Tensor &k = encoder_out;
+  const Tensor &v = encoder_out;
 
   // TODO(@jerinphilip), this will be called over and over.
   auto [out, attn] = attention_.forward(q, k, v, mask);
@@ -307,8 +308,9 @@ Tensor LayerNorm::forward(const Tensor &x) const {
   return y;
 }
 
-std::tuple<Tensor, Tensor> Attention::forward(Tensor &q, Tensor &k, Tensor &v,
-                                              Tensor &mask) const {
+std::tuple<Tensor, Tensor> Attention::forward(const Tensor &q, const Tensor &k,
+                                              const Tensor &v,
+                                              const Tensor &mask) const {
   // We have a B x T x H sequence comoing in, for q, k and v.
   Tensor yq = affine(Q_, q, "q");
   Tensor yk = affine(K_, k, "k");
@@ -341,7 +343,7 @@ std::tuple<Tensor, Tensor> Attention::forward(Tensor &q, Tensor &k, Tensor &v,
 }
 
 std::tuple<Tensor, Tensor> EncoderLayer::forward(const Tensor &x,
-                                                 Tensor &mask) const {
+                                                 const Tensor &mask) const {
   // TODO(fill code):
   auto [out, attention] = attention_.forward(x, x, x, mask);
 

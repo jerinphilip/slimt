@@ -50,7 +50,8 @@ Encoder::Encoder(size_t layers, size_t num_heads, size_t feed_forward_depth) {
   }
 }
 
-Tensor Encoder::forward(Tensor &word_embedding, Tensor &mask) const {
+Tensor Encoder::forward(const Tensor &word_embedding,
+                        const Tensor &mask) const {
   auto [x, attn] = encoder()[0].forward(word_embedding, mask);
 
   for (size_t i = 1; i < encoder_.size(); i++) {
@@ -89,7 +90,7 @@ Transformer::Transformer(size_t encoder_layers, size_t decoder_layers,
 }
 
 Decoder::Decoder(size_t layers, size_t num_heads, size_t feed_forward_depth,
-                 Tensor &embedding)
+                 const Tensor &embedding)
     : embedding_(embedding) {
   for (size_t i = 0; i < layers; i++) {
     decoder_.emplace_back(i + 1, feed_forward_depth, num_heads);
@@ -109,10 +110,11 @@ void Decoder::register_parameters(const std::string &prefix,
   }
 }
 
-std::tuple<Tensor, Tensor> Decoder::step(Tensor &encoder_out, Tensor &mask,
+std::tuple<Tensor, Tensor> Decoder::step(const Tensor &encoder_out,
+                                         const Tensor &mask,
                                          std::vector<Tensor> &states,
-                                         Words &previous_step,
-                                         Words &shortlist) const {
+                                         const Words &previous_step,
+                                         const Words &shortlist) const {
   // Infer batch-size from encoder_out.
   size_t encoder_feature_dim = encoder_out.dim(-1);
   size_t source_sequence_length = encoder_out.dim(-2);
@@ -123,7 +125,7 @@ std::tuple<Tensor, Tensor> Decoder::step(Tensor &encoder_out, Tensor &mask,
 
   // Trying to re-imagine:
   // https://github.com/browsermt/marian-dev/blob/f436b2b7528927333da1629a74fde3779c0a96dd/src/models/decoder.h#L67
-  auto from_sentences = [this](Words &previous_step, size_t batch_size) {
+  auto from_sentences = [this](const Words &previous_step, size_t batch_size) {
     const std::string name = "target_embed";
     size_t embed_dim = embedding_.dim(-1);
 
@@ -219,10 +221,11 @@ void Transformer::register_parameters(const std::string &prefix,
   decoder_.register_parameters(prefix, parameters);
 }
 
-Words greedy_sample(Tensor &logits, const Words &words, size_t batch_size) {
+Words greedy_sample(const Tensor &logits, const Words &words,
+                    size_t batch_size) {
   Words sampled_words;
   for (size_t i = 0; i < batch_size; i++) {
-    auto *data = logits.data<float>();
+    const auto *data = logits.data<float>();
     size_t max_index = 0;
     float max_value = data[0];
     size_t stride = words.size();

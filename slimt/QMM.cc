@@ -34,14 +34,14 @@ constexpr Provider kProvider = Provider::Gemmology;
 #endif
 
 namespace slimt::qmm {
-Tensor affine(Tensor& x, const Tensor& W, const Tensor& b, float a_quant,
+Tensor affine(const Tensor& x, const Tensor& W, const Tensor& b, float a_quant,
               float b_quant, const std::string& name) {
   using detail::affine;
   using detail::kProvider;
   return affine<kProvider>(x, W, b, a_quant, b_quant, name);
 }
 
-Tensor affine_with_select(Tensor& x, const Tensor& W, const Tensor& b,
+Tensor affine_with_select(const Tensor& x, const Tensor& W, const Tensor& b,
                           float a_quant, float b_quant,
                           const std::vector<uint32_t>& indices,
                           const std::string& name) {
@@ -51,7 +51,7 @@ Tensor affine_with_select(Tensor& x, const Tensor& W, const Tensor& b,
                                        name);
 }
 
-Tensor dot(Tensor& x, const Tensor& W, float a_quant, float b_quant,
+Tensor dot(const Tensor& x, const Tensor& W, float a_quant, float b_quant,
            const std::string& name) {
   using detail::dot;
   using detail::kProvider;

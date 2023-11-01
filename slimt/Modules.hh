@@ -36,8 +36,8 @@ class Attention {
  public:
   explicit Attention(std::string name, size_t num_heads);
   void register_parameters(const std::string &prefix, ParameterMap &parameters);
-  std::tuple<Tensor, Tensor> forward(Tensor &q, Tensor &k, Tensor &v,
-                                     Tensor &mask) const;
+  std::tuple<Tensor, Tensor> forward(const Tensor &q, const Tensor &k,
+                                     const Tensor &v, const Tensor &mask) const;
 
  private:
   std::string name_;
@@ -74,7 +74,7 @@ class EncoderLayer {
  public:
   EncoderLayer(size_t depth, size_t ffn_count, size_t num_heads);
   void register_parameters(const std::string &prefix, ParameterMap &parameters);
-  std::tuple<Tensor, Tensor> forward(const Tensor &x, Tensor &mask) const;
+  std::tuple<Tensor, Tensor> forward(const Tensor &x, const Tensor &mask) const;
 
  private:
   size_t depth_;
@@ -87,8 +87,9 @@ class DecoderLayer {
  public:
   explicit DecoderLayer(size_t depth, size_t ffn_count, size_t num_heads);
   void register_parameters(const std::string &prefix, ParameterMap &parameters);
-  std::tuple<Tensor, Tensor> forward(Tensor &encoder_out, Tensor &mask,
-                                     Tensor &state, const Tensor &x) const;
+  std::tuple<Tensor, Tensor> forward(const Tensor &encoder_out,
+                                     const Tensor &mask, Tensor &state,
+                                     const Tensor &x) const;
   Tensor start_state(size_t batch_size) const {
     return rnn_.start_state(batch_size);
   }
