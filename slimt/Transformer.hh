@@ -14,7 +14,7 @@ namespace slimt {
 class Encoder {
  public:
   explicit Encoder(size_t layers, size_t num_heads, size_t feed_forward_depth);
-  Tensor forward(Tensor &embedding, Tensor &mask) const;
+  Tensor forward(const Tensor &embedding, const Tensor &mask) const;
   void register_parameters(const std::string &prefix, ParameterMap &parameters);
   const std::vector<EncoderLayer> &encoder() const { return encoder_; }
 
@@ -25,17 +25,18 @@ class Encoder {
 class Decoder {
  public:
   Decoder(size_t layers, size_t num_heads, size_t feed_forward_depth,
-          Tensor &embedding);
+          const Tensor &embedding);
 
   void register_parameters(const std::string &prefix, ParameterMap &parameters);
 
   std::vector<Tensor> start_states(size_t batch_size) const;
-  std::tuple<Tensor, Tensor> step(Tensor &encoder_out, Tensor &mask,
+  std::tuple<Tensor, Tensor> step(const Tensor &encoder_out, const Tensor &mask,
                                   std::vector<Tensor> &states,
-                                  Words &previous_step, Words &shortlist) const;
+                                  const Words &previous_step,
+                                  const Words &shortlist) const;
 
  private:
-  Tensor &embedding_;
+  const Tensor &embedding_;
   std::vector<DecoderLayer> decoder_;
   Affine output_;
 };

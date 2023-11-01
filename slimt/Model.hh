@@ -52,7 +52,7 @@ class SLIMT_EXPORT Model {
   explicit Model(const Config &config, const Package<std::string> &package);
   explicit Model(const Config &config, const Package<View> &package);
 
-  Histories forward(Input &input) const;
+  Histories forward(const Input &input) const;
 
   const Config &config() const { return config_; }
   const Vocabulary &vocabulary() const { return vocabulary_; }
@@ -64,7 +64,7 @@ class SLIMT_EXPORT Model {
   }
 
  private:
-  Histories decode(Tensor &encoder_out, Input &input) const;
+  Histories decode(const Tensor &encoder_out, const Input &input) const;
 
   size_t id_;
   Config config_;

@@ -50,17 +50,6 @@ Tensor index_select(const Tensor& x, const Tensor& indices,
   return selected;
 }
 
-void modify_mask_for_pad_tokens_in_attention(float* mask, size_t size) {
-  // Adopted from:
-  // https://github.com/browsermt/marian-dev/blob/14c9d9b0e732f42674e41ee138571d5a7bf7ad94/src/models/transformer.h#L132
-  float f16_lowest = std::numeric_limits<float>::lowest() / 2.0F;  // NOLINT
-  float minus_inf = std::max(f16_lowest, -99999999.0F);            // NOLINT
-  for (size_t i = 0; i < size; i++) {
-    float* x = mask + i;
-    *x = (1.0F - *x) * minus_inf;
-  }
-}
-
 template <class Scalar>
 void transpose_10(const Scalar* in, size_t rows, size_t cols, Scalar* out) {
   for (size_t i = 0; i < rows; i++) {

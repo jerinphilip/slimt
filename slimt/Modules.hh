@@ -25,7 +25,7 @@ class LayerNorm {
  public:
   explicit LayerNorm() = default;
   void register_parameters(const std::string &prefix, ParameterMap &parameters);
-  Tensor forward(Tensor &x) const;
+  Tensor forward(const Tensor &x) const;
 
  private:
   Tensor bias_;
@@ -50,7 +50,7 @@ class SSRU {
  public:
   explicit SSRU() = default;
   void register_parameters(const std::string &prefix, ParameterMap &parameters);
-  Tensor forward(Tensor &state, Tensor &x) const;
+  Tensor forward(Tensor &state, const Tensor &x) const;
   Tensor start_state(size_t batch_size) const;
 
  private:
@@ -63,7 +63,7 @@ class FFN {
  public:
   explicit FFN(size_t depth);
   void register_parameters(const std::string &prefix, ParameterMap &parameters);
-  Tensor forward(Tensor &x) const;
+  Tensor forward(const Tensor &x) const;
 
  private:
   Affine O_;
@@ -74,7 +74,7 @@ class EncoderLayer {
  public:
   EncoderLayer(size_t depth, size_t ffn_count, size_t num_heads);
   void register_parameters(const std::string &prefix, ParameterMap &parameters);
-  std::tuple<Tensor, Tensor> forward(Tensor &x, Tensor &mask) const;
+  std::tuple<Tensor, Tensor> forward(const Tensor &x, Tensor &mask) const;
 
  private:
   size_t depth_;
@@ -88,7 +88,7 @@ class DecoderLayer {
   explicit DecoderLayer(size_t depth, size_t ffn_count, size_t num_heads);
   void register_parameters(const std::string &prefix, ParameterMap &parameters);
   std::tuple<Tensor, Tensor> forward(Tensor &encoder_out, Tensor &mask,
-                                     Tensor &state, Tensor &x) const;
+                                     Tensor &state, const Tensor &x) const;
   Tensor start_state(size_t batch_size) const {
     return rnn_.start_state(batch_size);
   }
@@ -101,7 +101,7 @@ class DecoderLayer {
   LayerNorm ffn_ffn_;
 };
 
-Tensor affine_with_select(const Affine &parameters, Tensor &x,
+Tensor affine_with_select(const Affine &parameters, const Tensor &x,
                           const std::vector<uint32_t> &indices,
                           const std::string &name = "");
 

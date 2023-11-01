@@ -91,7 +91,7 @@ void update_alignment(const std::vector<size_t> &lengths,
 }
 }  // namespace
 
-Histories Model::decode(Tensor &encoder_out, Input &input) const {
+Histories Model::decode(const Tensor &encoder_out, const Input &input) const {
   // Prepare a shortlist for the entire input.
   size_t batch_size = encoder_out.dim(-3);
   size_t source_sequence_length = encoder_out.dim(-2);
@@ -153,9 +153,9 @@ Histories Model::decode(Tensor &encoder_out, Input &input) const {
   return histories;
 }
 
-Histories Model::forward(Input &input) const {
+Histories Model::forward(const Input &input) const {
   const Tensor &indices = input.indices();
-  Tensor &mask = input.mask();
+  const Tensor &mask = input.mask();
 
   // uint64_t batch_size = indices.dim(-2);
   // uint64_t sequence_length = indices.dim(-1);
@@ -167,7 +167,6 @@ Histories Model::forward(Input &input) const {
 
   // https://github.com/browsermt/marian-dev/blob/14c9d9b0e732f42674e41ee138571d5a7bf7ad94/src/models/transformer.h#L570
   // https://github.com/browsermt/marian-dev/blob/14c9d9b0e732f42674e41ee138571d5a7bf7ad94/src/models/transformer.h#L133
-  modify_mask_for_pad_tokens_in_attention(mask.data<float>(), mask.size());
   Tensor encoder_out = transformer_.encoder().forward(word_embedding, mask);
   Histories histories = decode(encoder_out, input);
   return histories;

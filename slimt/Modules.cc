@@ -21,9 +21,10 @@ float retrieve_quantization_multiplier(const Tensor &W) {
   return b_quant;
 }
 
-std::tuple<Tensor, Tensor> scaled_dot_product_attention(Tensor &q, Tensor &k,
-                                                        Tensor &v,
-                                                        Tensor &mask) {
+std::tuple<Tensor, Tensor> scaled_dot_product_attention(const Tensor &q,
+                                                        const Tensor &k,
+                                                        const Tensor &v,
+                                                        const Tensor &mask) {
   // https://github.com/browsermt/marian-dev/blob/14c9d9b0e732f42674e41ee138571d5a7bf7ad94/src/models/transformer.h#L228
 
   // attn = softmax((q . k^T)/d_k) . v
@@ -58,7 +59,7 @@ std::tuple<Tensor, Tensor> scaled_dot_product_attention(Tensor &q, Tensor &k,
   size_t batch_stride = (num_heads * query_length * value_length);
   for (size_t batch_id = 0; batch_id < batch_size; batch_id++) {
     float *data = qkt.data<float>() + batch_id * batch_stride;
-    float *mask_data = mask.data<float>() + batch_id * value_length;
+    const float *mask_data = mask.data<float>() + batch_id * value_length;
     for (size_t offset = 0; offset < batch_stride; offset += value_length) {
       float *data_begin = data + offset;
       add(data_begin, mask_data, value_length, data_begin);
@@ -84,7 +85,7 @@ std::tuple<Tensor, Tensor> scaled_dot_product_attention(Tensor &q, Tensor &k,
   return std::make_tuple(std::move(out), std::move(attn));
 }
 
-Tensor split_heads(Tensor &x, size_t num_heads) {
+Tensor split_heads(const Tensor &x, size_t num_heads) {
   size_t batch_size = x.dim(-3);
   size_t sequence_length = x.dim(-2);
   size_t feature_dim = x.dim(-1);
@@ -124,7 +125,7 @@ Tensor split_heads(Tensor &x, size_t num_heads) {
   return y;
 }
 
-Tensor join_heads(Tensor &x) {
+Tensor join_heads(const Tensor &x) {
   size_t batch_size = x.dim(-4);
   size_t num_heads = x.dim(-3);
   size_t sequence_length = x.dim(-2);
@@ -141,7 +142,7 @@ Tensor join_heads(Tensor &x) {
   return y;
 }
 
-Tensor affine(const Affine &parameters, Tensor &x,
+Tensor affine(const Affine &parameters, const Tensor &x,
               const std::string &name = "") {
   Tensor y = qmm::affine(                              //
       x,                                               //
@@ -153,7 +154,7 @@ Tensor affine(const Affine &parameters, Tensor &x,
   return y;
 }
 
-Tensor affine_with_select(const Affine &parameters, Tensor &x,
+Tensor affine_with_select(const Affine &parameters, const Tensor &x,
                           const std::vector<uint32_t> &indices,
                           const std::string &name /*= ""*/) {
   Tensor y = qmm::affine_with_select(                  //
@@ -167,7 +168,7 @@ Tensor affine_with_select(const Affine &parameters, Tensor &x,
   return y;
 }
 
-Tensor linear(const Linear &parameters, Tensor &x,
+Tensor linear(const Linear &parameters, const Tensor &x,
               const std::string &name = "") {
   Tensor y = qmm::dot(                                 //
       x, parameters.W,                                 //
@@ -186,7 +187,7 @@ Tensor SSRU::start_state(size_t batch_size) const {
   return start;
 }
 
-Tensor SSRU::forward(Tensor &state, Tensor &x) const {
+Tensor SSRU::forward(Tensor &state, const Tensor &x) const {
   // From Research to Production and Back: Ludicrously Fast Neural Machine
   // Translation (https://aclanthology.org/D19-5632.pdf) Section 3.1 describes
   // SSRU. SSRU is described by the following recurrent equations - which
@@ -243,7 +244,7 @@ Tensor SSRU::forward(Tensor &state, Tensor &x) const {
 
 std::tuple<Tensor, Tensor> DecoderLayer::forward(Tensor &encoder_out,
                                                  Tensor &mask, Tensor &state,
-                                                 Tensor &x) const {
+                                                 const Tensor &x) const {
   Tensor decoder_out = rnn_.forward(state, x);
 
   // Assign query, key, value for cross-attention.
@@ -280,12 +281,12 @@ DecoderLayer::DecoderLayer(size_t depth, size_t ffn_count, size_t num_heads)
 
 FFN::FFN(size_t depth) : depth_(depth) {}
 
-Tensor FFN::forward(Tensor &x) const {
+Tensor FFN::forward(const Tensor &x) const {
   Tensor y = affine(O_, x, "ffn" + std::to_string(depth_));
   return y;
 }
 
-Tensor LayerNorm::forward(Tensor &x) const {
+Tensor LayerNorm::forward(const Tensor &x) const {
   Tensor y = x.like("ln_out");
   size_t cols = x.dim(-1);
   size_t rows = x.size() / cols;
@@ -329,7 +330,7 @@ std::tuple<Tensor, Tensor> Attention::forward(Tensor &q, Tensor &k, Tensor &v,
   Tensor yo = affine(O_, out, "o");
 
   // Add and norm
-  Tensor &x = q;
+  const Tensor &x = q;
   Tensor x_plus_y(x.type(), x.shape(), "x+y_(residual)");
 
   add(x.data<float>(), yo.data<float>(), yo.size(), x_plus_y.data<float>());
@@ -339,7 +340,7 @@ std::tuple<Tensor, Tensor> Attention::forward(Tensor &q, Tensor &k, Tensor &v,
   return std::make_tuple(std::move(y), std::move(attn));
 }
 
-std::tuple<Tensor, Tensor> EncoderLayer::forward(Tensor &x,
+std::tuple<Tensor, Tensor> EncoderLayer::forward(const Tensor &x,
                                                  Tensor &mask) const {
   // TODO(fill code):
   auto [out, attention] = attention_.forward(x, x, x, mask);

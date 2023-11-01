@@ -31,10 +31,11 @@ namespace slimt::qmm::detail {
 
 template <>
 Tensor affine_with_select<Provider::Gemmology>(
-    Tensor& x, const Tensor& W, const Tensor& b, float a_quant, float b_quant,
-    const std::vector<uint32_t>& indices, const std::string& name) {
+    const Tensor& x, const Tensor& W, const Tensor& b, float a_quant,
+    float b_quant, const std::vector<uint32_t>& indices,
+    const std::string& name) {
   // Naming is to simplify thinking with the gemmology API below.
-  Tensor& A = x;        // NOLINT
+  const Tensor& A = x;  // NOLINT
   const Tensor& B = W;  // NOLINT
   const Tensor& bias = b;
 
@@ -119,11 +120,11 @@ Tensor affine_with_select<Provider::Gemmology>(
 }
 
 template <>
-Tensor affine<Provider::Gemmology>(Tensor& x, const Tensor& W, const Tensor& b,
-                                   float a_quant, float b_quant,
-                                   const std::string& name) {
+Tensor affine<Provider::Gemmology>(const Tensor& x, const Tensor& W,
+                                   const Tensor& b, float a_quant,
+                                   float b_quant, const std::string& name) {
   // Naming is to simplify thinking with the gemmology API below.
-  Tensor& A = x;        // NOLINT
+  const Tensor& A = x;  // NOLINT
   const Tensor& B = W;  // NOLINT
   const Tensor& bias = b;
 
@@ -189,10 +190,10 @@ Tensor affine<Provider::Gemmology>(Tensor& x, const Tensor& W, const Tensor& b,
 }
 
 template <>
-Tensor dot<Provider::Gemmology>(Tensor& x, const Tensor& W, float a_quant,
+Tensor dot<Provider::Gemmology>(const Tensor& x, const Tensor& W, float a_quant,
                                 float b_quant, const std::string& name) {
   // Naming is to simplify thinking with the gemmology API below.
-  Tensor& A = x;        // NOLINT
+  const Tensor& A = x;  // NOLINT
   const Tensor& B = W;  // NOLINT
 
   size_t A_cols = A.dim(-1);          // NOLINT
