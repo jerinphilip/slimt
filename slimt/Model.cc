@@ -97,7 +97,7 @@ Histories Model::decode(const Tensor &encoder_out, const Input &input) const {
   size_t source_sequence_length = encoder_out.dim(-2);
 
   Shortlist shortlist = shortlist_generator_.generate(input.words());
-  Words indices = shortlist.words();
+  const Words &indices = shortlist.words();
   // The following can be used to check if shortlist is going wrong.
   // std::vector<uint32_t> indices(vocabulary_.size());
   // std::iota(indices.begin(), indices.end(), 0);
