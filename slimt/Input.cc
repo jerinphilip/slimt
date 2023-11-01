@@ -10,7 +10,6 @@
 
 namespace slimt {
 
-// Tensor(Type type, Shape shape, std::string name);
 Input::Input(size_t batch_size, size_t sequence_length, uint32_t pad_id,
              size_t limit_factor)
     : batch_(Type::u32, Shape({batch_size, sequence_length}), "batch"),
