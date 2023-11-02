@@ -49,6 +49,8 @@ class SLIMT_EXPORT Blocking {
                               const Options &options);
 
  private:
+  size_t id() { return id_++; }
+
   Config config_;
   std::optional<TranslationCache> cache_;
   size_t id_ = 0;
@@ -65,6 +67,8 @@ class SLIMT_EXPORT Async {
                               std::string source, const Options &options);
 
  private:
+  size_t id() { return id_++; }
+
   Config config_;
   std::optional<TranslationCache> cache_;
   Threadsafe<AggregateBatcher> batcher_;

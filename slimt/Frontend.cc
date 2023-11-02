@@ -120,7 +120,7 @@ std::vector<Response> Blocking::translate(const Ptr<Model> &model,
     const auto &processor = model->processor();
     auto [annotated, segments] =
         processor.process(std::move(source), config_.wrap_length);
-    auto request = make_request(id_, model, cache_, std::move(annotated),
+    auto request = make_request(id(), model, cache_, std::move(annotated),
                                 std::move(segments), continuation);
 
     batcher.enqueue(request);
@@ -180,7 +180,7 @@ std::vector<Response> Blocking::pivot(const Ptr<Model> &first,
 
     const TextProcessor &processor = second->processor();
     auto [annotated, segments] = processor.process(source_to_pivot.target);
-    auto request = make_request(id_, second, cache_, std::move(annotated),
+    auto request = make_request(id(), second, cache_, std::move(annotated),
                                 std::move(segments), continuation);
 
     batcher.enqueue(request);
@@ -238,7 +238,7 @@ std::future<Response> Async::translate(const Ptr<Model> &model,
   const TextProcessor &processor = model->processor();
   auto [annotated, segments] =
       processor.process(std::move(source), config_.wrap_length);
-  auto request = make_request(id_, model, cache_, std::move(annotated),
+  auto request = make_request(id(), model, cache_, std::move(annotated),
                               std::move(segments), continuation);
 
   batcher_.enqueue(model, request);
@@ -279,7 +279,7 @@ std::future<Response> Async::pivot(const Ptr<Model> &first,
     auto [annotated, segments] = processor.process(intermediate);
 
     auto request =
-        make_request(id_, second, cache_, std::move(annotated),
+        make_request(id(), second, cache_, std::move(annotated),
                      std::move(segments), std::move(joining_continuation));
 
     batcher_.enqueue(second, request);
@@ -288,7 +288,7 @@ std::future<Response> Async::pivot(const Ptr<Model> &first,
   const TextProcessor &processor = first->processor();
   auto [annotated, segments] =
       processor.process(std::move(source), config_.wrap_length);
-  auto request = make_request(id_, first, cache_, std::move(annotated),
+  auto request = make_request(id(), first, cache_, std::move(annotated),
                               std::move(segments), continuation);
 
   batcher_.enqueue(first, request);
