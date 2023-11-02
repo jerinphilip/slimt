@@ -72,7 +72,7 @@ size_t Request::word_count(size_t index) const {
   return (segments_[index].size());
 }
 
-Segment Request::segment(size_t index) const { return segments_[index]; }
+const Segment &Request::segment(size_t index) const { return segments_[index]; }
 
 void Request::complete(size_t index, History history) {
   // Concurrently called by multiple workers as a history from translation is

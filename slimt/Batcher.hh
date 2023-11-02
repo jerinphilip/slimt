@@ -32,7 +32,7 @@ class SegmentRef {
   size_t size() const;
 
   /// Accessor to the segment represented by the SegmentRef.
-  Segment get() const;
+  const Segment &get() const;
 
   /// Forwards history to Request to set history corresponding to this
   /// SegmentRef.

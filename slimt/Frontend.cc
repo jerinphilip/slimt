@@ -32,7 +32,7 @@ Input convert(const Batch &batch, uint32_t pad_id, size_t limit_factor) {
   const auto &segment_refs = batch.segment_refs();
   Input input(batch.size(), batch.max_length(), pad_id, limit_factor);
   for (const auto &segment_ref : segment_refs) {
-    Segment segment = segment_ref.get();
+    const Segment &segment = segment_ref.get();
     input.add(segment);
   }
 
