@@ -261,7 +261,7 @@ std::future<Response> Async::pivot(const Ptr<Model> &first,
     // Move semantics only work on mutable lambdas, and can only be done once.
     // It's only once in our case, so issok.
     AnnotatedText intermediate = partial.target;
-    auto joining_continuation = [source_to_pivot = std::move(partial), &promise,
+    auto joining_continuation = [source_to_pivot = std::move(partial), promise,
                                  html](Response &&pivot_to_target) mutable {
       // We have both Responses at this callback, source_to_pivot is moved in,
       // second half will be available when complete.
