@@ -64,7 +64,7 @@ class Batch {
   //
   // segment_refs() are used to access segment_refs to construct marian internal
   // batch.
-  const SegmentRefs &segment_refs() { return segment_refs_; }
+  const SegmentRefs &segment_refs() const { return segment_refs_; }
 
   // On obtaining Histories after translating a batch, complete can be
   // called with Histories , which forwards the call to Request through
