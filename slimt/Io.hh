@@ -50,6 +50,7 @@ void unquantize_embedding_weights(const int8_t* quantized_weights,
 
 class MmapFile {
  public:
+  MmapFile() = default;
   explicit MmapFile(const std::string& filepath);
   ~MmapFile();
 

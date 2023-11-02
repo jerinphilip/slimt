@@ -25,10 +25,15 @@ namespace {
 size_t model_id = 0;
 
 Package<io::MmapFile> mmap_from(const Package<std::string> &package) {
+  auto maybe_mmap = [](const std::string &path) {
+    return path.empty() ? io::MmapFile() : io::MmapFile(path);
+  };
+
   return {
-      .model = io::MmapFile(package.model),            //
-      .vocabulary = io::MmapFile(package.vocabulary),  //
-      .shortlist = io::MmapFile(package.shortlist),    //
+      .model = maybe_mmap(package.model),            //
+      .vocabulary = maybe_mmap(package.vocabulary),  //
+      .shortlist = maybe_mmap(package.shortlist),    //
+      .ssplit = maybe_mmap(package.ssplit),          //
   };
 }
 
@@ -37,6 +42,7 @@ Package<View> view_from(const Package<io::MmapFile> &mmap) {
       .model = {mmap.model.data(), mmap.model.size()},                 //
       .vocabulary = {mmap.vocabulary.data(), mmap.vocabulary.size()},  //
       .shortlist = {mmap.shortlist.data(), mmap.shortlist.size()},     //
+      .ssplit = {mmap.ssplit.data(), mmap.ssplit.size()},              //
   };
 }
 

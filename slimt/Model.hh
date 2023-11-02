@@ -25,6 +25,7 @@ struct Package {
   Field model;
   Field vocabulary;
   Field shortlist;
+  Field ssplit;
 };
 
 class SLIMT_EXPORT Model {

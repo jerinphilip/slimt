@@ -36,6 +36,7 @@ struct Options {
     app.add_option("--model", translator.model, "Path to model");
     app.add_option("--vocabulary", translator.vocabulary, "Path to vocabulary");
     app.add_option("--shortlist", translator.shortlist, "Path to shortlist");
+    app.add_option("--ssplit", translator.ssplit, "Path to ssplit prefixes file.");
     app.add_flag("--version", version, "Display version");
     app.add_flag("--html", html, "Whether content is HTML");
     app.add_flag("--async", async, "Try async backend");
@@ -46,7 +47,7 @@ struct Options {
 };
 
 std::string prefix(const std::string &root, const std::string &basename) {
-  return root + "/" + basename;
+  return basename.empty() ? basename : root + "/" + basename;
 }
 
 void run(const Options &options) {
@@ -55,6 +56,7 @@ void run(const Options &options) {
   fprintf(stdout, "%s model: %s\n", indent.c_str(), options.translator.model.c_str());
   fprintf(stdout, "%s vocabulary: %s\n", indent.c_str(), options.translator.vocabulary.c_str());
   fprintf(stdout, "%s shortlist: %s\n", indent.c_str(), options.translator.shortlist.c_str());
+  fprintf(stdout, "%s ssplit: %s\n", indent.c_str(), options.translator.ssplit.c_str());
   // clang-format on
   //
   using namespace slimt;  // NOLINT
@@ -63,7 +65,8 @@ void run(const Options &options) {
   Package<std::string> package{
       .model = prefix(options.root, options.translator.model),            //
       .vocabulary = prefix(options.root, options.translator.vocabulary),  //
-      .shortlist = prefix(options.root, options.translator.shortlist)     //
+      .shortlist = prefix(options.root, options.translator.shortlist),    //
+      .ssplit = prefix(options.root, options.translator.ssplit)           //
   };
 
   // Sample user-operation.
