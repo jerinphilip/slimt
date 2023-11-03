@@ -14,3 +14,5 @@ COREDUMP_PATTERN="${COREDUMP_DIR}/core.%n.%P.%t"
 sudo sysctl -w kern.corefile=${COREDUMP_PATTERN}
 
 echo "coredumps: ${COREDUMP_PATTERN}"
+
+python3 -m pip install setuptools
