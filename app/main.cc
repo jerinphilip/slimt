@@ -91,12 +91,27 @@ void run(const Options &options) {
                        static_cast<float>(value.total));
         return 100 * ratio;  // NOLINT
       };
-      fprintf(
-          stderr,
-          "Progress %lf%% [ wps %lf | words %zu/%zu | segments %zu/%zu ] \n",
-          percent(info.words), info.wps,                //
-          info.words.completed, info.words.total,       //
-          info.segments.completed, info.segments.total  //
+
+      auto length = [](size_t value) {
+        int count = 0;
+        constexpr size_t kBase = 10;
+        while (value) {
+          value /= kBase;
+          ++count;
+        }
+        return count;
+      };
+
+      int word_width = length(info.words.total);
+      int segment_width = length(info.segments.total);
+      fprintf(stderr,
+              "Progress %5.2lf%% [ wps %lf | words %*zu/%zu | segments "
+              "%*zu/%zu ] \n",
+              percent(info.words), info.wps,                //
+              word_width,                                   //
+              info.words.completed, info.words.total,       //
+              segment_width,                                //
+              info.segments.completed, info.segments.total  //
       );
     };
 
