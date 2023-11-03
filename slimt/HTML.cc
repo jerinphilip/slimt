@@ -18,6 +18,35 @@
 #include "slimt/Types.hh"
 #include "slimt/XHScanner.hh"
 
+namespace detail {
+
+/// Very simple replacement for std::format introduced in C++20. Only supports
+/// replacing `{}` in the template string with whatever `operator<<` for that
+/// type turns it into.
+
+std::string format(const std::string &tmpl) { return tmpl; }
+
+template <typename Arg>
+std::string format(const std::string &tmpl, Arg arg) {
+  std::ostringstream os;
+  auto index = tmpl.find("{}");
+  assert(index != std::string::npos);
+  os << tmpl.substr(0, index) << arg << tmpl.substr(index + 2);
+  return os.str();
+}
+
+template <typename Arg, typename... Args>
+std::string format(const std::string &tmpl, Arg arg, Args... args) {
+  std::ostringstream os;
+  auto index = tmpl.find("{}");
+  assert(index != std::string::npos);
+  os << tmpl.substr(0, index) << arg
+     << format(tmpl.substr(index + 2), std::forward<Args>(args)...);
+  return os.str();
+}
+
+}  // namespace detail
+
 namespace {
 
 using slimt::AnnotatedText;
@@ -324,34 +353,6 @@ void consume_ignored_tag(markup::Scanner &scanner, HTML::Tag &tag,
 }
 
 }  // namespace
-
-namespace detail {
-/// Very simple replacement for std::format introduced in C++20. Only supports
-/// replacing `{}` in the template string with whatever `operator<<` for that
-/// type turns it into.
-
-std::string format(const std::string &tmpl) { return tmpl; }
-
-template <typename Arg>
-std::string format(const std::string &tmpl, Arg arg) {
-  std::ostringstream os;
-  auto index = tmpl.find("{}");
-  assert(index != std::string::npos);
-  os << tmpl.substr(0, index) << arg << tmpl.substr(index + 2);
-  return os.str();
-}
-
-template <typename Arg, typename... Args>
-std::string format(const std::string &tmpl, Arg arg, Args... args) {
-  std::ostringstream os;
-  auto index = tmpl.find("{}");
-  assert(index != std::string::npos);
-  os << tmpl.substr(0, index) << arg
-     << format(tmpl.substr(index + 2), std::forward<Args>(args)...);
-  return os.str();
-}
-
-}  // namespace detail
 
 namespace slimt {
 
