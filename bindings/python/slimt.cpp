@@ -60,22 +60,23 @@ class PyService {
 
     // Prepare promises, save respective futures. Have callback's in async set
     // value to the promises.
-    std::vector<std::future<Response>> futures;
+    using Handle = slimt::Handle;
+    std::vector<Handle> futures;
 
     Options options{
         .html = html,  //
     };
 
     for (auto &source : sources) {
-      std::future<Response> future =
-          service_.translate(model, std::move(source), options);
+      Handle future = service_.translate(model, std::move(source), options);
 
       futures.push_back(std::move(future));
     }
 
     // Wait on all futures to be ready.
     std::vector<Response> responses;
-    for (auto &future : futures) {
+    for (auto &handle : handles) {
+      auto &future = handle.future();
       future.wait();
       responses.push_back(std::move(future.get()));
     }
@@ -98,37 +99,24 @@ class PyService {
         .html = html  //
     };
 
-    // Prepare promises, save respective futures. Have callback's in async set
-    // value to the promises.
-    using Promise = std::promise<Response>;
-    using Future = std::future<Response>;
-
-    std::vector<Promise> promises(sources.size());
-
-    std::vector<Future> futures;
+    using Handle = slimt::Handle;
+    std::vector<Handle> handles;
     for (size_t i = 0; i < sources.size(); i++) {
-      Promise &promise = promises[i];
       std::string &source = sources[i];
-
-      auto callback = [&promise, i](Response &&response) {
-        promise.set_value(std::move(response));
-      };
-
-      service_.pivot(         //
-          first, second,      //
-          std::move(source),  //
-          options             //
+      Handle handle = service_.pivot(  //
+          first, second,               //
+          std::move(source),           //
+          options                      //
       );
 
-      Future future = promise.get_future();
-      futures.push_back(std::move(future));
+      handles.push_back(std::move(handle));
     }
 
     // Wait on all futures to be ready.
     std::vector<Response> responses;
-    for (size_t i = 0; i < futures.size(); i++) {
-      futures[i].wait();
-      Response response = futures[i].get();
+    for (auto &handle : handles) {
+      handle.future().wait();
+      Response response = handle.future().get();
       responses.push_back(std::move(response));
     }
 
