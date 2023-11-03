@@ -7,7 +7,6 @@
 #include <vector>
 
 #include "slimt/Annotation.hh"
-#include "slimt/Request.hh"
 #include "slimt/Types.hh"
 
 namespace slimt {
