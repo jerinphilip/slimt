@@ -24,3 +24,5 @@ COREDUMP_PATTERN="${COREDUMP_DIR}/core-%e-%p-%t"
 echo "${COREDUMP_PATTERN}" | sudo tee /proc/sys/kernel/core_pattern
 
 echo "coredumps: ${COREDUMP_PATTERN}"
+
+python3 -m pip install setuptools
