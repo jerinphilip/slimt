@@ -11,7 +11,6 @@
 #include "slimt/Frontend.hh"
 #include "slimt/Model.hh"
 #include "slimt/Response.hh"
-#include "slimt/Utils.hh"
 
 inline std::string read_from_stdin() {
   // Read a large input text blob from stdin
@@ -84,25 +83,22 @@ void run(const Options &options) {
         .html = options.html  //
     };
 
-    auto percent = [](std::pair<size_t, size_t> value) {
-      float ratio =
-          (static_cast<float>(value.first) / static_cast<float>(value.second));
+    auto percent = [](const Handle::Progress &value) {
+      float ratio = (static_cast<float>(value.completed) /
+                     static_cast<float>(value.total));
       return 100 * ratio;  // NOLINT
     };
 
     Handle handle = service.translate(model, std::move(source), opts);
-    Timer timer;
     std::chrono::seconds poll(options.poll);
     std::future_status status = handle.future().wait_for(poll);
     while (status == std::future_status::timeout) {
-      auto segments = handle.segments();
-      auto words = handle.words();
-      float wps = words.first / timer.elapsed();
+      auto info = handle.info();
       fprintf(
           stdout,
           "Progress %lf%% [ wps %lf | words %zu/%zu | segments %zu/%zu ] \n",
-          percent(words), wps, segments.first, segments.second, words.first,
-          words.second);
+          percent(info.words), info.wps, info.segments.completed,
+          info.segments.total, info.words.completed, info.words.total);
       status = handle.future().wait_for(poll);
     }
 

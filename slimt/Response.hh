@@ -7,6 +7,7 @@
 
 #include "slimt/Annotation.hh"
 #include "slimt/Types.hh"
+#include "slimt/Utils.hh"
 
 namespace slimt {
 
@@ -58,17 +59,28 @@ class Request;
 
 class Handle {
  public:
+  struct Progress {
+    size_t completed;
+    size_t total;
+  };
+
+  struct Info {
+    double wps;
+    Progress words;
+    Progress segments;
+  };
+
   Handle(const Ptr<Request> &request, Future &&future)
       : request_(request), future_(std::move(future)) {}
 
-  std::pair<size_t, size_t> segments() const;
-  std::pair<size_t, size_t> words() const;
+  Handle::Info info() const;
 
   std::future<Response> &future() { return future_; }
 
  private:
   Ptr<Request> request_;
   std::future<Response> future_;
+  Timer timer_;
 };
 
 }  // namespace slimt

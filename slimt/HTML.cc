@@ -74,6 +74,7 @@ std::string to_lower_case(const std::string_view &input) {
   return out;
 }
 
+#if __cplusplus < 202002L
 /// Very simple replacement for std::format introduced in C++20. Only supports
 /// replacing `{}` in the template string with whatever `operator<<` for that
 /// type turns it into.
@@ -100,6 +101,7 @@ std::string format(const std::string &formatTemplate, Arg arg, Args... args) {
   return os.str();
 }
 
+#endif
 /// Syntactic sugar around rbegin() and rend() that allows me to write
 /// `for (auto &&item : reversed(container))` instead of the needlessly verbose
 /// `for (auto it = container.rbegin(); it != container.rend(); ++it)`

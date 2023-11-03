@@ -187,14 +187,24 @@ Response combine(Response &&first, Response &&second) {
 
   return combined;
 }
+Handle::Info Handle::info() const {
+  size_t words_completed = request_->completed_word_count();
+  double wps = static_cast<float>(words_completed) / timer_.elapsed();
+  Progress words{
+      .completed = words_completed,    //
+      .total = request_->word_count()  //
+  };
 
-std::pair<size_t, size_t> Handle::words() const {
-  return std::make_pair(request_->completed_word_count(),
-                        request_->word_count());
-}
+  Progress segments{
+      .completed = request_->completed(),  //
+      .total = request_->segment_count()   //
+  };
 
-std::pair<size_t, size_t> Handle::segments() const {
-  return std::make_pair(request_->completed(), request_->segment_count());
+  return Info{
+      .wps = wps,           //
+      .words = words,       //
+      .segments = segments  //
+  };
 }
 
 }  // namespace slimt

@@ -95,11 +95,14 @@ class Timer {
   Timer(const Timer &timer) = delete;
   Timer &operator=(const Timer &timer) = delete;
 
+  Timer(Timer &&timer) = default;
+  Timer &operator=(Timer &&timer) = default;
+
   // Get the time elapsed without stopping the timer.  If the template type is
   // not specified, it returns the time counts as represented by
   // std::chrono::seconds
   template <class Duration = std::chrono::seconds>
-  double elapsed() {
+  double elapsed() const {
     using duration_double =
         std::chrono::duration<double, typename Duration::period>;
     return std::chrono::duration_cast<duration_double>(clock::now() - start_)
