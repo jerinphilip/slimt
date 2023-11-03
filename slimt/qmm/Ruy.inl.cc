@@ -55,10 +55,10 @@ void unquantizeAddBias(const int32_t* input, const float* input_bias_prepared,
 
 // Ruy.
 template <>
-Tensor affine<Provider::Ruy>(Tensor& x, const Tensor& W, const Tensor& b,
+Tensor affine<Provider::Ruy>(const Tensor& x, const Tensor& W, const Tensor& b,
                              float a_quant, float b_quant,
                              const std::string& name) {
-  Tensor& A = x;        // NOLINT
+  const Tensor& A = x;  // NOLINT
   const Tensor& B = W;  // NOLINT
   const Tensor& bias = b;
 
@@ -116,12 +116,12 @@ Tensor affine<Provider::Ruy>(Tensor& x, const Tensor& W, const Tensor& b,
 }
 
 template <>
-Tensor affine_with_select<Provider::Ruy>(Tensor& x, const Tensor& W,
+Tensor affine_with_select<Provider::Ruy>(const Tensor& x, const Tensor& W,
                                          const Tensor& b, float a_quant,
                                          float b_quant,
                                          const std::vector<uint32_t>& indices,
                                          const std::string& name) {
-  Tensor& A = x;        // NOLINT
+  const Tensor& A = x;  // NOLINT
   const Tensor& B = W;  // NOLINT
   const Tensor& bias = b;
 
@@ -201,9 +201,9 @@ Tensor affine_with_select<Provider::Ruy>(Tensor& x, const Tensor& W,
 }
 
 template <>
-Tensor dot<Provider::Ruy>(Tensor& x, const Tensor& W, float a_quant,
+Tensor dot<Provider::Ruy>(const Tensor& x, const Tensor& W, float a_quant,
                           float b_quant, const std::string& name) {
-  Tensor& A = x;        // NOLINT
+  const Tensor& A = x;  // NOLINT
   const Tensor& B = W;  // NOLINT
 
   size_t A_cols = A.dim(-1);          // NOLINT

@@ -13,8 +13,10 @@ class Input {
         size_t limit_factor);
 
   void add(const std::vector<uint32_t> &words);
+  void finalize();
+
   const Tensor &indices() const { return batch_; }
-  Tensor &mask() { return mask_; }
+  const Tensor &mask() const { return mask_; }
   const std::vector<uint32_t> &words() const { return words_; }
   const std::vector<size_t> &lengths() const { return lengths_; }
   size_t index() const { return index_; }
@@ -30,5 +32,6 @@ class Input {
   uint32_t pad_id_ = 0;
   size_t used_ = 0;
   size_t limit_factor_;
+  bool finalized_ = false;
 };
 }  // namespace slimt

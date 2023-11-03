@@ -65,7 +65,7 @@ class Request {
 
   /// Obtains segment corresponding to index  to create a batch of segments
   /// among several requests.
-  Segment segment(size_t index) const;
+  const Segment &segment(size_t index) const;
 
   /// For notions of priority among requests, used to enable std::set in
   /// BatchingPool.

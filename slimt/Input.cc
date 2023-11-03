@@ -10,7 +10,6 @@
 
 namespace slimt {
 
-// Tensor(Type type, Shape shape, std::string name);
 Input::Input(size_t batch_size, size_t sequence_length, uint32_t pad_id,
              size_t limit_factor)
     : batch_(Type::u32, Shape({batch_size, sequence_length}), "batch"),
@@ -45,6 +44,22 @@ void Input::add(const std::vector<uint32_t> &words) {
   std::fill(mask_begin, mask_end, 0.0F);
   ++index_;
   used_ += words.size();
+}
+
+void Input::finalize() {
+  if (!finalized_) {
+    finalized_ = true;
+    // Adopted from:
+    // https://github.com/browsermt/marian-dev/blob/14c9d9b0e732f42674e41ee138571d5a7bf7ad94/src/models/transformer.h#L132
+    auto *data = mask_.data<float>();
+    size_t size = mask_.size();
+    float f16_lowest = std::numeric_limits<float>::lowest() / 2.0F;  // NOLINT
+    float minus_inf = std::max(f16_lowest, -99999999.0F);            // NOLINT
+    for (size_t i = 0; i < size; i++) {
+      float *x = data + i;
+      *x = (1.0F - *x) * minus_inf;
+    }
+  }
 }
 
 float Input::limit_factor() const { return limit_factor_; }

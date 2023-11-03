@@ -28,14 +28,15 @@ namespace slimt {
 
 namespace {
 
-Input convert(Batch &batch, uint32_t pad_id, size_t limit_factor) {
+Input convert(const Batch &batch, uint32_t pad_id, size_t limit_factor) {
   const auto &segment_refs = batch.segment_refs();
   Input input(batch.size(), batch.max_length(), pad_id, limit_factor);
   for (const auto &segment_ref : segment_refs) {
-    Segment segment = segment_ref.get();
+    const Segment &segment = segment_ref.get();
     input.add(segment);
   }
 
+  input.finalize();
   return input;
 }
 
@@ -119,7 +120,7 @@ std::vector<Response> Blocking::translate(const Ptr<Model> &model,
     const auto &processor = model->processor();
     auto [annotated, segments] =
         processor.process(std::move(source), config_.wrap_length);
-    auto request = make_request(id_, model, cache_, std::move(annotated),
+    auto request = make_request(id(), model, cache_, std::move(annotated),
                                 std::move(segments), continuation);
 
     batcher.enqueue(request);
@@ -179,7 +180,7 @@ std::vector<Response> Blocking::pivot(const Ptr<Model> &first,
 
     const TextProcessor &processor = second->processor();
     auto [annotated, segments] = processor.process(source_to_pivot.target);
-    auto request = make_request(id_, second, cache_, std::move(annotated),
+    auto request = make_request(id(), second, cache_, std::move(annotated),
                                 std::move(segments), continuation);
 
     batcher.enqueue(request);
@@ -236,7 +237,7 @@ Handle Async::translate(const Ptr<Model> &model, std::string source,
   const TextProcessor &processor = model->processor();
   auto [annotated, segments] =
       processor.process(std::move(source), config_.wrap_length);
-  auto request = make_request(id_, model, cache_, std::move(annotated),
+  auto request = make_request(id(), model, cache_, std::move(annotated),
                               std::move(segments), continuation);
 
   batcher_.enqueue(model, request);
@@ -260,7 +261,7 @@ Handle Async::pivot(const Ptr<Model> &first, const Ptr<Model> &second,
     // Move semantics only work on mutable lambdas, and can only be done once.
     // It's only once in our case, so issok.
     AnnotatedText intermediate = partial.target;
-    auto joining_continuation = [source_to_pivot = std::move(partial), &promise,
+    auto joining_continuation = [source_to_pivot = std::move(partial), promise,
                                  html](Response &&pivot_to_target) mutable {
       // We have both Responses at this callback, source_to_pivot is moved in,
       // second half will be available when complete.
@@ -278,7 +279,7 @@ Handle Async::pivot(const Ptr<Model> &first, const Ptr<Model> &second,
     auto [annotated, segments] = processor.process(intermediate);
 
     auto request =
-        make_request(id_, second, cache_, std::move(annotated),
+        make_request(id(), second, cache_, std::move(annotated),
                      std::move(segments), std::move(joining_continuation));
 
     batcher_.enqueue(second, request);
@@ -287,7 +288,7 @@ Handle Async::pivot(const Ptr<Model> &first, const Ptr<Model> &second,
   const TextProcessor &processor = first->processor();
   auto [annotated, segments] =
       processor.process(std::move(source), config_.wrap_length);
-  auto request = make_request(id_, first, cache_, std::move(annotated),
+  auto request = make_request(id(), first, cache_, std::move(annotated),
                               std::move(segments), continuation);
 
   batcher_.enqueue(first, request);

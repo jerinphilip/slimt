@@ -25,10 +25,15 @@ namespace {
 size_t model_id = 0;
 
 Package<io::MmapFile> mmap_from(const Package<std::string> &package) {
+  auto maybe_mmap = [](const std::string &path) {
+    return path.empty() ? io::MmapFile() : io::MmapFile(path);
+  };
+
   return {
-      .model = io::MmapFile(package.model),            //
-      .vocabulary = io::MmapFile(package.vocabulary),  //
-      .shortlist = io::MmapFile(package.shortlist),    //
+      .model = maybe_mmap(package.model),            //
+      .vocabulary = maybe_mmap(package.vocabulary),  //
+      .shortlist = maybe_mmap(package.shortlist),    //
+      .ssplit = maybe_mmap(package.ssplit),          //
   };
 }
 
@@ -37,6 +42,7 @@ Package<View> view_from(const Package<io::MmapFile> &mmap) {
       .model = {mmap.model.data(), mmap.model.size()},                 //
       .vocabulary = {mmap.vocabulary.data(), mmap.vocabulary.size()},  //
       .shortlist = {mmap.shortlist.data(), mmap.shortlist.size()},     //
+      .ssplit = {mmap.ssplit.data(), mmap.ssplit.size()},              //
   };
 }
 
@@ -91,13 +97,13 @@ void update_alignment(const std::vector<size_t> &lengths,
 }
 }  // namespace
 
-Histories Model::decode(Tensor &encoder_out, Input &input) const {
+Histories Model::decode(const Tensor &encoder_out, const Input &input) const {
   // Prepare a shortlist for the entire input.
   size_t batch_size = encoder_out.dim(-3);
   size_t source_sequence_length = encoder_out.dim(-2);
 
   Shortlist shortlist = shortlist_generator_.generate(input.words());
-  Words indices = shortlist.words();
+  const Words &indices = shortlist.words();
   // The following can be used to check if shortlist is going wrong.
   // std::vector<uint32_t> indices(vocabulary_.size());
   // std::iota(indices.begin(), indices.end(), 0);
@@ -153,9 +159,9 @@ Histories Model::decode(Tensor &encoder_out, Input &input) const {
   return histories;
 }
 
-Histories Model::forward(Input &input) const {
+Histories Model::forward(const Input &input) const {
   const Tensor &indices = input.indices();
-  Tensor &mask = input.mask();
+  const Tensor &mask = input.mask();
 
   // uint64_t batch_size = indices.dim(-2);
   // uint64_t sequence_length = indices.dim(-1);
@@ -167,7 +173,6 @@ Histories Model::forward(Input &input) const {
 
   // https://github.com/browsermt/marian-dev/blob/14c9d9b0e732f42674e41ee138571d5a7bf7ad94/src/models/transformer.h#L570
   // https://github.com/browsermt/marian-dev/blob/14c9d9b0e732f42674e41ee138571d5a7bf7ad94/src/models/transformer.h#L133
-  modify_mask_for_pad_tokens_in_attention(mask.data<float>(), mask.size());
   Tensor encoder_out = transformer_.encoder().forward(word_embedding, mask);
   Histories histories = decode(encoder_out, input);
   return histories;

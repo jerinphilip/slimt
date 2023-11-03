@@ -32,7 +32,7 @@ class SegmentRef {
   size_t size() const;
 
   /// Accessor to the segment represented by the SegmentRef.
-  Segment get() const;
+  const Segment &get() const;
 
   /// Forwards history to Request to set history corresponding to this
   /// SegmentRef.
@@ -64,7 +64,7 @@ class Batch {
   //
   // segment_refs() are used to access segment_refs to construct marian internal
   // batch.
-  const SegmentRefs &segment_refs() { return segment_refs_; }
+  const SegmentRefs &segment_refs() const { return segment_refs_; }
 
   // On obtaining Histories after translating a batch, complete can be
   // called with Histories , which forwards the call to Request through

@@ -28,7 +28,7 @@ void SegmentRef::complete(History history) {
   request_->complete(index_, std::move(history));
 }
 
-Segment SegmentRef::get() const { return request_->segment(index_); }
+const Segment& SegmentRef::get() const { return request_->segment(index_); }
 
 bool operator<(const Request& a, const Request& b) {
   // Among Requests, only sequence id is used for obtaining priority.
