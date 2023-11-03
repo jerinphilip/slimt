@@ -1,6 +1,6 @@
 #!/bin/bash
 
-SLIMT_PSEUDO_WHEEL=1 python3 setup.py install --user
+SLIMT_PSEUDO_WHEEL=1 python3 setup.py -q install --user
 python3 -m slimt download -m en-de-tiny
 
 BROWSERMT="$HOME/Library/Application Support/slimt/models/browsermt/"
