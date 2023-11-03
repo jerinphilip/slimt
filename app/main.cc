@@ -1,3 +1,4 @@
+#include <chrono>
 #include <cstdio>
 #include <cstdlib>
 #include <future>
@@ -26,6 +27,7 @@ struct Options {
   bool async = false;
   bool html = false;
   bool version = false;
+  size_t poll = 5;  // NOLINT
   slimt::Config service;
   slimt::Model::Config model;
 
@@ -33,6 +35,7 @@ struct Options {
   void setup_onto(App &app) {
     // clang-format off
     app.add_option("--root", root, "Path to prefix other filenames to");
+    app.add_option("--poll", poll, "Seconds to poll a long request to report");
     app.add_option("--model", translator.model, "Path to model");
     app.add_option("--vocabulary", translator.vocabulary, "Path to vocabulary");
     app.add_option("--shortlist", translator.shortlist, "Path to shortlist");
@@ -81,10 +84,48 @@ void run(const Options &options) {
         .html = options.html  //
     };
 
-    std::future<Response> future =
-        service.translate(model, std::move(source), opts);
+    Handle handle = service.translate(model, std::move(source), opts);
+    auto report = [&handle]() {
+      auto info = handle.info();
+      auto percent = [](const Handle::Progress &value) {
+        float ratio = (static_cast<float>(value.completed) /
+                       static_cast<float>(value.total));
+        return 100 * ratio;  // NOLINT
+      };
 
-    Response response = future.get();
+      auto length = [](size_t value) {
+        int count = 0;
+        constexpr size_t kBase = 10;
+        while (value) {
+          value /= kBase;
+          ++count;
+        }
+        return count;
+      };
+
+      int word_width = length(info.words.total);
+      int segment_width = length(info.segments.total);
+      fprintf(stderr,
+              "Progress %6.2lf %% [ wps %lf | words %*zu/%zu | segments "
+              "%*zu/%zu ] \n",
+              percent(info.words), info.wps,                //
+              word_width,                                   //
+              info.words.completed, info.words.total,       //
+              segment_width,                                //
+              info.segments.completed, info.segments.total  //
+      );
+    };
+
+    std::chrono::seconds poll(options.poll);
+    std::future_status status = handle.future().wait_for(poll);
+    while (status == std::future_status::timeout) {
+      report();
+      status = handle.future().wait_for(poll);
+    }
+
+    report();
+
+    Response response = handle.future().get();
     fprintf(stdout, "%s\n", response.target.text.c_str());
   } else {
     // Blocking operation.

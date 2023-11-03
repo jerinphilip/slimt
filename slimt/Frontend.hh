@@ -59,10 +59,10 @@ class SLIMT_EXPORT Async {
   explicit Async(const Config &config);
   ~Async();
 
-  std::future<Response> translate(const Ptr<Model> &model, std::string source,
-                                  const Options &options);
-  std::future<Response> pivot(const Ptr<Model> &first, const Ptr<Model> &second,
-                              std::string source, const Options &options);
+  Handle translate(const Ptr<Model> &model, std::string source,
+                   const Options &options);
+  Handle pivot(const Ptr<Model> &first, const Ptr<Model> &second,
+               std::string source, const Options &options);
 
  private:
   Config config_;

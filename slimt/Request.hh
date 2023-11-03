@@ -60,6 +60,9 @@ class Request {
   /// Obtain number of segments in a request.
   size_t segment_count() const;
 
+  // Number of segments for which translation is completed.
+  size_t completed() const;
+
   /// Obtains segment corresponding to index  to create a batch of segments
   /// among several requests.
   Segment segment(size_t index) const;
@@ -76,6 +79,9 @@ class Request {
     return histories_[index] != nullptr;
   }
 
+  size_t word_count() const { return word_count_; }
+  size_t completed_word_count() const { return completed_word_count_.load(); }
+
  private:
   size_t id_;
 
@@ -86,6 +92,11 @@ class Request {
   /// The following atomic atomically operates on the variable holding
   /// segments remaining to be translated.
   std::atomic<int> counter_;
+
+  /// Completed words, to measure wps.
+  std::atomic<int> completed_word_count_;
+
+  size_t word_count_;
 
   /// segments_ hold the segments processed into Words which generated from
   /// input string.

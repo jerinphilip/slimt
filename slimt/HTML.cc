@@ -18,6 +18,35 @@
 #include "slimt/Types.hh"
 #include "slimt/XHScanner.hh"
 
+namespace detail {
+
+/// Very simple replacement for std::format introduced in C++20. Only supports
+/// replacing `{}` in the template string with whatever `operator<<` for that
+/// type turns it into.
+
+std::string format(const std::string &tmpl) { return tmpl; }
+
+template <typename Arg>
+std::string format(const std::string &tmpl, Arg arg) {
+  std::ostringstream os;
+  auto index = tmpl.find("{}");
+  assert(index != std::string::npos);
+  os << tmpl.substr(0, index) << arg << tmpl.substr(index + 2);
+  return os.str();
+}
+
+template <typename Arg, typename... Args>
+std::string format(const std::string &tmpl, Arg arg, Args... args) {
+  std::ostringstream os;
+  auto index = tmpl.find("{}");
+  assert(index != std::string::npos);
+  os << tmpl.substr(0, index) << arg
+     << format(tmpl.substr(index + 2), std::forward<Args>(args)...);
+  return os.str();
+}
+
+}  // namespace detail
+
 namespace {
 
 using slimt::AnnotatedText;
@@ -72,32 +101,6 @@ std::string to_lower_case(const std::string_view &input) {
   std::transform(input.begin(), input.end(), out.begin(),
                  [](unsigned char c) { return std::tolower(c); });
   return out;
-}
-
-/// Very simple replacement for std::format introduced in C++20. Only supports
-/// replacing `{}` in the template string with whatever `operator<<` for that
-/// type turns it into.
-// std::string format(std::string const &formatTemplate) { return
-// formatTemplate; }
-
-template <typename Arg>
-std::string format(const std::string &formatTemplate, Arg arg) {
-  std::ostringstream os;
-  auto index = formatTemplate.find("{}");
-  assert(index != std::string::npos);
-  os << formatTemplate.substr(0, index) << arg
-     << formatTemplate.substr(index + 2);
-  return os.str();
-}
-
-template <typename Arg, typename... Args>
-std::string format(const std::string &formatTemplate, Arg arg, Args... args) {
-  std::ostringstream os;
-  auto index = formatTemplate.find("{}");
-  assert(index != std::string::npos);
-  os << formatTemplate.substr(0, index) << arg
-     << format(formatTemplate.substr(index + 2), std::forward<Args>(args)...);
-  return os.str();
 }
 
 /// Syntactic sugar around rbegin() and rend() that allows me to write
@@ -206,7 +209,7 @@ class TokenFormatter {
 
     for (const HTML::Tag *tag : Reversed(closing)) {
       assert(tag->type == HTML::Tag::ELEMENT);
-      std::string close_tag = format("</{}>", tag->name);
+      std::string close_tag = detail::format("</{}>", tag->name);
       html_.insert(offset_ + (closeLeft_ ? 0 : whitespaceSize_), close_tag);
       offset_ += close_tag.size();
       if (closeLeft_) whitespaceOffset_ += close_tag.size();
@@ -217,13 +220,14 @@ class TokenFormatter {
       switch (tag->type) {
         case HTML::Tag::ELEMENT:
         case HTML::Tag::VOID_ELEMENT:
-          open_tag = format("<{}{}>{}", tag->name, tag->attributes, tag->data);
+          open_tag =
+              detail::format("<{}{}>{}", tag->name, tag->attributes, tag->data);
           break;
         case HTML::Tag::COMMENT:
-          open_tag = format("<!--{}-->", tag->data);
+          open_tag = detail::format("<!--{}-->", tag->data);
           break;
         case HTML::Tag::PROCESSING_INSTRUCTION:
-          open_tag = format("<?{}?>", tag->data);
+          open_tag = detail::format("<?{}?>", tag->data);
           break;
         case HTML::Tag::WHITESPACE: {
           // Try to eat two newlines (paragraph break) from our segment
@@ -294,7 +298,7 @@ void consume_ignored_tag(markup::Scanner &scanner, HTML::Tag &tag,
         SLIMT_ABORT("Did not find closing tag</" + name + ">");
       case markup::Scanner::TT_ATTRIBUTE:
         tag.attributes +=
-            format(" {}=\"{}\"", scanner.attribute(), scanner.value());
+            detail::format(" {}=\"{}\"", scanner.attribute(), scanner.value());
         break;
       default:
         // Not an attribute! Must be something inside the body or the closing
@@ -510,7 +514,7 @@ HTML::HTML(std::string &source, Options &&options)
       case markup::Scanner::TT_ATTRIBUTE:
         assert(tag != nullptr);
         tag->attributes +=
-            format(" {}=\"{}\"", scanner.attribute(), scanner.value());
+            detail::format(" {}=\"{}\"", scanner.attribute(), scanner.value());
         break;
 
       case markup::Scanner::TT_COMMENT_START:
