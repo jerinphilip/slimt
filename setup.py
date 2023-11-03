@@ -193,6 +193,7 @@ class build_py(_build_py):
         return super().run()
 
 
+PSEUDO_WHEEL = os.getenv("SLIMT_PSEUDO_WHEEL", None)
 # The information here can also be placed in setup.cfg - better separation of
 # logic and declaration, and simpler if you include description/version in a file.
 setup(
@@ -204,7 +205,7 @@ setup(
     description="Translate text-content locally in your machine across languages.",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    ext_modules=[CMakeExtension("slimt._slimt")],
+    ext_modules=[CMakeExtension("slimt._slimt")] if PSEUDO_WHEEL == None else [],
     cmdclass={"build_py": build_py, "build_ext": CMakeBuild},
     zip_safe=False,
     extras_require={"test": ["pytest>=6.0"]},

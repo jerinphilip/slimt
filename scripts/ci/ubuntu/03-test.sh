@@ -1,9 +1,7 @@
 #/bin/bash
-mkdir -p pypkg
-ln -s $PWD/bindings/python pypkg/slimt
 
-# Download en-de-tiny and de-en-tiny models.
-(cd pypkg && python3 -m slimt download -m en-de-tiny)
+SLIMT_PSEUDO_WHEEL=1 python3 setup.py install --user
+python3 -m slimt download -m en-de-tiny
 
 BROWSERMT=$HOME/.local/share/slimt/models/browsermt
 PREFIX=$BROWSERMT/ende.student.tiny11
