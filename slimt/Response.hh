@@ -7,6 +7,7 @@
 
 #include "slimt/Annotation.hh"
 #include "slimt/Types.hh"
+#include "slimt/Utils.hh"
 
 namespace slimt {
 
@@ -54,5 +55,33 @@ std::vector<Alignment> remap_alignments(const Response &first,
 Response combine(Response &&first, Response &&second);
 
 using Responses = std::vector<Response>;
+
+class Request;
+
+class Handle {
+ public:
+  struct Progress {
+    size_t completed;
+    size_t total;
+  };
+
+  struct Info {
+    double wps;
+    Progress words;
+    Progress segments;
+  };
+
+  Handle(const Ptr<Request> &request, Future &&future)
+      : request_(request), future_(std::move(future)) {}
+
+  Handle::Info info() const;
+
+  std::future<Response> &future() { return future_; }
+
+ private:
+  Ptr<Request> request_;
+  std::future<Response> future_;
+  Timer timer_;
+};
 
 }  // namespace slimt

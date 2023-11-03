@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "slimt/Annotation.hh"
+#include "slimt/Request.hh"  // NOLINT
 #include "slimt/Types.hh"
 
 namespace slimt {
@@ -185,6 +186,26 @@ Response combine(Response &&first, Response &&second) {
   combined.target = std::move(second.target);
 
   return combined;
+}
+
+Handle::Info Handle::info() const {
+  size_t words_completed = request_->completed_word_count();
+  double wps = static_cast<float>(words_completed) / timer_.elapsed();
+  Progress words{
+      .completed = words_completed,    //
+      .total = request_->word_count()  //
+  };
+
+  Progress segments{
+      .completed = request_->completed(),  //
+      .total = request_->segment_count()   //
+  };
+
+  return Info{
+      .wps = wps,           //
+      .words = words,       //
+      .segments = segments  //
+  };
 }
 
 }  // namespace slimt

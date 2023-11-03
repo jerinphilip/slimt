@@ -1,6 +1,22 @@
+import sys
 import typing
+import warnings
 
-from ._slimt import *  # type: ignore
+try:
+    from ._slimt import *  # type: ignore
+except ImportError:
+    warnings.warn("Error importing libslimt.so, some functions may not work")
+
+    # Stub symbols
+    Alignments = None
+    Response = None
+    Model = None
+    Service = None
+    AnnotatedText = None
+    Package = None
+    Config = None
+
+
 from .repository import Aggregator, TranslateLocallyLike
 
 REPOSITORY = Aggregator(
