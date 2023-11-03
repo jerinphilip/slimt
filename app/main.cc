@@ -26,6 +26,7 @@ struct Options {
   bool async = false;
   bool html = false;
   bool version = false;
+  size_t poll = 5;  // NOLINT
   slimt::Config service;
   slimt::Model::Config model;
 
@@ -33,6 +34,7 @@ struct Options {
   void setup_onto(App &app) {
     // clang-format off
     app.add_option("--root", root, "Path to prefix other filenames to");
+    app.add_option("--poll", poll, "Seconds to poll a long request to report");
     app.add_option("--model", translator.model, "Path to model");
     app.add_option("--vocabulary", translator.vocabulary, "Path to vocabulary");
     app.add_option("--shortlist", translator.shortlist, "Path to shortlist");
@@ -81,10 +83,27 @@ void run(const Options &options) {
         .html = options.html  //
     };
 
-    std::future<Response> future =
-        service.translate(model, std::move(source), opts);
+    auto percent = [](size_t completed, size_t total) {
+      float ratio = (static_cast<float>(completed) / static_cast<float>(total));
+      return 100 * ratio;  // NOLINT
+    };
 
-    Response response = future.get();
+    Handle handle = service.translate(model, std::move(source), opts);
+    fprintf(stdout, "Progress [%zu / %zu] %lf%%\n", handle.completed(),
+            handle.total(), percent(handle.completed(), handle.total()));
+
+    std::chrono::seconds poll(options.poll);
+    std::future_status status = handle.future().wait_for(poll);
+    while (status == std::future_status::timeout) {
+      fprintf(stdout, "Progress [%zu / %zu] %lf%%\n", handle.completed(),
+              handle.total(), percent(handle.completed(), handle.total()));
+      status = handle.future().wait_for(poll);
+    }
+
+    fprintf(stdout, "Loop over, waiting on whole future; status: %d\n",
+            static_cast<int>(status));
+
+    Response response = handle.future().get();
     fprintf(stdout, "%s\n", response.target.text.c_str());
   } else {
     // Blocking operation.

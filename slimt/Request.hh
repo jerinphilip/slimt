@@ -60,6 +60,9 @@ class Request {
   /// Obtain number of segments in a request.
   size_t segment_count() const;
 
+  // Number of segments for which translation is completed.
+  size_t completed() const;
+
   /// Obtains segment corresponding to index  to create a batch of segments
   /// among several requests.
   Segment segment(size_t index) const;

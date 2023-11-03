@@ -54,5 +54,21 @@ std::vector<Alignment> remap_alignments(const Response &first,
 Response combine(Response &&first, Response &&second);
 
 using Responses = std::vector<Response>;
+class Request;
+
+class Handle {
+ public:
+  Handle(const Ptr<Request> &request, Future &&future)
+      : request_(request), future_(std::move(future)) {}
+
+  size_t completed() const;
+  size_t total() const;
+
+  std::future<Response> &future() { return future_; }
+
+ private:
+  Ptr<Request> request_;
+  std::future<Response> future_;
+};
 
 }  // namespace slimt

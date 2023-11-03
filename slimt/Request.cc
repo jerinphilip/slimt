@@ -68,6 +68,8 @@ Request::Request(size_t id, size_t model_id, Segments &&segments,
 
 size_t Request::segment_count() const { return segments_.size(); }
 
+size_t Request::completed() const { return segment_count() - counter_.load(); }
+
 size_t Request::word_count(size_t index) const {
   return (segments_[index].size());
 }

@@ -217,9 +217,8 @@ Async::Async(const Config &config)
   }
 }
 
-std::future<Response> Async::translate(const Ptr<Model> &model,
-                                       std::string source,
-                                       const Options &options) {
+Handle Async::translate(const Ptr<Model> &model, std::string source,
+                        const Options &options) {
   std::shared_ptr<HTML> html = nullptr;
   if (options.html) {
     html = std::make_shared<HTML>(source);
@@ -241,11 +240,12 @@ std::future<Response> Async::translate(const Ptr<Model> &model,
                               std::move(segments), continuation);
 
   batcher_.enqueue(model, request);
-  return future;
+  Handle handle(request, std::move(future));
+  return handle;
 }
-std::future<Response> Async::pivot(const Ptr<Model> &first,
-                                   const Ptr<Model> &second, std::string source,
-                                   const Options &options) {
+
+Handle Async::pivot(const Ptr<Model> &first, const Ptr<Model> &second,
+                    std::string source, const Options &options) {
   Ptr<HTML> html = nullptr;
   if (options.html) {
     html = std::make_shared<HTML>(source);
@@ -291,7 +291,11 @@ std::future<Response> Async::pivot(const Ptr<Model> &first,
                               std::move(segments), continuation);
 
   batcher_.enqueue(first, request);
-  return future;
+
+  // FIXME: This need to account for 2 requests this time, plumbing with what's
+  // available for now. Come back and fix.
+  Handle handle(request, std::move(future));
+  return handle;
 }
 
 Async::~Async() {

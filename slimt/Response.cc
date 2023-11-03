@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "slimt/Annotation.hh"
+#include "slimt/Request.hh"
 #include "slimt/Types.hh"
 
 namespace slimt {
@@ -186,5 +187,8 @@ Response combine(Response &&first, Response &&second) {
 
   return combined;
 }
+
+size_t Handle::completed() const { return request_->completed(); }
+size_t Handle::total() const { return request_->segment_count(); }
 
 }  // namespace slimt
