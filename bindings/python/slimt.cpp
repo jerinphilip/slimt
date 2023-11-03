@@ -61,16 +61,15 @@ class PyService {
     // Prepare promises, save respective futures. Have callback's in async set
     // value to the promises.
     using Handle = slimt::Handle;
-    std::vector<Handle> futures;
+    std::vector<Handle> handles;
 
     Options options{
         .html = html,  //
     };
 
     for (auto &source : sources) {
-      Handle future = service_.translate(model, std::move(source), options);
-
-      futures.push_back(std::move(future));
+      Handle handle = service_.translate(model, std::move(source), options);
+      handles.push_back(std::move(handle));
     }
 
     // Wait on all futures to be ready.
