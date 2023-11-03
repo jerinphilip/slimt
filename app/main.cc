@@ -83,27 +83,31 @@ void run(const Options &options) {
         .html = options.html  //
     };
 
-    auto percent = [](const Handle::Progress &value) {
-      float ratio = (static_cast<float>(value.completed) /
-                     static_cast<float>(value.total));
-      return 100 * ratio;  // NOLINT
+    Handle handle = service.translate(model, std::move(source), opts);
+    auto report = [&handle]() {
+      auto info = handle.info();
+      auto percent = [](const Handle::Progress &value) {
+        float ratio = (static_cast<float>(value.completed) /
+                       static_cast<float>(value.total));
+        return 100 * ratio;  // NOLINT
+      };
+      fprintf(
+          stderr,
+          "Progress %lf%% [ wps %lf | words %zu/%zu | segments %zu/%zu ] \n",
+          percent(info.words), info.wps,                //
+          info.words.completed, info.words.total,       //
+          info.segments.completed, info.segments.total  //
+      );
     };
 
-    Handle handle = service.translate(model, std::move(source), opts);
     std::chrono::seconds poll(options.poll);
     std::future_status status = handle.future().wait_for(poll);
     while (status == std::future_status::timeout) {
-      auto info = handle.info();
-      fprintf(
-          stdout,
-          "Progress %lf%% [ wps %lf | words %zu/%zu | segments %zu/%zu ] \n",
-          percent(info.words), info.wps, info.segments.completed,
-          info.segments.total, info.words.completed, info.words.total);
+      report();
       status = handle.future().wait_for(poll);
     }
 
-    fprintf(stdout, "Loop over, waiting on whole future; status: %d\n",
-            static_cast<int>(status));
+    report();
 
     Response response = handle.future().get();
     fprintf(stdout, "%s\n", response.target.text.c_str());
