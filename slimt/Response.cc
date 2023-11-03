@@ -188,7 +188,13 @@ Response combine(Response &&first, Response &&second) {
   return combined;
 }
 
-size_t Handle::completed() const { return request_->completed(); }
-size_t Handle::total() const { return request_->segment_count(); }
+std::pair<size_t, size_t> Handle::words() const {
+  return std::make_pair(request_->completed_word_count(),
+                        request_->word_count());
+}
+
+std::pair<size_t, size_t> Handle::segments() const {
+  return std::make_pair(request_->completed(), request_->segment_count());
+}
 
 }  // namespace slimt

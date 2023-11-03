@@ -61,8 +61,8 @@ class Handle {
   Handle(const Ptr<Request> &request, Future &&future)
       : request_(request), future_(std::move(future)) {}
 
-  size_t completed() const;
-  size_t total() const;
+  std::pair<size_t, size_t> segments() const;
+  std::pair<size_t, size_t> words() const;
 
   std::future<Response> &future() { return future_; }
 

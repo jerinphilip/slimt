@@ -43,17 +43,23 @@ Request::Request(size_t id, size_t model_id, Segments &&segments,
     counter_ = segments_.size();
     histories_.resize(segments_.size());
 
+    // Word count book-keeping.
+    word_count_ = 0;
+    completed_word_count_ = 0;
+
     if (cache_) {
       // Iterate through segments, see if any can be prefilled from cache. If
       // prefilled, mark the particular segments as complete (non-empty
       // ProcessedSegmentRef). Also update accounting used elsewhere
       // (counter_) to reflect one less segment to translate.
       for (size_t idx = 0; idx < segments_.size(); idx++) {
+        word_count_ += segments_[idx].size();
         size_t key = cache_key(model_id_, segment(idx));
         auto [found, history] = cache_->find(key);
         if (found) {
           histories_[idx] = history;
           --counter_;
+          completed_word_count_ += segments_[idx].size();
         }
       }
       // 2. Also, if cache somehow manages to decrease all counter prefilling
@@ -61,6 +67,10 @@ Request::Request(size_t id, size_t model_id, Segments &&segments,
       // segments go into batching and therefore no complete triggers.
       if (counter_.load() == 0) {
         response_builder_(std::move(histories_));
+      }
+    } else {
+      for (const Segment &segment : segments_) {
+        word_count_ += segment.size();
       }
     }
   }
@@ -88,6 +98,8 @@ void Request::complete(size_t index, History history) {
     size_t key = cache_key(model_id_, segment(index));
     cache_->store(key, histories_[index]);
   }
+
+  completed_word_count_ += segments_[index].size();
 
   // In case this is last request in, completeRequest is called, which sets the
   // value of the promise.
