@@ -159,7 +159,6 @@ endif(USE_SSSE3)
 
 if(USE_NEON)
   list(APPEND SLIMT_COMPILE_DEFINITIONS USE_NEON)
-  list(APPEND SLIMT_QMM_COMPILE_OPTIONS -mfpu=neon)
 endif(USE_NEON)
 
 # cmake-format: off
