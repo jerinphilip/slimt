@@ -106,7 +106,7 @@ void run(const Options &options) {
       int word_width = length(info.words.total);
       int segment_width = length(info.segments.total);
       fprintf(stderr,
-              "Progress %6.2lf%% [ wps %lf | words %*zu/%zu | segments "
+              "Progress %6.2lf %% [ wps %lf | words %*zu/%zu | segments "
               "%*zu/%zu ] \n",
               percent(info.words), info.wps,                //
               word_width,                                   //
