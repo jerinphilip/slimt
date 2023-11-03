@@ -1,10 +1,13 @@
-# Install `bergamot` CLI via pip.
-python3 -m pip install bergamot -f https://github.com/jerinphilip/bergamot-translator/releases/expanded_assets/latest
+mkdir -p pypkg
+ln -s $PWD/bindings/python pypkg/slimt
 
 # Download en-de-tiny and de-en-tiny models.
-bergamot download -m en-de-tiny
+(cd pypkg && python3 -m slimt download -m en-de-tiny)
 
-BROWSERMT="$HOME/Library/Application Support/bergamot/models/browsermt/"
+# Download en-de-tiny and de-en-tiny models.
+python3 -m slimt download -m en-de-tiny
+
+BROWSERMT="$HOME/Library/Application Support/slimt/models/browsermt/"
 PREFIX="$BROWSERMT/ende.student.tiny11"
 
 MODEL=model.intgemm.alphas.bin
