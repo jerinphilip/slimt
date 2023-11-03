@@ -7,7 +7,7 @@
 #include <vector>
 
 #include "slimt/Annotation.hh"
-#include "slimt/Request.hh"
+#include "slimt/Request.hh"  // NOLINT
 #include "slimt/Types.hh"
 
 namespace slimt {
@@ -187,6 +187,7 @@ Response combine(Response &&first, Response &&second) {
 
   return combined;
 }
+
 Handle::Info Handle::info() const {
   size_t words_completed = request_->completed_word_count();
   double wps = static_cast<float>(words_completed) / timer_.elapsed();

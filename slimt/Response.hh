@@ -55,6 +55,7 @@ std::vector<Alignment> remap_alignments(const Response &first,
 Response combine(Response &&first, Response &&second);
 
 using Responses = std::vector<Response>;
+
 class Request;
 
 class Handle {
