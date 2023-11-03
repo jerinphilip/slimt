@@ -26,8 +26,14 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Version.hh.in
 set(SLIMT_GENERATED_HEADERS ${CMAKE_CURRENT_BINARY_DIR}/Version.hh
                             ${CMAKE_CURRENT_BINARY_DIR}/Export.hh)
 
-set(SLIMT_PRIVATE_HEADERS HTML.hh QMM.hh Regex.hh TensorOps.hh Utils.hh
-                          XHScanner.hh)
+set(SLIMT_PRIVATE_HEADERS
+    HTML.hh
+    QMM.hh
+    Regex.hh
+    Request.hh
+    TensorOps.hh
+    Utils.hh
+    XHScanner.hh)
 
 set(SLIMT_SOURCES
     Aligned.cc
