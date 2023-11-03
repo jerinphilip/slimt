@@ -298,7 +298,7 @@ void consume_ignored_tag(markup::Scanner &scanner, HTML::Tag &tag,
         SLIMT_ABORT("Did not find closing tag</" + name + ">");
       case markup::Scanner::TT_ATTRIBUTE:
         tag.attributes +=
-            format(" {}=\"{}\"", scanner.attribute(), scanner.value());
+            detail::format(" {}=\"{}\"", scanner.attribute(), scanner.value());
         break;
       default:
         // Not an attribute! Must be something inside the body or the closing
@@ -514,7 +514,7 @@ HTML::HTML(std::string &source, Options &&options)
       case markup::Scanner::TT_ATTRIBUTE:
         assert(tag != nullptr);
         tag->attributes +=
-            format(" {}=\"{}\"", scanner.attribute(), scanner.value());
+            detail::format(" {}=\"{}\"", scanner.attribute(), scanner.value());
         break;
 
       case markup::Scanner::TT_COMMENT_START:
