@@ -9,8 +9,8 @@
 #include <vector>
 
 #include "slimt/Annotation.hh"
-#include "slimt/ResponseBuilder.hh"
 #include "slimt/Types.hh"
+#include "slimt/Vocabulary.hh"
 
 namespace slimt {
 
@@ -34,6 +34,7 @@ namespace slimt {
 /// the future at client.
 class Request {
  public:
+  using Continuation = std::function<Ptr<Request>(Response &&response)>;
   /// Constructs an internal representation of the Request identified by Id,
   /// processed Segments and accepts a callback (ResponseBuilder) which builds
   /// the Response upon completion of the Request.
@@ -48,9 +49,9 @@ class Request {
   /// Request.
   /// @param [in] cache: Cache supplied externally to attempt to fetch
   /// translations or store them after completion for reuse later.
-  Request(size_t Id, size_t model_id, Segments &&segments,
-          ResponseBuilder &&response_builder,
-          std::optional<TranslationCache> &cache);
+  Request(size_t Id, size_t model_id, AnnotatedText &&source,
+          Segments &&segments, const Vocabulary &vocabulary,
+          std::optional<TranslationCache> &cache, Continuation &&continuation);
 
   /// Obtain the count of tokens in the segment correponding to index. Used to
   /// insert segment from multiple requests into the corresponding size
@@ -82,6 +83,10 @@ class Request {
   size_t word_count() const { return word_count_; }
   size_t completed_word_count() const { return completed_word_count_.load(); }
 
+  const Ptr<Request> &next() const { return next_; }
+
+  void postprocess(Histories &&histories);
+
  private:
   size_t id_;
 
@@ -98,19 +103,24 @@ class Request {
 
   size_t word_count_;
 
+  // Source text.
+  AnnotatedText source_;
   /// segments_ hold the segments processed into Words which generated from
   /// input string.
   Segments segments_;
+
+  const Vocabulary &vocabulary_;
 
   /// histories_ is a buffer which eventually stores the translations of each
   /// segment in the corresponding index.
   Histories histories_;
 
-  /// Constructing Response requires the vocabs_ used to generate Request.
-  ResponseBuilder response_builder_;
-
   /// Cache used to hold segment translations. If nullopt, means no-caching.
   std::optional<TranslationCache> &cache_;
+
+  Ptr<Request> next_ = nullptr;
+
+  Continuation continuation_;
 };
 
 }  // namespace slimt

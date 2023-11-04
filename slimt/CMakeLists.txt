@@ -49,7 +49,6 @@ set(SLIMT_SOURCES
     Regex.cc
     Request.cc
     Response.cc
-    ResponseBuilder.cc
     Shortlist.cc
     Splitter.cc
     Tensor.cc
