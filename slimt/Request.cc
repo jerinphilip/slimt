@@ -90,7 +90,7 @@ size_t Request::word_count(size_t index) const {
 
 const Segment &Request::segment(size_t index) const { return segments_[index]; }
 
-void Request::complete(size_t index, History history) {
+void Request::process(size_t index, History history) {
   // Concurrently called by multiple workers as a history from translation is
   // ready. The container storing histories is set with the value obtained.
 

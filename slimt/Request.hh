@@ -74,7 +74,7 @@ class Request {
 
   /// Processes a history obtained after translating in a heterogenous batch
   /// compiled from requests.
-  void complete(size_t index, History history);
+  void process(size_t index, History history);
 
   bool is_prefilled_from_cache(size_t index) const {
     return histories_[index] != nullptr;
@@ -83,7 +83,7 @@ class Request {
   size_t word_count() const { return word_count_; }
   size_t completed_word_count() const { return completed_word_count_.load(); }
 
-  const Ptr<Request> &next() const { return next_; }
+  Ptr<Request> next() const { return next_; }
 
   void postprocess(Histories &&histories);
 

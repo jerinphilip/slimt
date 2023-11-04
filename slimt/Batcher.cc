@@ -25,7 +25,7 @@ size_t SegmentRef::size() const { return (request_->word_count(index_)); }
 void SegmentRef::complete(History history) {
   // Relays complete into request's complete, using index
   // information.
-  request_->complete(index_, std::move(history));
+  request_->process(index_, std::move(history));
 }
 
 const Segment& SegmentRef::get() const { return request_->segment(index_); }
