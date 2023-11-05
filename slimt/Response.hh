@@ -66,24 +66,27 @@ class Handle {
   };
 
   struct Info {
-    size_t part;
     double wps;
+    Progress parts;
     Progress words;
     Progress segments;
   };
 
-  Handle(const Ptr<Request> &request, Future &&future)
-      : request_(request), future_(std::move(future)) {}
+  Handle(const Ptr<Request> &request, size_t parts, Future &&future)
+      : request_(request), parts_(parts), future_(std::move(future)) {}
 
   Handle::Info info();
 
   std::future<Response> &future() { return future_; }
 
  private:
-  size_t part_ = 0;
   Ptr<Request> request_;
 
+  size_t part_ = 0;
+  size_t parts_;
+
   std::future<Response> future_;
+
   Timer timer_;
 };
 

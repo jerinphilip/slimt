@@ -22,27 +22,40 @@ inline std::string read_from_stdin() {
 }
 
 struct Options {
-  slimt::Package<std::string> translator;
   std::string root;
+  slimt::Package<std::string> translator;
+
+  std::string follow_root;
+  slimt::Package<std::string> follow;
+  size_t poll = 5;  // NOLINT
+
+  slimt::Config service;
+  slimt::Model::Config model;
+
   bool async = false;
   bool html = false;
   bool version = false;
-  size_t poll = 5;  // NOLINT
-  slimt::Config service;
-  slimt::Model::Config model;
 
   template <class App>
   void setup_onto(App &app) {
     // clang-format off
     app.add_option("--root", root, "Path to prefix other filenames to");
-    app.add_option("--poll", poll, "Seconds to poll a long request to report");
     app.add_option("--model", translator.model, "Path to model");
     app.add_option("--vocabulary", translator.vocabulary, "Path to vocabulary");
     app.add_option("--shortlist", translator.shortlist, "Path to shortlist");
     app.add_option("--ssplit", translator.ssplit, "Path to ssplit prefixes file.");
+
+    app.add_option("--follow-root", follow_root, "Path to prefix other filenames to");
+    app.add_option("--follow-model", follow.model, "Path to model");
+    app.add_option("--follow-vocabulary", follow.vocabulary, "Path to vocabulary");
+    app.add_option("--follow-shortlist", follow.shortlist, "Path to shortlist");
+    app.add_option("--follow-ssplit", follow.ssplit, "Path to ssplit prefixes file.");
+
+    app.add_option("--poll", poll, "Seconds to poll a long request to report");
     app.add_flag("--version", version, "Display version");
     app.add_flag("--html", html, "Whether content is HTML");
     app.add_flag("--async", async, "Try async backend");
+
     service.setup_onto(app);
     model.setup_onto(app);
     // clang-format on
@@ -65,17 +78,28 @@ void run(const Options &options) {
   using namespace slimt;  // NOLINT
 
   // Adjust paths.
-  Package<std::string> package{
-      .model = prefix(options.root, options.translator.model),            //
-      .vocabulary = prefix(options.root, options.translator.vocabulary),  //
-      .shortlist = prefix(options.root, options.translator.shortlist),    //
-      .ssplit = prefix(options.root, options.translator.ssplit)           //
+  auto package =
+      [&](const std::string &root,
+          const Package<std::string> &translator) -> Package<std::string> {
+    return {
+        .model = prefix(root, translator.model),            //
+        .vocabulary = prefix(root, translator.vocabulary),  //
+        .shortlist = prefix(root, translator.shortlist),    //
+        .ssplit = prefix(root, translator.ssplit)           //
+    };
   };
 
   // Sample user-operation.
   // We decide the user interface first, ideally nice, clean.
   // There are times when it won't match - EM.
-  auto model = std::make_shared<Model>(options.model, package);
+  auto model = std::make_shared<Model>(
+      options.model, package(options.root, options.translator));
+
+  std::shared_ptr<Model> follow = nullptr;
+  if (!options.follow_root.empty()) {
+    follow = std::make_shared<Model>(
+        options.model, package(options.follow_root, options.follow));
+  }
 
   if (options.async) {
     // Async operation.
@@ -87,13 +111,26 @@ void run(const Options &options) {
         .html = options.html  //
     };
 
-    Handle handle = service.translate(model, std::move(source), opts);
+    Handle handle = (!follow)
+                        ? service.translate(model, std::move(source), opts)
+                        : service.pivot(model, follow, std::move(source), opts);
+
     auto report = [&handle]() {
       auto info = handle.info();
-      auto percent = [](const Handle::Progress &value) {
-        float ratio = (static_cast<float>(value.completed) /
-                       static_cast<float>(value.total));
-        return 100 * ratio;  // NOLINT
+      auto percent = [](const Handle::Info &info) {
+        auto decimal = [](const Handle::Progress &value) {
+          float ratio = (static_cast<float>(value.completed) /
+                         static_cast<float>(value.total));
+          return ratio;
+        };
+
+        const auto &value = info.words;
+        const auto &parts = info.parts;
+
+        float remaining = parts.total - parts.completed;
+        float completed = parts.completed - 1;
+        float unit = 100.0F / static_cast<float>(parts.total);
+        return completed * unit + decimal(value) * unit;  // NOLINT
       };
 
       auto length = [](size_t value) {
@@ -108,14 +145,14 @@ void run(const Options &options) {
 
       int word_width = length(info.words.total);
       int segment_width = length(info.segments.total);
+      int part_width = length(info.parts.total);
       fprintf(stderr,
-              "Progress %6.2lf %% [ wps %lf | words %*zu/%zu | segments "
-              "%*zu/%zu ] \n",
-              percent(info.words), info.wps,                //
-              word_width,                                   //
-              info.words.completed, info.words.total,       //
-              segment_width,                                //
-              info.segments.completed, info.segments.total  //
+              "Progress %6.2lf %% [ wps %lf | part %*zu/%zu | words %*zu/%zu | "
+              "segments %*zu/%zu ] \n",
+              percent(info), info.wps,                                     //
+              part_width, info.parts.completed, info.parts.total,          //
+              word_width, info.words.completed, info.words.total,          //
+              segment_width, info.segments.completed, info.segments.total  //
       );
     };
 

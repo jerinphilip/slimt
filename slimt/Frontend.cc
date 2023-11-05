@@ -240,7 +240,9 @@ Handle Async::translate(const Ptr<Model> &model, std::string source,
                               std::move(segments), continuation);
 
   batcher_.enqueue(model, request);
-  Handle handle(request, std::move(future));
+
+  constexpr size_t parts = 1;  // NOLINT
+  Handle handle(request, parts, std::move(future));
   return handle;
 }
 
@@ -296,9 +298,8 @@ Handle Async::pivot(const Ptr<Model> &first, const Ptr<Model> &second,
 
   batcher_.enqueue(first, request);
 
-  // FIXME: This need to account for 2 requests this time, plumbing with what's
-  // available for now. Come back and fix.
-  Handle handle(request, std::move(future));
+  constexpr size_t parts = 2;  // NOLINT
+  Handle handle(request, parts, std::move(future));
   return handle;
 }
 

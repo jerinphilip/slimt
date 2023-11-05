@@ -201,9 +201,14 @@ Handle::Info Handle::info() {
       .total = request_->segment_count()   //
   };
 
+  Progress parts{
+      .completed = part_ + 1,  //
+      .total = parts_          //
+  };
+
   Info summary{
-      .part = part_,        //
       .wps = wps,           //
+      .parts = parts,       //
       .words = words,       //
       .segments = segments  //
   };

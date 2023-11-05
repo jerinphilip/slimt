@@ -2,18 +2,29 @@
 
 BROWSERMT=$HOME/.local/share/bergamot/models/browsermt
 PREFIX=$BROWSERMT/ende.student.tiny11
+FOLLOW_PREFIX=$BROWSERMT/deen.student.tiny11
 
 MODEL=model.intgemm.alphas.bin
 VOCAB=vocab.deen.spm
 SHORTLIST=lex.s2t.bin
 
+ARGS=(
+  --root ${PREFIX}
+  --model ${MODEL}
+  --vocabulary ${VOCAB}
+  --shortlist ${SHORTLIST}
+
+  --follow-root ${FOLLOW_PREFIX}
+  --follow-model ${MODEL}
+  --follow-vocabulary ${VOCAB}
+  --follow-shortlist ${SHORTLIST}
+
+  --async
+  --workers 24
+)
+
 set -x
-./build/bin/slimt \
-  --root ${PREFIX} \
-  --model ${MODEL} \
-  --vocabulary ${VOCAB} \
-  --shortlist ${SHORTLIST} \
-  < data/sample.txt
+./build/app/slimt-cli "${ARGS[@]}" < data/wngt20/sources.shuf.10k
 
 exit
 

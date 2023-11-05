@@ -49,7 +49,7 @@ class Request {
   /// Request.
   /// @param [in] cache: Cache supplied externally to attempt to fetch
   /// translations or store them after completion for reuse later.
-  Request(size_t Id, size_t model_id, AnnotatedText &&source,
+  Request(size_t id, size_t model_id, AnnotatedText &&source,
           Segments &&segments, const Vocabulary &vocabulary,
           std::optional<TranslationCache> &cache, Continuation &&continuation);
 
