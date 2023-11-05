@@ -13,6 +13,7 @@
 #include "slimt/Response.hh"
 #include "slimt/Types.hh"
 #include "slimt/Utils.hh"
+#include "slimt/Vocabulary.hh"
 
 namespace slimt {
 
