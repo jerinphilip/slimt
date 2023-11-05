@@ -12,6 +12,7 @@
 #include "slimt/Frontend.hh"
 #include "slimt/Model.hh"
 #include "slimt/Response.hh"
+#include "slimt/Types.hh"
 
 inline std::string read_from_stdin() {
   // Read a large input text blob from stdin

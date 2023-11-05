@@ -71,11 +71,6 @@ class Request {
  private:
   void complete(Histories &&histories);
 
-  size_t id_;
-
-  /// Model associated with this request
-  size_t model_id_;
-
   /// Multiple translation-workers can concurrently access the same Request.
   /// The following atomic atomically operates on the variable holding
   /// segments remaining to be translated.
@@ -84,6 +79,11 @@ class Request {
   /// Completed words, to measure wps.
   std::atomic<int> words_complete_;
   size_t words_total_;
+
+  size_t id_;
+
+  /// Model associated with this request
+  size_t model_id_;
 
   // Source text.
   AnnotatedText source_;
@@ -100,9 +100,8 @@ class Request {
   /// Cache used to hold segment translations. If nullopt, means no-caching.
   std::optional<TranslationCache> &cache_;
 
-  Ptr<Request> next_ = nullptr;
-
   Continuation continuation_;
+  Ptr<Request> next_ = nullptr;
 };
 
 }  // namespace slimt

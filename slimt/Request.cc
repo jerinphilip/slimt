@@ -96,9 +96,10 @@ std::pair<Fraction, Fraction> Request::progress() const {
       .q = words_total_                                  //
   };
 
+  auto completed = static_cast<size_t>(counter_.load());
   Fraction segments{
-      .p = counter_.load() - segments_.size(),  //
-      .q = segments_.size()                     //
+      .p = segments_.size() - completed,  //
+      .q = segments_.size()               //
   };
 
   return std::make_pair(std::move(words), std::move(segments));
