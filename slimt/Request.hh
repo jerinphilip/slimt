@@ -48,10 +48,7 @@ class Request {
   size_t word_count(size_t index) const;
 
   /// Obtain number of segments in a request.
-  size_t segment_count() const;
-
-  // Number of segments for which translation is completed.
-  size_t completed() const;
+  size_t size() const;
 
   /// Obtains segment corresponding to index  to create a batch of segments
   /// among several requests.
@@ -65,18 +62,15 @@ class Request {
   /// compiled from requests.
   void process(size_t index, History history);
 
-  bool is_prefilled_from_cache(size_t index) const {
-    return histories_[index] != nullptr;
-  }
-
-  size_t word_count() const { return word_count_; }
-  size_t completed_word_count() const { return completed_word_count_.load(); }
+  bool cached(size_t index) const;
 
   Ptr<Request> next() const { return next_; }
 
-  void postprocess(Histories &&histories);
+  std::pair<Fraction, Fraction> progress() const;
 
  private:
+  void complete(Histories &&histories);
+
   size_t id_;
 
   /// Model associated with this request
@@ -88,9 +82,8 @@ class Request {
   std::atomic<int> counter_;
 
   /// Completed words, to measure wps.
-  std::atomic<int> completed_word_count_;
-
-  size_t word_count_;
+  std::atomic<int> words_complete_;
+  size_t words_total_;
 
   // Source text.
   AnnotatedText source_;

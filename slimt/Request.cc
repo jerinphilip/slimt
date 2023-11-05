@@ -46,14 +46,14 @@ Request::Request(size_t id, size_t model_id, AnnotatedText &&source,
   // translatable units present. However, in this case we want an empty valid
   // response. There's no need to do any additional processing here.
   if (segments_.empty()) {
-    postprocess(std::move(histories_));
+    complete(std::move(histories_));
   } else {
     counter_ = segments_.size();
     histories_.resize(segments_.size());
 
     // Word count book-keeping.
-    word_count_ = 0;
-    completed_word_count_ = 0;
+    words_total_ = 0;
+    words_complete_ = 0;
 
     if (cache_) {
       // Iterate through segments, see if any can be prefilled from cache. If
@@ -61,35 +61,51 @@ Request::Request(size_t id, size_t model_id, AnnotatedText &&source,
       // ProcessedSegmentRef). Also update accounting used elsewhere
       // (counter_) to reflect one less segment to translate.
       for (size_t idx = 0; idx < segments_.size(); idx++) {
-        word_count_ += segments_[idx].size();
+        words_total_ += segments_[idx].size();
         size_t key = cache_key(model_id_, segment(idx));
         auto [found, history] = cache_->find(key);
         if (found) {
           histories_[idx] = history;
           --counter_;
-          completed_word_count_ += segments_[idx].size();
+          words_complete_ += segments_[idx].size();
         }
       }
       // 2. Also, if cache somehow manages to decrease all counter prefilling
       // histories, then we'd have to trigger ResponseBuilder as well. No
       // segments go into batching and therefore no complete triggers.
       if (counter_.load() == 0) {
-        postprocess(std::move(histories_));
+        complete(std::move(histories_));
       }
     } else {
       for (const Segment &segment : segments_) {
-        word_count_ += segment.size();
+        words_total_ += segment.size();
       }
     }
   }
 }
 
-size_t Request::segment_count() const { return segments_.size(); }
+size_t Request::size() const { return segments_.size(); }
 
-size_t Request::completed() const { return segment_count() - counter_.load(); }
+bool Request::cached(size_t index) const {
+  return histories_[index] != nullptr;
+}
+
+std::pair<Fraction, Fraction> Request::progress() const {
+  Fraction words{
+      .p = static_cast<size_t>(words_complete_.load()),  //
+      .q = words_total_                                  //
+  };
+
+  Fraction segments{
+      .p = counter_.load() - segments_.size(),  //
+      .q = segments_.size()                     //
+  };
+
+  return std::make_pair(std::move(words), std::move(segments));
+}
 
 size_t Request::word_count(size_t index) const {
-  return (segments_[index].size());
+  return segments_[index].size();
 }
 
 const Segment &Request::segment(size_t index) const { return segments_[index]; }
@@ -107,16 +123,16 @@ void Request::process(size_t index, History history) {
     cache_->store(key, histories_[index]);
   }
 
-  completed_word_count_ += segments_[index].size();
+  words_complete_ += segments_[index].size();
 
-  // In case this is last request in, completeRequest is called, which sets the
-  // value of the promise.
+  // In case this is last request in, completeRequest is called, which sets
+  // the value of the promise.
   if (--counter_ == 0) {
-    postprocess(std::move(histories_));
+    complete(std::move(histories_));
   }
 }
 
-void Request::postprocess(Histories &&histories) {
+void Request::complete(Histories &&histories) {
   SLIMT_ABORT_IF(source_.sentence_count() != histories.size(),
                  "Mismatch in source and translated sentences");
   Response response;

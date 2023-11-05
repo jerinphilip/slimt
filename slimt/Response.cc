@@ -189,17 +189,8 @@ Response combine(Response &&first, Response &&second) {
 }
 
 Handle::Info Handle::info() {
-  size_t words_completed = request_->completed_word_count();
-  double wps = static_cast<float>(words_completed) / timer_.elapsed();
-  Fraction words{
-      .p = words_completed,        //
-      .q = request_->word_count()  //
-  };
-
-  Fraction segments{
-      .p = request_->completed(),     //
-      .q = request_->segment_count()  //
-  };
+  auto [words, segments] = request_->progress();
+  double wps = static_cast<float>(words.p) / timer_.elapsed();
 
   Fraction parts{
       .p = part_ + 1,  //
