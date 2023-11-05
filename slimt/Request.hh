@@ -25,7 +25,7 @@ namespace slimt {
 /// ```cpp
 ///   Batch::complete(...)
 ///       -> SegmentRef::complete(..)
-///          -> Request::complete(...)
+///          -> Request::process(...)
 /// ```
 ///
 /// When all segments in a Request are completed, response_builder is
@@ -38,17 +38,6 @@ class Request {
   /// Constructs an internal representation of the Request identified by Id,
   /// processed Segments and accepts a callback (ResponseBuilder) which builds
   /// the Response upon completion of the Request.
-  ///
-  ///
-  /// @param [in] id: Identifier assigned to Request by Service.
-  /// @param [in] model: Model for identifying a unique translation
-  /// segment key (model, words in a segment) for cache.
-  /// @param [in] segments: Each segment is a segment to be translated.
-  /// @param [in] response_builder: Callback function (of ResponseBuilder type)
-  /// to be triggered upon the completion of translation of all segments in a
-  /// Request.
-  /// @param [in] cache: Cache supplied externally to attempt to fetch
-  /// translations or store them after completion for reuse later.
   Request(size_t id, size_t model_id, AnnotatedText &&source,
           Segments &&segments, const Vocabulary &vocabulary,
           std::optional<TranslationCache> &cache, Continuation &&continuation);

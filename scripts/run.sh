@@ -21,10 +21,11 @@ ARGS=(
 
   --async
   --workers 24
+  --poll 1
 )
 
 set -x
-./build/app/slimt-cli "${ARGS[@]}" < data/wngt20/sources.shuf.10k
+./build/app/slimt-cli "${ARGS[@]}" < data/wngt20/sources.shuf.10k > /dev/null
 
 exit
 

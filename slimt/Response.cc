@@ -7,7 +7,7 @@
 #include <vector>
 
 #include "slimt/Annotation.hh"
-#include "slimt/Request.hh"
+#include "slimt/Request.hh"  // NOLINT(misc-include-cleaner)
 #include "slimt/Types.hh"
 
 namespace slimt {

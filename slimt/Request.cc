@@ -2,9 +2,11 @@
 
 #include <cstddef>
 #include <optional>
+#include <string>
 #include <utility>
 #include <vector>
 
+#include "slimt/Annotation.hh"
 #include "slimt/Cache.hh"
 #include "slimt/Macros.hh"
 #include "slimt/Response.hh"
