@@ -58,29 +58,33 @@ using Responses = std::vector<Response>;
 
 class Request;
 
+/// Rich reporting handle for a request in-flight.   Wraps around an std::future
+/// to achieve std::future things, also holds a Ptr<Request> which lets know how
+/// many parts of the request are complete.
 class Handle {
  public:
-  struct Progress {
-    size_t completed;
-    size_t total;
-  };
+  Handle(const Ptr<Request> &request, size_t parts, Future &&future)
+      : request_(request), parts_(parts), future_(std::move(future)) {}
 
+  // The following information is picked up and exported via ::info()
   struct Info {
     double wps;
-    Progress words;
-    Progress segments;
+    Fraction parts;
+    Fraction words;
+    Fraction segments;
   };
 
-  Handle(const Ptr<Request> &request, Future &&future)
-      : request_(request), future_(std::move(future)) {}
-
-  Handle::Info info() const;
-
+  Handle::Info info();
   std::future<Response> &future() { return future_; }
 
  private:
   Ptr<Request> request_;
+
+  size_t part_ = 0;
+  size_t parts_;
+
   std::future<Response> future_;
+
   Timer timer_;
 };
 

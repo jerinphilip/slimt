@@ -7,7 +7,7 @@
 #include <vector>
 
 #include "slimt/Annotation.hh"
-#include "slimt/Request.hh"  // NOLINT
+#include "slimt/Request.hh"  // NOLINT(misc-include-cleaner)
 #include "slimt/Types.hh"
 
 namespace slimt {
@@ -188,24 +188,29 @@ Response combine(Response &&first, Response &&second) {
   return combined;
 }
 
-Handle::Info Handle::info() const {
-  size_t words_completed = request_->completed_word_count();
-  double wps = static_cast<float>(words_completed) / timer_.elapsed();
-  Progress words{
-      .completed = words_completed,    //
-      .total = request_->word_count()  //
+Handle::Info Handle::info() {
+  auto [words, segments] = request_->progress();
+  double wps = static_cast<float>(words.p) / timer_.elapsed();
+
+  Fraction parts{
+      .p = part_ + 1,  //
+      .q = parts_      //
   };
 
-  Progress segments{
-      .completed = request_->completed(),  //
-      .total = request_->segment_count()   //
-  };
-
-  return Info{
+  Info summary{
       .wps = wps,           //
+      .parts = parts,       //
       .words = words,       //
       .segments = segments  //
   };
+
+  // Advance to the next request if.p.
+  if (request_->next() != nullptr) {
+    request_ = request_->next();
+    part_++;
+  }
+
+  return summary;
 }
 
 }  // namespace slimt

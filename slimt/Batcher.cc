@@ -25,7 +25,7 @@ size_t SegmentRef::size() const { return (request_->word_count(index_)); }
 void SegmentRef::complete(History history) {
   // Relays complete into request's complete, using index
   // information.
-  request_->complete(index_, std::move(history));
+  request_->process(index_, std::move(history));
 }
 
 const Segment& SegmentRef::get() const { return request_->segment(index_); }
@@ -121,8 +121,8 @@ Batch Batcher::generate() {
 
 size_t Batcher::enqueue(const Ptr<Request>& request) {
   size_t to_be_translated = 0;
-  for (size_t i = 0; i < request->segment_count(); i++) {
-    if (!request->is_prefilled_from_cache(i)) {
+  for (size_t i = 0; i < request->size(); i++) {
+    if (!request->cached(i)) {
       SegmentRef sentence(i, request);
       size_t bucket_id = sentence.size();
 

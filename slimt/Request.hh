@@ -9,8 +9,8 @@
 #include <vector>
 
 #include "slimt/Annotation.hh"
-#include "slimt/ResponseBuilder.hh"
 #include "slimt/Types.hh"
+#include "slimt/Vocabulary.hh"
 
 namespace slimt {
 
@@ -25,7 +25,7 @@ namespace slimt {
 /// ```cpp
 ///   Batch::complete(...)
 ///       -> SegmentRef::complete(..)
-///          -> Request::complete(...)
+///          -> Request::process(...)
 /// ```
 ///
 /// When all segments in a Request are completed, response_builder is
@@ -34,23 +34,13 @@ namespace slimt {
 /// the future at client.
 class Request {
  public:
+  using Continuation = std::function<Ptr<Request>(Response &&response)>;
   /// Constructs an internal representation of the Request identified by Id,
   /// processed Segments and accepts a callback (ResponseBuilder) which builds
   /// the Response upon completion of the Request.
-  ///
-  ///
-  /// @param [in] id: Identifier assigned to Request by Service.
-  /// @param [in] model: Model for identifying a unique translation
-  /// segment key (model, words in a segment) for cache.
-  /// @param [in] segments: Each segment is a segment to be translated.
-  /// @param [in] response_builder: Callback function (of ResponseBuilder type)
-  /// to be triggered upon the completion of translation of all segments in a
-  /// Request.
-  /// @param [in] cache: Cache supplied externally to attempt to fetch
-  /// translations or store them after completion for reuse later.
-  Request(size_t Id, size_t model_id, Segments &&segments,
-          ResponseBuilder &&response_builder,
-          std::optional<TranslationCache> &cache);
+  Request(size_t id, size_t model_id, AnnotatedText &&source,
+          Segments &&segments, const Vocabulary &vocabulary,
+          std::optional<TranslationCache> &cache, Continuation &&continuation);
 
   /// Obtain the count of tokens in the segment correponding to index. Used to
   /// insert segment from multiple requests into the corresponding size
@@ -58,10 +48,7 @@ class Request {
   size_t word_count(size_t index) const;
 
   /// Obtain number of segments in a request.
-  size_t segment_count() const;
-
-  // Number of segments for which translation is completed.
-  size_t completed() const;
+  size_t size() const;
 
   /// Obtains segment corresponding to index  to create a batch of segments
   /// among several requests.
@@ -73,20 +60,16 @@ class Request {
 
   /// Processes a history obtained after translating in a heterogenous batch
   /// compiled from requests.
-  void complete(size_t index, History history);
+  void process(size_t index, History history);
 
-  bool is_prefilled_from_cache(size_t index) const {
-    return histories_[index] != nullptr;
-  }
+  bool cached(size_t index) const;
 
-  size_t word_count() const { return word_count_; }
-  size_t completed_word_count() const { return completed_word_count_.load(); }
+  Ptr<Request> next() const { return next_; }
+
+  std::pair<Fraction, Fraction> progress() const;
 
  private:
-  size_t id_;
-
-  /// Model associated with this request
-  size_t model_id_;
+  void complete(Histories &&histories);
 
   /// Multiple translation-workers can concurrently access the same Request.
   /// The following atomic atomically operates on the variable holding
@@ -94,23 +77,31 @@ class Request {
   std::atomic<int> counter_;
 
   /// Completed words, to measure wps.
-  std::atomic<int> completed_word_count_;
+  std::atomic<int> words_complete_;
+  size_t words_total_;
 
-  size_t word_count_;
+  size_t id_;
 
+  /// Model associated with this request
+  size_t model_id_;
+
+  // Source text.
+  AnnotatedText source_;
   /// segments_ hold the segments processed into Words which generated from
   /// input string.
   Segments segments_;
+
+  const Vocabulary &vocabulary_;
 
   /// histories_ is a buffer which eventually stores the translations of each
   /// segment in the corresponding index.
   Histories histories_;
 
-  /// Constructing Response requires the vocabs_ used to generate Request.
-  ResponseBuilder response_builder_;
-
   /// Cache used to hold segment translations. If nullopt, means no-caching.
   std::optional<TranslationCache> &cache_;
+
+  Continuation continuation_;
+  Ptr<Request> next_ = nullptr;
 };
 
 }  // namespace slimt

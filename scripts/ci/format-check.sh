@@ -22,8 +22,13 @@ function slimt-check-clang-tidy {
   )
 
   cmake -B build -S . "${ARGS[@]}"
-  run-clang-tidy -export-fixes build/clang-tidy.slimt.yml -p build -header-filter="$PWD/slimt" "$PWD/slimt/.*"
-  run-clang-tidy -export-fixes build/clang-tidy.app.yml -p build -header-filter="$PWD/slimt" "$PWD/app/.*"
+  set +e
+  FILES=$(find app slimt -type f)
+  run-clang-tidy -export-fixes build/clang-tidy.slimt.yml -fix -format -p build -header-filter="$PWD/slimt" ${FILES[@]}
+  CHECK_STATUS=$?
+  git diff
+  set -e
+  return $CHECK_STATUS
 
 }
 
@@ -37,7 +42,7 @@ function slimt-check-sh {
 }
 
 function slimt-check-cmake {
-  cmake-format $(find -name "CMakeLists.txt" -not -path "./3rd-party/*") --check
+  cmake-format $(find -name "CMakeLists.txt" -not -path "./3rd-party/*" -not -path "build") --check
 }
 
 function slimt-check-iwyu {

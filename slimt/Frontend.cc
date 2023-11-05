@@ -18,7 +18,6 @@
 #include "slimt/Model.hh"
 #include "slimt/Request.hh"
 #include "slimt/Response.hh"
-#include "slimt/ResponseBuilder.hh"
 #include "slimt/TextProcessor.hh"
 #include "slimt/Types.hh"
 #include "slimt/Utils.hh"
@@ -65,16 +64,13 @@ Ptr<Request> make_request(size_t id, const Ptr<Model> &model,
                           std::optional<TranslationCache> &cache,
                           AnnotatedText &&annotated_text, Segments &&segments,
                           Continuation &&continuation) {
-  ResponseBuilder response_builder(                                  //
-      std::move(annotated_text),                                     //
-      model->vocabulary(), std::forward<Continuation>(continuation)  //
-  );
-
-  auto request = std::make_shared<Request>(  //
-      id, model->id(),                       //
-      std::move(segments),                   //
-      std::move(response_builder),           //
-      cache                                  //
+  auto request = std::make_shared<Request>(     //
+      id, model->id(),                          //
+      std::move(annotated_text),                //
+      std::move(segments),                      //
+      model->vocabulary(),                      //
+      cache,                                    //
+      std::forward<Continuation>(continuation)  //
   );
   return request;
 }
@@ -115,6 +111,7 @@ std::vector<Response> Blocking::translate(const Ptr<Model> &model,
         html->restore(response);
       }
       promise.set_value(std::move(response));
+      return nullptr;
     };
 
     const auto &processor = model->processor();
@@ -176,6 +173,7 @@ std::vector<Response> Blocking::pivot(const Ptr<Model> &first,
       Response combined =
           combine(std::move(source_to_pivot), std::move(pivot_to_target));
       response = std::move(combined);
+      return nullptr;
     };
 
     const TextProcessor &processor = second->processor();
@@ -232,6 +230,7 @@ Handle Async::translate(const Ptr<Model> &model, std::string source,
       html->restore(response);
     }
     promise->set_value(std::move(response));
+    return nullptr;
   };
 
   const TextProcessor &processor = model->processor();
@@ -241,7 +240,9 @@ Handle Async::translate(const Ptr<Model> &model, std::string source,
                               std::move(segments), continuation);
 
   batcher_.enqueue(model, request);
-  Handle handle(request, std::move(future));
+
+  constexpr size_t parts = 1;  // NOLINT
+  Handle handle(request, parts, std::move(future));
   return handle;
 }
 
@@ -256,13 +257,15 @@ Handle Async::pivot(const Ptr<Model> &first, const Ptr<Model> &second,
   auto promise = std::make_shared<Promise>();
   auto future = promise->get_future();
 
-  auto continuation = [this, promise, second, html](Response &&partial) {
+  auto continuation = [this, promise, second,
+                       html](Response &&partial) -> Ptr<Request> {
     // https://stackoverflow.com/a/65606554/4565794
     // Move semantics only work on mutable lambdas, and can only be done once.
     // It's only once in our case, so issok.
     AnnotatedText intermediate = partial.target;
-    auto joining_continuation = [source_to_pivot = std::move(partial), promise,
-                                 html](Response &&pivot_to_target) mutable {
+    auto joining_continuation =
+        [source_to_pivot = std::move(partial), promise,
+         html](Response &&pivot_to_target) mutable -> Ptr<Request> {
       // We have both Responses at this callback, source_to_pivot is moved in,
       // second half will be available when complete.
       Response response =
@@ -273,6 +276,7 @@ Handle Async::pivot(const Ptr<Model> &first, const Ptr<Model> &second,
         html->restore(response);
       }
       promise->set_value(std::move(response));
+      return nullptr;
     };
 
     const TextProcessor &processor = second->processor();
@@ -283,6 +287,7 @@ Handle Async::pivot(const Ptr<Model> &first, const Ptr<Model> &second,
                      std::move(segments), std::move(joining_continuation));
 
     batcher_.enqueue(second, request);
+    return request;
   };
 
   const TextProcessor &processor = first->processor();
@@ -293,9 +298,8 @@ Handle Async::pivot(const Ptr<Model> &first, const Ptr<Model> &second,
 
   batcher_.enqueue(first, request);
 
-  // FIXME: This need to account for 2 requests this time, plumbing with what's
-  // available for now. Come back and fix.
-  Handle handle(request, std::move(future));
+  constexpr size_t parts = 2;  // NOLINT
+  Handle handle(request, parts, std::move(future));
   return handle;
 }
 
