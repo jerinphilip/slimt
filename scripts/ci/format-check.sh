@@ -22,8 +22,13 @@ function slimt-check-clang-tidy {
   )
 
   cmake -B build -S . "${ARGS[@]}"
-  run-clang-tidy -export-fixes build/clang-tidy.slimt.yml -p build -header-filter="$PWD/slimt" "$PWD/slimt/.*"
-  run-clang-tidy -export-fixes build/clang-tidy.app.yml -p build -header-filter="$PWD/slimt" "$PWD/app/.*"
+  set +e
+  run-clang-tidy -export-fixes build/clang-tidy.slimt.yml -p build -header-filter="$PWD/slimt" $(find apps slimt)
+  CHECK_STATUS=$?
+  clang-apply-replacements --format build/
+  git diff
+  set -e
+  return $CHECK_STATUS
 
 }
 
