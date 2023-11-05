@@ -118,18 +118,17 @@ void run(const Options &options) {
     auto report = [&handle]() {
       auto info = handle.info();
       auto percent = [](const Handle::Info &info) {
-        auto decimal = [](const Handle::Progress &value) {
-          float ratio = (static_cast<float>(value.completed) /
-                         static_cast<float>(value.total));
+        auto decimal = [](const Fraction &v) {
+          float ratio = (static_cast<float>(v.p) / static_cast<float>(v.q));
           return ratio;
         };
 
         const auto &value = info.words;
         const auto &parts = info.parts;
 
-        float remaining = parts.total - parts.completed;
-        float completed = parts.completed - 1;
-        float unit = 100.0F / static_cast<float>(parts.total);
+        float remaining = parts.q - parts.p;
+        float completed = parts.p - 1;
+        float unit = 100.0F / static_cast<float>(parts.q);
         return completed * unit + decimal(value) * unit;  // NOLINT
       };
 
@@ -143,16 +142,16 @@ void run(const Options &options) {
         return count;
       };
 
-      int word_width = length(info.words.total);
-      int segment_width = length(info.segments.total);
-      int part_width = length(info.parts.total);
+      int word_width = length(info.words.q);
+      int segment_width = length(info.segments.q);
+      int part_width = length(info.parts.q);
       fprintf(stderr,
-              "Progress %6.2lf %% [ wps %lf | part %*zu/%zu | words %*zu/%zu | "
+              "Fraction %6.2lf %% [ wps %lf | part %*zu/%zu | words %*zu/%zu | "
               "segments %*zu/%zu ] \n",
-              percent(info), info.wps,                                     //
-              part_width, info.parts.completed, info.parts.total,          //
-              word_width, info.words.completed, info.words.total,          //
-              segment_width, info.segments.completed, info.segments.total  //
+              percent(info), info.wps,                         //
+              part_width, info.parts.p, info.parts.q,          //
+              word_width, info.words.p, info.words.q,          //
+              segment_width, info.segments.p, info.segments.q  //
       );
     };
 

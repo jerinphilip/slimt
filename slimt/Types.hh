@@ -19,6 +19,14 @@ struct Range {
   size_t size() const { return end - begin; }
 };
 
+// Convenience shorthand to represent a fraction. Don't want to use
+// std::pair<size_t, size_t> and the more verbose .first, .second, hence .p, .q,
+// where p/q represents the fraction.
+struct Fraction {
+  size_t p;
+  size_t q;
+};
+
 inline bool operator==(Range &a, Range b) {
   return a.begin == b.begin && a.end == b.end;
 }

@@ -191,19 +191,19 @@ Response combine(Response &&first, Response &&second) {
 Handle::Info Handle::info() {
   size_t words_completed = request_->completed_word_count();
   double wps = static_cast<float>(words_completed) / timer_.elapsed();
-  Progress words{
-      .completed = words_completed,    //
-      .total = request_->word_count()  //
+  Fraction words{
+      .p = words_completed,        //
+      .q = request_->word_count()  //
   };
 
-  Progress segments{
-      .completed = request_->completed(),  //
-      .total = request_->segment_count()   //
+  Fraction segments{
+      .p = request_->completed(),     //
+      .q = request_->segment_count()  //
   };
 
-  Progress parts{
-      .completed = part_ + 1,  //
-      .total = parts_          //
+  Fraction parts{
+      .p = part_ + 1,  //
+      .q = parts_      //
   };
 
   Info summary{
@@ -213,7 +213,7 @@ Handle::Info Handle::info() {
       .segments = segments  //
   };
 
-  // Advance to the next request if completed.
+  // Advance to the next request if.p.
   if (request_->next() != nullptr) {
     request_ = request_->next();
     part_++;
