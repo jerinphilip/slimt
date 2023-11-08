@@ -77,7 +77,9 @@ class PyService {
     for (auto &handle : handles) {
       auto &future = handle.future();
       future.wait();
-      responses.push_back(std::move(future.get()));
+      Response response = future.get();
+      change_ranges_to_utf8(response);
+      responses.push_back(std::move(response));
     }
 
     return responses;
@@ -141,6 +143,7 @@ class PyService {
 
     return Service(config);
   }
+  static Response change_ranges_to_utf8(Response &response) {}
 
   Service service_;
 };
