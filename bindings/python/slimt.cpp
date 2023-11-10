@@ -143,25 +143,101 @@ class PyService {
 
     return Service(config);
   }
+
   static Response change_ranges_to_utf8(Response &response) {
-    std::string target = response.target.text;
-    vector<std::pair<Range, Range>> replace_ops;
-    for (int sentenceIdx = 0; sentenceIdx < response.size(); sentenceIdx++) {
-      for (int i = 0; i < response[sentenceIdx].alignments.size(); i++) {
-        int src = alignments[sentenceIdx][i].src;
-        int tgt = alignments[sentenceIdx][i].tgt;
-        if (isUnknown(sourceUnknown, sentenceIdx, src)) {
-          Range source_byte_range = response.source.word_as_range(sentenceIdx, response[sentenceIdx].alignments[i]));
-          Range target_byte_range = response.target.word_as_range(sentenceIdx, response[sentenceIdx].alignments[i]));
-          replace_ops.push_back(
-              std::make_pair(target_byte_range, source_byte_range))
-        }
+    // Ranges are in C++ Byte Ranges.  Python however requires indices into
+    // unicode strings. For example, the following is required without this
+    // change.
+    //
+    // # Case 1: Byte Ranges
+    //
+    // source = response.source.text // "Hello world"
+    // range = response.source.word_as_range(0, 0)
+    //
+    // #  Additional encoding step required to access
+    // #  "byte" ranges.
+    // bytes = source.encode("utf8")
+    //
+    // word_bytes = bytes[range.begin:range.end]
+    // word = word_bytes.decode("utf8")
+    //
+    // # Case 2: Unicode (UTF-8 ranges)
+    //
+    // What we want to do, is omit the conversion step, by providing ranges
+    // native to python.
+    //
+    // source = response.source.text // "Hello world"
+    // range = response.source.word_as_range(0, 0)
+    // word = source[range.begin:range.end]
+    //
+    //
+    // Why? Diagnosis?
+    //
+    // pybind11 converts std::string, by default to unicode-strings (python).
+    // However, since we manage ranges, they remain "byte ranges". We can
+    // mitigate this problem, by patching the annotation's ranges to point to
+    // unicode before returning the response.
+
+    auto transform_to_utf8 = [](const AnnotatedText &annotated) -> Annotation {
+      Annotation utf8;
+      // f: Range [Bytes] -> Range[UTF8]
+      const std::string &text = annotated.text;
+
+      size_t sentence_idx = 0;
+      size_t word_idx = 0;
+      Range current = annotated.word_as_range(sentence_idx, word_idx);
+
+      std::vector<Range> words;
+
+      size_t utf8_idx = 0;
+      size_t byte_idx = 0;
+      Range utf8 {          //
+        .begin = utf8_idx,  //
+            .end = -1       //
       }
-    }
-    std::sort(replaceOps.begin(), replaceOps.end(),
-              [](const auto &a, const auto &b) {
-                return a.first.begin < b.first.begin;
-              });
+      // This loops run on the entire string.
+      //
+      // We have indices into two views of the same string. One is bytes, the
+      // other is utf8 encoded. We want to convert what is bytes to utf8.
+      //
+      // For this, we traverse through the characters, checking for unicode
+      // encoding and associated adjustments to the utf8_idx, keeping
+      // correspondences with the byte_idx;
+      for (const char c : text) {
+        // current = [begin, end)
+
+        if (byte_idx == current.begin) {
+          utf8.begin = utf8_idx;
+        }
+
+        if (byte_idx == current.end) {
+          utf8.end = utf8_idx;
+
+          // Push it to the list of (utf8) words.
+          // We will use these to create the utf8 range annotation.
+          words.push_back(utf8);
+
+          ++word_idx;
+          if (word_idx >= annotated.word_count(sentence_idx)) {
+            ++sentence_idx;
+            word_idx = 0;
+          }
+
+          current = annotated.word_as_range(sentence_idx, word_idx);
+
+          utf8.begin = utf8_idx;
+          utf8.end = -1;
+        }
+
+        if ((c & 0xc0) != 0x80)  // if is not utf-8 continuation character
+          ++utf8_idx;
+
+        ++byte_idx;
+      }
+    };
+
+    response.source.update_annotation(transform_to_utf8(response.source));
+    response.target.update_annotation(transform_to_utf8(response.target));
   }
 
   Service service_;
