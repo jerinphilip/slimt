@@ -289,8 +289,8 @@ jobs:
           with:
             name: wheels
             path: ./wheelhouse/*.whl
-  upload-wheels:
-    name: "Upload wheels to PyPI"
+  upload-release:
+    name: "Upload Release"
     runs-on: ubuntu-latest
     if: ${{ startsWith(github.ref, 'refs/tags/v') }}
     needs: [build-wheels]
@@ -300,10 +300,25 @@ jobs:
       with:
         name: wheels
 
-    - name: Publish wheels to PyPI
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
       env:
-        TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
-        TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-      run: |
-        python3 -m pip install twine
-        twine upload *.whl
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        draft: false
+        prerelease: false
+
+    - name: Upload Release Assets
+      id: upload-release-assets
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./wheelhouse/*.whl
+        asset_name: wheel
+        asset_content_type: application/zip
+
