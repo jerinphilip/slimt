@@ -171,6 +171,10 @@ class PyService {
     // word = source[range.begin:range.end]
     //
     //
+    // Assert:
+    //  word == response.source.word(0, 0)
+    //  [python-slicing] = C++ string conversion
+    //
     // Why? Diagnosis?
     //
     // pybind11 converts std::string, by default to unicode-strings (python).
