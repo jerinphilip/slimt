@@ -143,7 +143,26 @@ class PyService {
 
     return Service(config);
   }
-  static Response change_ranges_to_utf8(Response &response) {}
+  static Response change_ranges_to_utf8(Response &response) {
+    std::string target = response.target.text;
+    vector<std::pair<Range, Range>> replace_ops;
+    for (int sentenceIdx = 0; sentenceIdx < response.size(); sentenceIdx++) {
+      for (int i = 0; i < response[sentenceIdx].alignments.size(); i++) {
+        int src = alignments[sentenceIdx][i].src;
+        int tgt = alignments[sentenceIdx][i].tgt;
+        if (isUnknown(sourceUnknown, sentenceIdx, src)) {
+          Range source_byte_range = response.source.word_as_range(sentenceIdx, response[sentenceIdx].alignments[i]));
+          Range target_byte_range = response.target.word_as_range(sentenceIdx, response[sentenceIdx].alignments[i]));
+          replace_ops.push_back(
+              std::make_pair(target_byte_range, source_byte_range))
+        }
+      }
+    }
+    std::sort(replaceOps.begin(), replaceOps.end(),
+              [](const auto &a, const auto &b) {
+                return a.first.begin < b.first.begin;
+              });
+  }
 
   Service service_;
 };
