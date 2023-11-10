@@ -43,6 +43,9 @@ void AnnotatedText::append_ending_whitespace(std::string_view whitespace) {
   text.append(whitespace.data(), whitespace.size());
   annotation.token_begin_.back() = text.size();
 }
+void AnnotatedText::update_annotation(const Annotation &new_annotation) {
+  annotation = new_annotation;
+}
 
 void AnnotatedText::record_existing_sentence(
     std::vector<std::string_view>::iterator begin,

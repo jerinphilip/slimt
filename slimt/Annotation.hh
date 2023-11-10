@@ -146,6 +146,7 @@ class AnnotatedText {
   /// Append the whitespace at the end of input. std::string_view must not be in
   /// text.
   void append_ending_whitespace(std::string_view whitespace);
+  void update_annotation(const Annotation &new_annotation);
 
   /// Package the existence of a sentence that is already in text.  The
   /// iterators are over std::string_views for each token that must be in text
