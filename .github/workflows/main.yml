@@ -295,21 +295,25 @@ jobs:
     name: "Release Latest Build"
     runs-on: ubuntu-latest
     needs: [build-wheels]
+    permissions:
+      contents: "write"
+      packages: "write"
+      pull-requests: "read"
     steps:
-    - name: Download artifacts
-      uses: actions/download-artifact@v2
+     - name: Download artifacts
+       uses: actions/download-artifact@v2
 
-    # Leave the below be, it will be useful.
-    - name: List downloaded assets
-      run: |
-       find ./
+     # Leave the below be, it will be useful.
+     - name: List downloaded assets
+       run: |
+        find ./
 
-    - name: Update GitHub prerelease
-      uses: marvinpinto/action-automatic-releases@latest
-      with:
-        repo_token: ${{ secrets.GITHUB_TOKEN }}
-        automatic_release_tag: latest
-        prerelease: true
-        title: "Latest Build"
-        files: |
-             wheels/*.whl
+     - name: Update GitHub prerelease
+       uses: marvinpinto/action-automatic-releases@latest
+       with:
+         repo_token: ${{ secrets.GITHUB_TOKEN }}
+         automatic_release_tag: latest
+         prerelease: true
+         title: "Latest Build"
+         files: |
+              wheels/*.whl
