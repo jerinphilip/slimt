@@ -267,7 +267,7 @@ jobs:
               ${{github.workspace}}\ccache.exe -z # Print current cache stats
 
 
-            CIBW_BUILD: "cp{37,38,39,310,311}-*manylinux_x86_64 cp{37,38,39,310,311}-macosx_x86_64 cp3{8,9,10}-win_amd64 cp*macosx_arm64"
+            CIBW_BUILD: "cp{37,38}-*manylinux_x86_64"
 
             CIBW_BEFORE_TEST_LINUX: |
               ccache -s # Print current ccache stats
@@ -303,8 +303,6 @@ jobs:
     - name: Create Release
       id: create_release
       uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         tag_name: ${{ github.ref }}
         release_name: Release ${{ github.ref }}
@@ -320,8 +318,6 @@ jobs:
     - name: Upload Release Assets
       id: upload-release-assets
       uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
         asset_path: ./wheelhouse/*.whl
