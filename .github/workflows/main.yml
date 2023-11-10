@@ -305,19 +305,12 @@ jobs:
       run: |
        find ./
 
-    - name: Update GitHub prerelease
-      uses: actions/create-release@v1
-      with:
-        tag_name: ${{ github.ref }}
-        release_name: Release ${{ github.ref }}
-        draft: true
-        prerelease: true
-
-    - name: Upload Release Assets
-      id: upload-release-assets
-      uses: actions/upload-release-asset@v1
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./wheelhouse/*.whl
-        asset_name: wheel
-        asset_content_type: application/zip
+   - name: Update GitHub prerelease
+     uses: marvinpinto/action-automatic-releases@latest
+     with:
+       repo_token: ${{ secrets.GITHUB_TOKEN }}
+       automatic_release_tag: latest
+       prerelease: true
+       title: "Latest Build"
+       files: |
+            wheels/*.whl
