@@ -182,9 +182,9 @@ class PyService {
     // mitigate this problem, by patching the annotation's ranges to point to
     // unicode before returning the response.
 
-    auto transform_to_utf8 =
-        [](const AnnotatedText &annotated) -> slimt::Annotation {
-      slimt::Annotation utf8_annotation;
+    auto transform_to_utf8 = [](const AnnotatedText &annotated)
+        -> std::unique_ptr<slimt::Annotation> {
+      auto utf8_annotation = std::make_unique<slimt::Annotation>();
       // f: Range [Bytes] -> Range[UTF8]
       const std::string &text = annotated.text;
 
@@ -240,7 +240,7 @@ class PyService {
 
         ++byte_idx;
       }
-      utf8_annotation.extend_annotation(words);
+      utf8_annotation->extend_annotation(words);
       return utf8_annotation;
     };
 

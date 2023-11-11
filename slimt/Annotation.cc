@@ -43,8 +43,9 @@ void AnnotatedText::append_ending_whitespace(std::string_view whitespace) {
   text.append(whitespace.data(), whitespace.size());
   annotation.token_begin_.back() = text.size();
 }
-void AnnotatedText::update_annotation(const Annotation &new_annotation) {
-  annotation = std::move(new_annotation);
+void AnnotatedText::update_annotation(
+    std::unique_ptr<slimt::Annotation> new_annotation) {
+  annotation = std::move(*new_annotation);
 }
 
 void AnnotatedText::record_existing_sentence(
