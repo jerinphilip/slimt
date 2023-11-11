@@ -210,6 +210,6 @@ PYBIND11_MODULE(_slimt, m) {
            py::arg("config"), py::arg("package"));
 
   auto sm_preset = m.def_submodule("preset");
-  sm_preset.def("tiny11", preset::tiny11);
-  sm_preset.def("base", preset::base);
+  sm_preset.def("tiny11", slimt::preset::tiny11);
+  sm_preset.def("base", slimt::preset::base);
 }
