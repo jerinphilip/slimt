@@ -28,7 +28,6 @@ struct Package {
   Field ssplit;
 };
 
-
 class SLIMT_EXPORT Model {
  public:
   struct SLIMT_EXPORT Config {
@@ -81,8 +80,8 @@ class SLIMT_EXPORT Model {
 };
 
 namespace preset {
-  Model::Config tiny11();
-  Model::Config base();
-}
+Model::Config tiny11();
+Model::Config base();
+}  // namespace preset
 
 }  // namespace slimt
