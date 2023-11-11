@@ -193,7 +193,12 @@ PYBIND11_MODULE(_slimt, m) {
       .def_readwrite("vocabulary", &Package::vocabulary)
       .def_readwrite("shortlist", &Package::shortlist);
 
-  py::class_<ModelConfig>(m, "Config").def(py::init<>());
+  py::class_<ModelConfig>(m, "Config").def(py::init<>())
+      .def_readwrite("encoder_layers", &ModelConfig::encoder_layers)
+      .def_readwrite("decoder_layers", &ModelConfig::decoder_layers)
+      .def_readwrite("feed_forward_depth", &ModelConfig::feed_forward_depth)
+      .def_readwrite("num_heads", &ModelConfig::num_heads)
+      .def_readwrite("split_mode", &ModelConfig::split_mode);
 
   py::class_<PyService>(m, "Service")
       .def(py::init<size_t, size_t>(), py::arg("workers") = 1,
