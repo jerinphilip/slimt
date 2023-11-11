@@ -76,6 +76,14 @@ class Annotation {
     return Range{token_begin_[token_idx], token_begin_[token_idx + 1]};
   }
 
+  void extend_annotation(const std::vector<Range> &words) {
+    for (const auto &word : words) {
+      assert(word.begin == token_begin_.back());
+      token_begin_.push_back(word.begin);
+      token_begin_.push_back(word.end);
+    }
+  }
+
  private:
   friend class AnnotatedText;
   /// Map from token index to byte offset at which it begins.  Token i is:

@@ -221,8 +221,6 @@ class PyService {
 
           // Push it to the list of (utf8) words.
           // We will use these to create the utf8 range annotation.
-          utf8_annotation.token_begin_.push_back(utf8.begin);
-          utf8_annotation.token_begin_.push_back(utf8.end);
           words.push_back(utf8);
 
           ++word_idx;
@@ -242,6 +240,7 @@ class PyService {
 
         ++byte_idx;
       }
+      utf8_annotation.extend_annotation(words);
       return utf8_annotation;
     };
 
