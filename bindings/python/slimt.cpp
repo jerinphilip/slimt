@@ -124,15 +124,7 @@ class PyService {
 
  private:
   static Service make_service(size_t workers, size_t cache_size) {
-    py::scoped_ostream_redirect outstream(
-        std::cout,                                 // std::ostream&
-        py::module_::import("sys").attr("stdout")  // Python output
-    );
-    py::scoped_ostream_redirect errstream(
-        std::cerr,                                 // std::ostream&
-        py::module_::import("sys").attr("stderr")  // Python output
-    );
-
+    Redirect redirect;
     py::call_guard<py::gil_scoped_release> gil_guard;
 
     ServiceConfig config;
@@ -216,4 +208,8 @@ PYBIND11_MODULE(_slimt, m) {
              return std::make_shared<Model>(config, package);
            }),
            py::arg("config"), py::arg("package"));
+           :
+  auto sm_preset = m.def_submodule("preset");
+  sm_preset.def("tiny11", preset::tiny11);
+  sm_preset.def("base", preset::base);
 }
