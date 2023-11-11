@@ -177,4 +177,33 @@ Histories Model::forward(const Input &input) const {
   Histories histories = decode(encoder_out, input);
   return histories;
 }
+
+namespace preset {
+Model::Config tiny11() {
+  // NOLINTBEGIN
+  Model::Config config{
+      .encoder_layers = 6,      //
+      .decoder_layers = 2,      //
+      .feed_forward_depth = 2,  //
+      .num_heads = 8,           //
+      .split_mode = "sentence"  //
+  };
+  // NOLINTEND
+  return config;
+}
+
+Model::Config base() {
+  // NOLINTBEGIN
+  Model::Config config{
+      .encoder_layers = 6,      //
+      .decoder_layers = 2,      //
+      .feed_forward_depth = 2,  //
+      .num_heads = 8,           //
+      .split_mode = "sentence"  //
+  };
+  // NOLINTEND
+  return config;
+}
+}  // namespace preset
+
 }  // namespace slimt

@@ -28,6 +28,7 @@ struct Package {
   Field ssplit;
 };
 
+
 class SLIMT_EXPORT Model {
  public:
   struct SLIMT_EXPORT Config {
@@ -78,5 +79,10 @@ class SLIMT_EXPORT Model {
   Transformer transformer_;
   ShortlistGenerator shortlist_generator_;
 };
+
+namespace preset {
+  Model::Config tiny11();
+  Model::Config base();
+}
 
 }  // namespace slimt
