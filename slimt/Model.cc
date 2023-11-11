@@ -179,7 +179,7 @@ Histories Model::forward(const Input &input) const {
 }
 
 namespace preset {
-Model::Config tiny11() {
+Model::Config tiny() {
   // NOLINTBEGIN
   Model::Config config{
       .encoder_layers = 6,      //
