@@ -144,7 +144,7 @@ class PyService {
     return Service(config);
   }
 
-  static Response change_ranges_to_utf8(Response &response) {
+  static void change_ranges_to_utf8(Response &response) {
     // Ranges are in C++ Byte Ranges.  Python however requires indices into
     // unicode strings. For example, the following is required without this
     // change.
@@ -182,8 +182,9 @@ class PyService {
     // mitigate this problem, by patching the annotation's ranges to point to
     // unicode before returning the response.
 
-    auto transform_to_utf8 = [](const AnnotatedText &annotated) -> Annotation {
-      Annotation utf8;
+    auto transform_to_utf8 =
+        [](const AnnotatedText &annotated) -> slimt::Annotation {
+      slimt::Annotation utf8_annotation;
       // f: Range [Bytes] -> Range[UTF8]
       const std::string &text = annotated.text;
 
@@ -195,10 +196,11 @@ class PyService {
 
       size_t utf8_idx = 0;
       size_t byte_idx = 0;
-      Range utf8 {          //
-        .begin = utf8_idx,  //
-            .end = -1       //
-      }
+      Range utf8{
+          //
+          .begin = utf8_idx,  //
+          .end = 0            //
+      };
       // This loops run on the entire string.
       //
       // We have indices into two views of the same string. One is bytes, the
@@ -219,6 +221,8 @@ class PyService {
 
           // Push it to the list of (utf8) words.
           // We will use these to create the utf8 range annotation.
+          utf8_annotation.token_begin_.push_back(utf8.begin);
+          utf8_annotation.token_begin_.push_back(utf8.end);
           words.push_back(utf8);
 
           ++word_idx;
@@ -238,6 +242,7 @@ class PyService {
 
         ++byte_idx;
       }
+      return utf8_annotation;
     };
 
     response.source.update_annotation(transform_to_utf8(response.source));
