@@ -299,6 +299,7 @@ jobs:
       contents: "write"
       packages: "write"
       pull-requests: "read"
+    if: ${{ github.ref == 'refs/heads/main' }}
     steps:
      - name: Download artifacts
        uses: actions/download-artifact@v2
