@@ -272,8 +272,6 @@ PYBIND11_MODULE(_slimt, m) {
              auto view = annotated_text.sentence(sentence_id);
              return std::string(view.data(), view.size());
            })
-      .def("word_as_range", &AnnotatedText::word_as_range)
-      .def("sentence_as_range", &AnnotatedText::sentence_as_range)
       .def_readonly("text", &AnnotatedText::text);
 
   py::class_<Response>(m, "Response")
