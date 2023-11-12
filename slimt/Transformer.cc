@@ -157,7 +157,7 @@ std::tuple<Tensor, Tensor> Decoder::step(const Tensor &encoder_out,
   auto [x, attn] =
       decoder_[0].forward(encoder_out, mask, states[0], decoder_embed);
 
-  Tensor guided_alignment;
+  Tensor guided_alignment = std::move(attn);
   for (size_t i = 1; i < decoder_.size(); i++) {
     auto [y, _attn] = decoder_[i].forward(encoder_out, mask, states[i], x);
     x = std::move(y);

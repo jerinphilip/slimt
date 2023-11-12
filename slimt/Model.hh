@@ -79,4 +79,9 @@ class SLIMT_EXPORT Model {
   ShortlistGenerator shortlist_generator_;
 };
 
+namespace preset {
+Model::Config tiny();
+Model::Config base();
+}  // namespace preset
+
 }  // namespace slimt
