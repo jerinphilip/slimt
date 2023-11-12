@@ -76,12 +76,19 @@ class Annotation {
     return Range{token_begin_[token_idx], token_begin_[token_idx + 1]};
   }
 
-  void extend_annotation(const std::vector<Range> &words) {
-    for (const auto &word : words) {
-      assert(word.begin == token_begin_.back());
-      token_begin_.push_back(word.begin);
-      token_begin_.push_back(word.end);
+  void update_words(const std::vector<Range> &words) {
+    if (words.empty()) {
+      return;
     }
+
+    token_begin_.clear();
+    token_begin_.push_back(0);
+
+    for (const auto &word : words) {
+      token_begin_.push_back(word.begin);
+    }
+    token_begin_.push_back(words.back().end);
+    token_begin_.push_back(words.back().end);
   }
 
  private:
@@ -154,7 +161,7 @@ class AnnotatedText {
   /// Append the whitespace at the end of input. std::string_view must not be in
   /// text.
   void append_ending_whitespace(std::string_view whitespace);
-  void update_annotation(std::unique_ptr<slimt::Annotation> new_annotation);
+  void update_annotation(const std::vector<Range> &words);
 
   /// Package the existence of a sentence that is already in text.  The
   /// iterators are over std::string_views for each token that must be in text
