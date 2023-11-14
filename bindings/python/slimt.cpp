@@ -260,18 +260,20 @@ PYBIND11_MODULE(_slimt, m) {
       .def(py::init<>())
       .def("word_count", &AnnotatedText::word_count)
       .def("sentence_count", &AnnotatedText::sentence_count)
-      .def("word",
-           [](const AnnotatedText &annotated_text, size_t sentence_id,
-              size_t word_id) -> std::string {
-             auto view = annotated_text.word(sentence_id, word_id);
-             return std::string(view.data(), view.size());
-           })
-      .def("sentence",
-           [](const AnnotatedText &annotated_text,
-              size_t sentence_id) -> std::string {
-             auto view = annotated_text.sentence(sentence_id);
-             return std::string(view.data(), view.size());
-           })
+      // .def("word",
+      //      [](const AnnotatedText &annotated_text, size_t sentence_id,
+      //         size_t word_id) -> std::string {
+      //        auto view = annotated_text.word(sentence_id, word_id);
+      //        return std::string(view.data(), view.size());
+      //      })
+      // .def("sentence",
+      //      [](const AnnotatedText &annotated_text,
+      //         size_t sentence_id) -> std::string {
+      //        auto view = annotated_text.sentence(sentence_id);
+      //        return std::string(view.data(), view.size());
+      //      })
+      .def("word_as_range", &AnnotatedText::word_as_range)
+      .def("sentence_as_range", &AnnotatedText::sentence_as_range)
       .def_readonly("text", &AnnotatedText::text);
 
   py::class_<Response>(m, "Response")
