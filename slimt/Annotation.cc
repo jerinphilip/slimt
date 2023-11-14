@@ -43,8 +43,8 @@ void AnnotatedText::append_ending_whitespace(std::string_view whitespace) {
   text.append(whitespace.data(), whitespace.size());
   annotation.token_begin_.back() = text.size();
 }
-void AnnotatedText::update_annotation(const std::vector<Range> &words) {
-  annotation.update_words(words);
+void AnnotatedText::update(const std::vector<Range> &words) {
+  annotation.update(words);
 }
 
 void AnnotatedText::record_existing_sentence(
