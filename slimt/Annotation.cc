@@ -77,4 +77,57 @@ void AnnotatedText::record_existing_sentence(
   annotation.token_begin_.push_back(text.size());
 }
 
+void AnnotatedText::to(Encoding encoding) {
+  if (encoding == Encoding::UTF8) {
+    size_t sentence_idx = 0;
+    size_t word_idx = 0;
+    Range current = word_as_range(sentence_idx, word_idx);
+
+    std::vector<Range> words;
+
+    size_t utf8_idx = 0;
+    size_t byte_idx = 0;
+    Range utf8{
+        //
+        .begin = utf8_idx,  //
+        .end = 0            //
+    };
+    // This loops run on the entire string.
+    //
+    // We have indices into two views of the same string. One is bytes, the
+    // other is utf8 encoded. We want to convert what is bytes to utf8.
+    //
+    // For this, we traverse through the characters, checking for unicode
+    // encoding and associated adjustments to the utf8_idx, keeping
+    // correspondences with the byte_idx;
+    for (const char c : text) {
+      // current = [begin, end)
+      if ((c & 0xc0) != 0x80)  // if is not utf-8 continuation character
+        ++utf8_idx;
+
+      ++byte_idx;
+
+      if (byte_idx == current.end) {
+        utf8.end = utf8_idx;
+
+        // Push it to the list of (utf8) words.
+        // We will use these to create the utf8 range annotation.
+        words.push_back(utf8);
+
+        ++word_idx;
+        if (word_idx >= word_count(sentence_idx)) {
+          ++sentence_idx;
+          word_idx = 0;
+        }
+
+        current = word_as_range(sentence_idx, word_idx);
+
+        utf8.begin = utf8_idx;
+        utf8.end = -1;
+      }
+    }
+    annotation.update(words);
+  }
+}
+
 }  // namespace slimt

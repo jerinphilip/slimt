@@ -36,6 +36,12 @@ namespace slimt {
 /// beginning).  A sentence can also be empty (typically the translation system
 /// produced empty output).  That's fine, these are just empty ranges as you
 /// would expect.
+enum class Encoding {
+  Byte,
+  UTF8
+  //, UTF16 // For later.
+};
+
 class Annotation {
  public:
   /// Initially an empty string.  Populated by AnnotatedText.
@@ -162,6 +168,7 @@ class AnnotatedText {
   /// text.
   void append_ending_whitespace(std::string_view whitespace);
   void update(const std::vector<Range> &words);
+  void to(Encoding encoding);
 
   /// Package the existence of a sentence that is already in text.  The
   /// iterators are over std::string_views for each token that must be in text
