@@ -9,7 +9,7 @@ def test_ende_borked_base(service, models, sample):
     model_id = "en-de-base"
     repository = "browsermt"
     REPOSITORY.download(repository, model_id)
-    config_path = REPOSITORY.modelConfigPath(repository, model_id)
+    config_path = REPOSITORY.model_config_path(repository, model_id)
     c = None
     with open(config_path) as yaml_file:
         c = yaml.safe_load(yaml_file)
