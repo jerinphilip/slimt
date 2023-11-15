@@ -273,5 +273,18 @@ class AnnotatedText {
     return std::string_view(text.data() + range.begin, range.size());
   }
 };
+class WordIterator {
+ public:
+  explicit WordIterator(const AnnotatedText &annotated)
+      : annotated_(annotated) {}
+  Range operator*();
+  WordIterator &operator++();
+  WordIterator &operator--();
+
+ private:
+  const AnnotatedText &annotated_;
+  size_t sentence_idx_{};
+  size_t word_idx_{};
+};
 
 }  // namespace slimt
