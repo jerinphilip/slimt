@@ -285,6 +285,7 @@ class WordIterator {
   const AnnotatedText &annotated_;
   size_t sentence_idx_{};
   size_t word_idx_{};
+  Range range_;
 };
 
 }  // namespace slimt

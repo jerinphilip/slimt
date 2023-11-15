@@ -79,9 +79,7 @@ void AnnotatedText::record_existing_sentence(
 
 void AnnotatedText::to(Encoding encoding) {
   if (encoding == Encoding::UTF8) {
-    size_t sentence_idx = 0;
-    size_t word_idx = 0;
-    Range current = word_as_range(sentence_idx, word_idx);
+    WordIterator current(*this);
 
     std::vector<Range> words;
 
@@ -107,23 +105,15 @@ void AnnotatedText::to(Encoding encoding) {
 
       ++byte_idx;
 
-      if (byte_idx == current.end) {
+      if (byte_idx == (*current).end) {
         utf8.end = utf8_idx;
 
         // Push it to the list of (utf8) words.
         // We will use these to create the utf8 range annotation.
         words.push_back(utf8);
-
-        ++word_idx;
-        if (word_idx >= word_count(sentence_idx)) {
-          ++sentence_idx;
-          word_idx = 0;
-        }
-
-        current = word_as_range(sentence_idx, word_idx);
+        ++current;
 
         utf8.begin = utf8_idx;
-        utf8.end = -1;
       }
     }
     annotation.update(words);
@@ -151,8 +141,8 @@ WordIterator &WordIterator::operator--() {
 }
 
 Range WordIterator::operator*() {
-  Range current = annotated_.word_as_range(sentence_idx_, word_idx_);
-  return current;
+  range_ = annotated_.word_as_range(sentence_idx_, word_idx_);
+  return range_;
 }
 
 }  // namespace slimt
