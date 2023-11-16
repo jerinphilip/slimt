@@ -19,6 +19,7 @@ using slimt::Alignments;
 using slimt::AnnotatedText;
 using ServiceConfig = slimt::Config;
 using ModelConfig = slimt::Model::Config;
+using slimt::Encoding;
 using slimt::Options;
 using slimt::Range;
 using slimt::Response;
@@ -49,7 +50,8 @@ class PyService {
   }
 
   std::vector<Response> translate(std::shared_ptr<Model> model, py::list &texts,
-                                  bool html) {
+                                  bool html,
+                                  Encoding encoding = Encoding::UTF8) {
     py::call_guard<py::gil_scoped_release> gil_guard;
     Redirect redirect;
 
@@ -78,7 +80,9 @@ class PyService {
       auto &future = handle.future();
       future.wait();
       Response response = future.get();
-      change_ranges_to_utf8(response);
+      if (encoding == Encoding::UTF8) {
+        change_ranges_to_utf8(response);
+      }
       responses.push_back(std::move(response));
     }
 
@@ -214,7 +218,7 @@ PYBIND11_MODULE(_slimt, m) {
       .def(py::init<size_t, size_t>(), py::arg("workers") = 1,
            py::arg("cache_size") = 0)
       .def("translate", &PyService::translate, py::arg("model"),
-           py::arg("texts"), py::arg("html") = false)
+           py::arg("texts"), py::arg("html") = false, py::arg("encoding"))
       .def("pivot", &PyService::pivot, py::arg("first"), py::arg("second"),
            py::arg("texts"), py::arg("html") = false);
 
@@ -223,4 +227,9 @@ PYBIND11_MODULE(_slimt, m) {
              return std::make_shared<Model>(config, package);
            }),
            py::arg("config"), py::arg("package"));
+
+  py::enum_<Encoding>(m, "Encoding")
+      .value("Byte", Encoding::Byte)
+      .value("UTF8", Encoding::UTF8)
+      .export_values();
 }
