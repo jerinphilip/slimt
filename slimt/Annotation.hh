@@ -284,8 +284,8 @@ class WordIterator {
 
  private:
   const AnnotatedText &annotated_;
-  size_t sentence_idx_{};
-  size_t word_idx_{};
+  size_t sentence_idx_{0};
+  size_t word_idx_{0};
   Range range_;
 };
 
