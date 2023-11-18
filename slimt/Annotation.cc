@@ -78,6 +78,7 @@ void AnnotatedText::record_existing_sentence(
 }
 
 void AnnotatedText::to(Encoding encoding) {
+  if (encoding == encoding_) return;
   if (encoding == Encoding::UTF8) {
     WordIterator current(*this);
 
