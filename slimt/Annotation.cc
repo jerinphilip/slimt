@@ -79,7 +79,26 @@ void AnnotatedText::record_existing_sentence(
 
 void AnnotatedText::to(Encoding encoding) {
   if (encoding == encoding_) return;
-  if (encoding == Encoding::UTF8) {
+  if (encoding == Encoding::Byte) {
+    WordIterator current(*this);
+
+    std::vector<Range> words;
+
+    size_t utf8_idx = 0;
+    size_t byte_idx = 0;
+    Range utf8{.begin = utf8_idx, .end = 0};
+    for (const char c : text) {
+      ++byte_idx;
+
+      if (byte_idx == (*current).end) {
+        utf8.end = utf8_idx;
+        words.push_back(utf8);
+        ++current;
+        utf8.begin = utf8_idx;
+      }
+    }
+    annotation.update(words);
+  } else if (encoding == Encoding::UTF8 && encoding_ == Encoding::Byte) {
     WordIterator current(*this);
 
     std::vector<Range> words;
