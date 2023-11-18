@@ -129,17 +129,6 @@ WordIterator &WordIterator::operator++() {
   return *this;
 }
 
-WordIterator &WordIterator::operator--() {
-  if (word_idx_ == 0) {
-    --sentence_idx_;
-    word_idx_ = annotated_.word_count(sentence_idx_) - 1;
-  } else {
-    --word_idx_;
-  }
-
-  return *this;
-}
-
 Range WordIterator::operator*() {
   range_ = annotated_.word_as_range(sentence_idx_, word_idx_);
   return range_;
