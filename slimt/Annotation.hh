@@ -273,6 +273,7 @@ class AnnotatedText {
     return std::string_view(text.data() + range.begin, range.size());
   }
 };
+
 class WordIterator {
  public:
   explicit WordIterator(const AnnotatedText &annotated)
