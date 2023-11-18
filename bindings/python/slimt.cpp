@@ -130,15 +130,7 @@ class PyService {
 
  private:
   static Service make_service(size_t workers, size_t cache_size) {
-    py::scoped_ostream_redirect outstream(
-        std::cout,                                 // std::ostream&
-        py::module_::import("sys").attr("stdout")  // Python output
-    );
-    py::scoped_ostream_redirect errstream(
-        std::cerr,                                 // std::ostream&
-        py::module_::import("sys").attr("stderr")  // Python output
-    );
-
+    Redirect redirect;
     py::call_guard<py::gil_scoped_release> gil_guard;
 
     ServiceConfig config;
@@ -212,7 +204,13 @@ PYBIND11_MODULE(_slimt, m) {
       .def_readwrite("vocabulary", &Package::vocabulary)
       .def_readwrite("shortlist", &Package::shortlist);
 
-  py::class_<ModelConfig>(m, "Config").def(py::init<>());
+  py::class_<ModelConfig>(m, "Config")
+      .def(py::init<>())
+      .def_readwrite("encoder_layers", &ModelConfig::encoder_layers)
+      .def_readwrite("decoder_layers", &ModelConfig::decoder_layers)
+      .def_readwrite("feed_forward_depth", &ModelConfig::feed_forward_depth)
+      .def_readwrite("num_heads", &ModelConfig::num_heads)
+      .def_readwrite("split_mode", &ModelConfig::split_mode);
 
   py::class_<PyService>(m, "Service")
       .def(py::init<size_t, size_t>(), py::arg("workers") = 1,
@@ -232,4 +230,8 @@ PYBIND11_MODULE(_slimt, m) {
       .value("Byte", Encoding::Byte)
       .value("UTF8", Encoding::UTF8)
       .export_values();
+
+  auto sm_preset = m.def_submodule("preset");
+  sm_preset.def("tiny", slimt::preset::tiny);
+  sm_preset.def("base", slimt::preset::base);
 }

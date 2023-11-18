@@ -71,9 +71,9 @@ Model::Model(const Config &config, const Package<std::string> &package)
 
 namespace {
 void update_alignment(const std::vector<size_t> &lengths,
-                      const std::vector<bool> &finished, Tensor &attn,
+                      const std::vector<bool> &finished, const Tensor &attn,
                       Alignments &alignments) {
-  auto *data = attn.data<float>();
+  const auto *data = attn.data<float>();
   // B x H x 1 (T) x S
   size_t batch_size = attn.dim(-4);
   size_t num_heads = attn.dim(-3);
@@ -87,7 +87,7 @@ void update_alignment(const std::vector<size_t> &lengths,
     if (!finished[id]) {
       size_t batch_stride = (num_heads * slice * source_length);
       size_t head_stride = (slice * source_length);
-      float *alignment = data + id * batch_stride + head_id * head_stride;
+      const float *alignment = data + id * batch_stride + head_id * head_stride;
       size_t length = lengths[id];
       Distribution distribution(length);
       std::copy(alignment, alignment + length, distribution.data());
@@ -177,4 +177,33 @@ Histories Model::forward(const Input &input) const {
   Histories histories = decode(encoder_out, input);
   return histories;
 }
+
+namespace preset {
+Model::Config tiny() {
+  // NOLINTBEGIN
+  Model::Config config{
+      .encoder_layers = 6,      //
+      .decoder_layers = 2,      //
+      .feed_forward_depth = 2,  //
+      .num_heads = 8,           //
+      .split_mode = "sentence"  //
+  };
+  // NOLINTEND
+  return config;
+}
+
+Model::Config base() {
+  // NOLINTBEGIN
+  Model::Config config{
+      .encoder_layers = 6,      //
+      .decoder_layers = 2,      //
+      .feed_forward_depth = 2,  //
+      .num_heads = 8,           //
+      .split_mode = "sentence"  //
+  };
+  // NOLINTEND
+  return config;
+}
+}  // namespace preset
+
 }  // namespace slimt
