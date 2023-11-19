@@ -7,6 +7,8 @@
 #include <utility>
 #include <vector>
 
+#include "Macros.hh"
+
 namespace slimt {
 
 AnnotatedText::AnnotatedText(std::string &&t) : text(std::move(t)) {
@@ -87,9 +89,7 @@ void AnnotatedText::to(Encoding encoding) {
     size_t utf8_idx = 0;
     size_t byte_idx = 0;
     Range utf8{.begin = utf8_idx, .end = 0};
-    for (const char c : text) {
-      ++byte_idx;
-
+    for (; byte_idx < text.length(); byte_idx++) {
       if (byte_idx == (*current).end) {
         utf8.end = utf8_idx;
         words.push_back(utf8);
@@ -137,6 +137,8 @@ void AnnotatedText::to(Encoding encoding) {
       }
     }
     annotation.update(words);
+  } else {
+    SLIMT_ABORT("Unimplemented");
   }
 }
 
