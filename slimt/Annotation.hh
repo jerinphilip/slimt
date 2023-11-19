@@ -49,7 +49,6 @@ class Annotation {
     token_begin_.push_back(0);
     token_begin_.push_back(0);
     gap_.push_back(0);
-    encoding_ = Encoding::Byte;
   }
 
   size_t sentence_count() const { return gap_.size() - 1; }
@@ -273,7 +272,7 @@ class AnnotatedText {
   std::string_view as_view(const Range &range) const {
     return std::string_view(text.data() + range.begin, range.size());
   }
-  Encoding encoding_;
+  Encoding encoding_{Encoding::Byte};
 };
 
 class WordIterator {
