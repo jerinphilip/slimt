@@ -23,7 +23,7 @@ def models():
 
     for repository in keys:
         for modelId in model_ids:
-            config_path = REPOSITORY.modelConfigPath(repository, modelId)
+            config_path = REPOSITORY.model_config_path(repository, modelId)
             c = None
             with open(config_path) as yaml_file:
                 c = yaml.safe_load(yaml_file)

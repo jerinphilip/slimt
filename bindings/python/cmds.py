@@ -76,7 +76,7 @@ class Translate:
 
         models = []
         for model in args.model:
-            config_path = REPOSITORY.modelConfigPath(args.repository, model)
+            config_path = REPOSITORY.model_config_path(args.repository, model)
             package = package_from_config_path(config_path)
             config = Config()
             models.append(Model(config, package))
