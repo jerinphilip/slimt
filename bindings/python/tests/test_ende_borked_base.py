@@ -1,6 +1,6 @@
 # type: ignore
 import os
-from slimt.utils import toJSON
+from slimt.utils import to_json
 from slimt import REPOSITORY, Package, Model, preset
 import yaml
 
@@ -28,4 +28,4 @@ def test_ende_borked_base(service, models, sample):
     source, _, html = sample
     responses = service.translate(model, [source], html=html)
     for response in responses:
-        print(toJSON(response, indent=4))
+        print(to_json(response, indent=4))
