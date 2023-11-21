@@ -80,24 +80,38 @@ void AnnotatedText::record_existing_sentence(
 }
 
 void AnnotatedText::to(Encoding encoding) {
-  if (encoding == encoding_) return;
-  if (encoding == Encoding::Byte) {
+  if (encoding == encoding_) {
+    return;
+  }
+
+  if (encoding == Encoding::Byte && encoding_ == Encoding::UTF8) {
     WordIterator current(*this);
 
     std::vector<Range> words;
 
-    size_t utf8_idx = 0;
     size_t byte_idx = 0;
-    Range utf8{.begin = utf8_idx, .end = 0};
-    for (; byte_idx < text.length(); byte_idx++) {
-      if (byte_idx == (*current).end) {
-        utf8.end = utf8_idx;
-        words.push_back(utf8);
-        ++current;
-        utf8.begin = utf8_idx;
+    Range byte{.begin = byte_idx, .end = 0};
+
+    const char *marker = text.data();
+    std::cout << *marker << std::endl;
+    for (; current.has_next(); ++current) {
+      byte.begin = byte_idx;
+
+      for (size_t idx = (*current).begin; idx != (*current).end; idx++) {
+        ++marker;
+        ++byte_idx;
+
+        if ((*marker & 0xc0) == 0x80) {
+          ++byte_idx;
+          ++marker;
+        }
       }
+      byte.end = byte_idx;
+      words.push_back(byte);
     }
+
     annotation.update(words);
+    encoding_ = Encoding::Byte;
   } else if (encoding == Encoding::UTF8 && encoding_ == Encoding::Byte) {
     WordIterator current(*this);
 
@@ -137,6 +151,7 @@ void AnnotatedText::to(Encoding encoding) {
       }
     }
     annotation.update(words);
+    encoding_ = Encoding::UTF8;
   } else {
     SLIMT_ABORT("Unimplemented");
   }
@@ -156,4 +171,8 @@ Range WordIterator::operator*() {
   return range_;
 }
 
+bool WordIterator::has_next() {
+  return sentence_idx_ < annotated_.sentence_count() &&
+         word_idx_ < annotated_.word_count(sentence_idx_);
+}
 }  // namespace slimt

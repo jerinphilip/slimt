@@ -281,6 +281,7 @@ class WordIterator {
       : annotated_(annotated) {}
   Range operator*();
   WordIterator &operator++();
+  bool has_next();
 
  private:
   const AnnotatedText &annotated_;
