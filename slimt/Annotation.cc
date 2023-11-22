@@ -93,7 +93,6 @@ void AnnotatedText::to(Encoding encoding) {
     Range byte{.begin = byte_idx, .end = 0};
 
     const char *marker = text.data();
-    std::cout << *marker << std::endl;
     for (; current.has_next(); ++current) {
       byte.begin = byte_idx;
 
