@@ -1,24 +1,36 @@
 # type: ignore
-from slimt.utils import toJSON
 from slimt import Encoding
+from slimt.utils import toJSON
+from collections import namedtuple
 
 
-def test_basic(service, models, sample):
+def test_basic(service, models):
+    Pair = namedtuple("Pair", ["byte", "utf8"])
     source = "no sé"
     model = models[1]
-    responses_byte = service.translate(
+    response_byte = service.translate(
         model, [source], html=False, encoding=Encoding.Byte
-    )
-    responses_utf8 = service.translate(
+    )[0]
+    response_utf8 = service.translate(
         model, [source], html=False, encoding=Encoding.UTF8
+    )[0]
+    utf8: AnnotatedText = response_utf8.source
+    byte: AnnotatedText = response_byte.source
+    text = Pair(
+        byte=utf8.text.encode(),
+        utf8=utf8.text,
     )
-    for response in responses_byte:
-        print(dir(response))
-        print(toJSON(response, indent=4))
-        extracted_byte = response.source.word(0, 0)
-    for response in responses_utf8:
-        print(dir(response))
-        print(toJSON(response, indent=4))
-        range = response.source.word_as_range(0, 0)
-        extracted_utf8 = response.source.text[range.begin : range.end]
-    assert extracted_utf8 == extracted_byte
+    sentence_count = byte.sentence_count()
+    for sentence_idx in range(sentence_count):
+        word_count = byte.word_count(sentence_idx)
+        for word_idx in range(word_count):
+            text_range = Pair(
+                byte=byte.word_as_range(sentence_idx, word_idx),
+                utf8=utf8.word_as_range(sentence_idx, word_idx),
+            )
+            expected = text.utf8[text_range.utf8.begin : text_range.utf8.end]
+            reconstructed = text.byte[
+                text_range.byte.begin : text_range.byte.end
+            ].decode("utf-8")
+
+            assert expected == reconstructed
