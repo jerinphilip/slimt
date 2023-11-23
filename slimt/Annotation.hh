@@ -279,7 +279,7 @@ class WordIterator {
  public:
   explicit WordIterator(const AnnotatedText &annotated)
       : annotated_(annotated) {}
-  Range operator*();
+  Range &operator*();
   WordIterator &operator++();
   bool has_next();
 

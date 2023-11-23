@@ -164,7 +164,7 @@ WordIterator &WordIterator::operator++() {
   return *this;
 }
 
-Range WordIterator::operator*() {
+Range &WordIterator::operator*() {
   range_ = annotated_.word_as_range(sentence_idx_, word_idx_);
   return range_;
 }
