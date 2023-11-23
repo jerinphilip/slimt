@@ -272,7 +272,7 @@ class AnnotatedText {
   std::string_view as_view(const Range &range) const {
     return std::string_view(text.data() + range.begin, range.size());
   }
-  Encoding encoding_{Encoding::Byte};
+  Encoding encoding_ = Encoding::Byte;
 };
 
 class WordIterator {
@@ -285,8 +285,8 @@ class WordIterator {
 
  private:
   const AnnotatedText &annotated_;
-  size_t sentence_idx_{0};
-  size_t word_idx_{0};
+  size_t sentence_idx_ = 0;
+  size_t word_idx_ = 0;
   Range range_;
 };
 
