@@ -94,6 +94,8 @@ class Annotation {
       token_begin_.push_back(word.begin);
     }
     token_begin_.push_back(words.back().end);
+    // The last range is repated to denote EOS [sentence_length,
+    // sentence_length].
     token_begin_.push_back(words.back().end);
   }
 
