@@ -85,15 +85,13 @@ void AnnotatedText::to(Encoding encoding) {
   }
 
   if (encoding == Encoding::Byte && encoding_ == Encoding::UTF8) {
-    WordIterator current(*this);
-
     std::vector<Range> words;
 
     size_t byte_idx = 0;
     Range byte{.begin = byte_idx, .end = 0};
 
     const char *marker = text.data();
-    for (; current.has_next(); ++current) {
+    for (WordIterator current(*this); current.has_next(); ++current) {
       byte.begin = byte_idx;
 
       for (size_t idx = (*current).begin; idx != (*current).end; idx++) {
