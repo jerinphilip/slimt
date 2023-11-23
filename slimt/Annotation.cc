@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "Macros.hh"
+#include "slimt/Types.hh"
 
 namespace slimt {
 
