@@ -200,11 +200,17 @@ PYBIND11_MODULE(_slimt, m) {
       .def_readwrite("num_heads", &ModelConfig::num_heads)
       .def_readwrite("split_mode", &ModelConfig::split_mode);
 
+  py::enum_<Encoding>(m, "Encoding")
+      .value("Byte", Encoding::Byte)
+      .value("UTF8", Encoding::UTF8)
+      .export_values();
+
   py::class_<PyService>(m, "Service")
       .def(py::init<size_t, size_t>(), py::arg("workers") = 1,
            py::arg("cache_size") = 0)
       .def("translate", &PyService::translate, py::arg("model"),
-           py::arg("texts"), py::arg("html") = false, py::arg("encoding"))
+           py::arg("texts"), py::arg("html") = false,
+           py::arg("encoding") = Encoding::UTF8)
       .def("pivot", &PyService::pivot, py::arg("first"), py::arg("second"),
            py::arg("texts"), py::arg("html") = false);
 
@@ -213,11 +219,6 @@ PYBIND11_MODULE(_slimt, m) {
              return std::make_shared<Model>(config, package);
            }),
            py::arg("config"), py::arg("package"));
-
-  py::enum_<Encoding>(m, "Encoding")
-      .value("Byte", Encoding::Byte)
-      .value("UTF8", Encoding::UTF8)
-      .export_values();
 
   auto sm_preset = m.def_submodule("preset");
   sm_preset.def("tiny", slimt::preset::tiny);
