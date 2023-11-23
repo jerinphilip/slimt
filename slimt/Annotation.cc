@@ -99,7 +99,7 @@ void AnnotatedText::to(Encoding encoding) {
         ++marker;
         ++byte_idx;
 
-        if ((*marker & 0xc0) == 0x80) {
+        if ((*marker & 0xc0) == 0x80) {  // NOLINT
           ++byte_idx;
           ++marker;
         }
@@ -132,7 +132,8 @@ void AnnotatedText::to(Encoding encoding) {
     // correspondences with the byte_idx;
     for (const char c : text) {
       // current = [begin, end)
-      if ((c & 0xc0) != 0x80)  // if is not utf-8 continuation character
+      // if is not utf-8 continuation character
+      if ((c & 0xc0) != 0x80)  // NOLINT
         ++utf8_idx;
 
       ++byte_idx;
