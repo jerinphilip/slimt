@@ -1,5 +1,5 @@
 # type: ignore
-from slimt.utils import toJSON
+from slimt.utils import to_json
 import json
 import pytest
 
@@ -37,7 +37,7 @@ def test_pivot(service, models, sample):
     for model in models:
         responses = service.translate(model, [source], html=html)
         for response in responses:
-            responseJSON = json.loads((toJSON(response, indent=4)))
+            responseJSON = json.loads((to_json(response, indent=4)))
             source = responseJSON["target"]["text"]
             responses_.append(responseJSON)
     sources_response = responses_[0]["source"]

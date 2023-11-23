@@ -42,8 +42,8 @@ class Repository(ABC):  # pragma: no cover
         pass
 
     @abstractmethod
-    def modelConfigPath(self, model_identifier: str) -> str:
-        """returns modelConfigPath for for a given model-identifier"""
+    def model_config_path(self, model_identifier: str) -> str:
+        """returns model_config_path for for a given model-identifier"""
         pass
 
     @abstractmethod
@@ -122,7 +122,7 @@ class TranslateLocallyLike(Repository):
                 codes.append(model["code"])
         return codes
 
-    def modelConfigPath(self, model_identifier: str) -> str:
+    def model_config_path(self, model_identifier: str) -> str:
         model = self.model(model_identifier)
         fprefix = self._archive_name_without_extension(model["url"])
         model_dir = os.path.join(self.dirs["models"], fprefix)
@@ -200,8 +200,8 @@ class Aggregator:
     def update(self, name: str) -> None:
         self.repositories.get(name, self.default_repository).update()
 
-    def modelConfigPath(self, name: str, code: str) -> PathLike:
-        return self.repositories.get(name, self.default_repository).modelConfigPath(
+    def model_config_path(self, name: str, code: str) -> PathLike:
+        return self.repositories.get(name, self.default_repository).model_config_path(
             code
         )
 
