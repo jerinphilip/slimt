@@ -1,6 +1,5 @@
 # type: ignore
 from slimt import Encoding
-from slimt.utils import toJSON
 from collections import namedtuple
 
 
