@@ -37,7 +37,7 @@ struct Response {
   /// alignment and quality information are available.
   size_t size() const { return source.sentence_count(); }
 
-  void transform_in_place(Encoding encoding);
+  void to(Encoding encoding);
 };
 
 /// Options dictate how to construct a Response for an input string of

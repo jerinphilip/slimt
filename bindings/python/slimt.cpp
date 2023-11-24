@@ -80,7 +80,7 @@ class PyService {
       auto &future = handle.future();
       future.wait();
       Response response = future.get();
-      response.transform_in_place(encoding);
+      response.to(encoding);
       responses.push_back(std::move(response));
     }
 

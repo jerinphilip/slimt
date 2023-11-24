@@ -188,7 +188,7 @@ Response combine(Response &&first, Response &&second) {
   return combined;
 }
 
-void Response::transform_in_place(Encoding encoding) {
+void Response::to(Encoding encoding) {
   source.to(encoding);
   target.to(encoding);
 }
