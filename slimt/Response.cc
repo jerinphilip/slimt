@@ -188,6 +188,11 @@ Response combine(Response &&first, Response &&second) {
   return combined;
 }
 
+void Response::transform_in_place(Encoding encoding) {
+  source.to(encoding);
+  target.to(encoding);
+}
+
 Handle::Info Handle::info() {
   auto [words, segments] = request_->progress();
   double wps = static_cast<float>(words.p) / timer_.elapsed();

@@ -80,9 +80,7 @@ class PyService {
       auto &future = handle.future();
       future.wait();
       Response response = future.get();
-      if (encoding == Encoding::UTF8) {
-        change_ranges_to_utf8(response);
-      }
+      response.transform_in_place(encoding);
       responses.push_back(std::move(response));
     }
 
@@ -138,11 +136,6 @@ class PyService {
     config.cache_size = cache_size;
 
     return Service(config);
-  }
-
-  static void change_ranges_to_utf8(Response &response) {
-    response.source.to(slimt::Encoding::UTF8);
-    response.target.to(slimt::Encoding::UTF8);
   }
 
   Service service_;
