@@ -96,13 +96,9 @@ void AnnotatedText::to(Encoding encoding) {
       byte.begin = byte_idx;
 
       for (size_t idx = (*current).begin; idx != (*current).end; idx++) {
-        ++marker;
-        ++byte_idx;
-
-        if ((*marker & 0xc0) == 0x80) {  // NOLINT
-          ++byte_idx;
-          ++marker;
-        }
+        int sequence_length = utf8_sequence_length(marker);
+        byte_idx += sequence_length;
+        marker += sequence_length;
       }
       byte.end = byte_idx;
       words.push_back(byte);
@@ -130,23 +126,24 @@ void AnnotatedText::to(Encoding encoding) {
     // For this, we traverse through the characters, checking for unicode
     // encoding and associated adjustments to the utf8_idx, keeping
     // correspondences with the byte_idx;
+    int extra_bytes = 0;
     for (const char c : text) {
       // current = [begin, end)
       // if is not utf-8 continuation character
-      if ((c & 0xc0) != 0x80)  // NOLINT
-        ++utf8_idx;
-
+      //
+      extra_bytes += utf8_sequence_length(&c) - 1;
       ++byte_idx;
 
       if (byte_idx == (*current).end) {
-        utf8.end = utf8_idx;
+        utf8.end = byte_idx - extra_bytes;
 
         // Push it to the list of (utf8) words.
         // We will use these to create the utf8 range annotation.
         words.push_back(utf8);
         ++current;
 
-        utf8.begin = utf8_idx;
+        utf8.begin = byte_idx - extra_bytes;
+        extra_bytes = 0;
       }
     }
     annotation.update(words);
