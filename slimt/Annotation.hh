@@ -274,6 +274,7 @@ class AnnotatedText {
   std::string_view as_view(const Range &range) const {
     return std::string_view(text.data() + range.begin, range.size());
   }
+  static int utf8_sequence_length(const char *iterator);
   Encoding encoding_ = Encoding::Byte;
 };
 

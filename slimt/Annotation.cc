@@ -156,6 +156,24 @@ void AnnotatedText::to(Encoding encoding) {
   }
 }
 
+int AnnotatedText::utf8_sequence_length(const char *iterator) {
+  // Check if the most significant bit is 0
+  if ((*iterator & 0x80) == 0) {  // NOLINT
+    return 1;                     // Single-byte character
+  }
+
+  // Check the number of leading 1s to determine the length of the sequence
+  if ((*iterator & 0xE0) == 0xC0) {         // NOLINT
+    return 2;                               // 2-byte sequence
+  } else if ((*iterator & 0xF0) == 0xE0) {  // NOLINT
+    return 3;                               // 3-byte sequence
+  } else if ((*iterator & 0xF8) == 0xF0) {  // NOLINT
+    return 4;                               // 4-byte sequence
+  }
+
+  return 0;  // Not a valid start of a multi-byte sequence
+}
+
 WordIterator &WordIterator::operator++() {
   ++word_idx_;
   if (word_idx_ >= annotated_.word_count(sentence_idx_)) {
