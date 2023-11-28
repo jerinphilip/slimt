@@ -299,7 +299,7 @@ Tensor LayerNorm::forward(const Tensor &x) const {
 
   layer_norm(x.data<float>(),                            //
              scale_.data<float>(), bias_.data<float>(),  //
-             kEps, rows, cols, has_bias,        //
+             kEps, rows, cols, has_bias,                 //
              y.data<float>());
 
   return y;

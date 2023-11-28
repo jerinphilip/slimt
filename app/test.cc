@@ -30,12 +30,12 @@ namespace {
 std::string prefix(const std::string &fname) { return kBlobPath + "/" + fname; }
 
 template <typename Scalar, class... Args>
-Tensor tf(const std::string &path, Args &&...args) {
+Tensor tf(const std::string &path, Args &&... args) {
   return tensor_from_file<Scalar>(prefix(path), std::forward<Args>(args)...);
 }
 
 template <typename Scalar, typename Quant, class... Args>
-std::tuple<Tensor, float> qtf(const std::string &path, Args &&...args) {
+std::tuple<Tensor, float> qtf(const std::string &path, Args &&... args) {
   return quantized_tensor_from_file<Scalar, Quant>(prefix(path),
                                                    std::forward<Args>(args)...);
 }
@@ -264,8 +264,7 @@ void LayerNormalizationOp() {
 
   bool has_beta = true;
   layer_norm(rhs0.data<float>(), rhs1.data<float>(), rhs2.data<float>(), kEps,
-             rows, cols, has_beta,
-             lhs_expected.data<float>());
+             rows, cols, has_beta, lhs_expected.data<float>());
 
   SLIMT_TRACE(lhs);
   SLIMT_TRACE(lhs_expected);
