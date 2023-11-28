@@ -1,11 +1,12 @@
 # type: ignore
 from slimt import Encoding
+from slimt.utils import to_json
 from collections import namedtuple
 
 
 def test_basic(service, models):
     Pair = namedtuple("Pair", ["byte", "utf8"])
-    source = "no sé"
+    source = "no sé 😀 😃 😄 😁 😆"
     model = models[1]
     response_byte = service.translate(
         model, [source], html=False, encoding=Encoding.Byte
@@ -13,6 +14,8 @@ def test_basic(service, models):
     response_utf8 = service.translate(
         model, [source], html=False, encoding=Encoding.UTF8
     )[0]
+    print(to_json(response_byte))
+    print(to_json(response_utf8))
     utf8: AnnotatedText = response_utf8.source
     byte: AnnotatedText = response_byte.source
     text = Pair(
