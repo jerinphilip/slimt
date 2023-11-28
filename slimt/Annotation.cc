@@ -95,7 +95,7 @@ void AnnotatedText::to(Encoding encoding) {
     for (WordIterator current(*this); current.has_next(); ++current) {
       byte.begin = byte_idx;
 
-      for (size_t idx = (*current).begin; idx != (*current).end; idx++) {
+      for (size_t idx = current->begin; idx != current->end; idx++) {
         int sequence_length = utf8_sequence_length(marker);
         byte_idx += sequence_length;
         marker += sequence_length;
@@ -134,7 +134,7 @@ void AnnotatedText::to(Encoding encoding) {
       extra_bytes += utf8_sequence_length(&c) - 1;
       ++byte_idx;
 
-      if (byte_idx == (*current).end) {
+      if (byte_idx == current->end) {
         utf8.end = byte_idx - extra_bytes;
 
         // Push it to the list of (utf8) words.
@@ -180,9 +180,9 @@ WordIterator &WordIterator::operator++() {
   return *this;
 }
 
-Range &WordIterator::operator*() {
+Range *WordIterator::operator->() {
   range_ = annotated_.word_as_range(sentence_idx_, word_idx_);
-  return range_;
+  return &range_;
 }
 
 bool WordIterator::has_next() {
