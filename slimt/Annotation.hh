@@ -274,7 +274,6 @@ class AnnotatedText {
   std::string_view as_view(const Range &range) const {
     return std::string_view(text.data() + range.begin, range.size());
   }
-  static int utf8_sequence_length(const char *iterator);
   Encoding encoding_ = Encoding::Byte;
 };
 
@@ -292,5 +291,7 @@ class WordIterator {
   size_t word_idx_ = 0;
   Range range_;
 };
+
+static int utf8_sequence_length(const char *iterator);
 
 }  // namespace slimt

@@ -153,7 +153,7 @@ void AnnotatedText::to(Encoding encoding) {
   }
 }
 
-int AnnotatedText::utf8_sequence_length(const char *iterator) {
+int utf8_sequence_length(const char *iterator) {
   // Check if the most significant bit is 0
   if ((*iterator & 0x80) == 0) {  // NOLINT
     return 1;                     // Single-byte character
