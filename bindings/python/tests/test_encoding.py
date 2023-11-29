@@ -6,7 +6,7 @@ from collections import namedtuple
 
 def test_basic(service, models):
     Pair = namedtuple("Pair", ["byte", "utf8"])
-    source = "no sé 😀 😃 😄 😁 😆"
+    source = "no sé 😀 😃 😄 😁 😆 ⛄ 🤔"
     model = models[1]
     response_byte = service.translate(
         model, [source], html=False, encoding=Encoding.Byte
