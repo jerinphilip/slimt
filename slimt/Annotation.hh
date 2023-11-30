@@ -292,6 +292,6 @@ class WordIterator {
   Range range_;
 };
 
-static int utf8_sequence_length(const char *iterator);
+int utf8_sequence_length(const char *iterator);
 
 }  // namespace slimt
