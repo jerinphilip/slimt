@@ -163,6 +163,7 @@ PYBIND11_MODULE(_slimt, m) {
 
   py::class_<Response>(m, "Response")
       .def(py::init<>())
+      .def("to", &Response::to)
       .def_readonly("source", &Response::source)
       .def_readonly("target", &Response::target)
       .def_readonly("alignments", &Response::alignments);
