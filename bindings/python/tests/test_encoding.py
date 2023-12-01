@@ -36,3 +36,15 @@ def test_basic(service, models):
             ].decode("utf-8")
 
             assert expected == reconstructed
+
+    response_utf8.to(Encoding.Byte)
+    utf8_to_byte: AnnotatedText = response_utf8.source
+    byte: AnnotatedText = response_byte.source
+    sentence_count = byte.sentence_count()
+    for sentence_idx in range(sentence_count):
+        word_count = byte.word_count(sentence_idx)
+        for word_idx in range(word_count):
+            byte_range = byte.word_as_range(sentence_idx, word_idx)
+            utf8_to_byte_range = utf8_to_byte.word_as_range(sentence_idx, word_idx)
+            assert byte_range.begin == utf8_to_byte_range.begin
+            assert byte_range.end == utf8_to_byte_range.end
