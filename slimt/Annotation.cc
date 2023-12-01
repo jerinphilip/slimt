@@ -96,13 +96,9 @@ void AnnotatedText::to(Encoding encoding) {
       byte.begin = byte_idx;
 
       for (size_t idx = current->begin; idx != current->end; idx++) {
-        ++marker;
-        ++byte_idx;
-
-        if ((*marker & 0xc0) == 0x80) {  // NOLINT
-          ++byte_idx;
-          ++marker;
-        }
+        int sequence_length = utf8_sequence_length(marker);
+        marker += sequence_length;
+        byte_idx += sequence_length;
       }
       byte.end = byte_idx;
       words.push_back(byte);
@@ -133,10 +129,10 @@ void AnnotatedText::to(Encoding encoding) {
     for (const char c : text) {
       // current = [begin, end)
       // if is not utf-8 continuation character
-      if ((c & 0xc0) != 0x80)  // NOLINT
-        ++utf8_idx;
+      int sequence_length = utf8_sequence_length(&c);
+      if (sequence_length > 0) ++utf8_idx;
 
-      ++byte_idx;
+      byte_idx += sequence_length;
 
       if (byte_idx == current->end) {
         utf8.end = utf8_idx;
