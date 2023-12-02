@@ -37,9 +37,8 @@ namespace slimt {
 /// produced empty output).  That's fine, these are just empty ranges as you
 /// would expect.
 enum class Encoding {
-  Byte,
-  UTF8
-  //, UTF16 // For later.
+  Byte,  //
+  UTF8   //
 };
 
 class Annotation {
