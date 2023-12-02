@@ -96,7 +96,7 @@ void AnnotatedText::to(Encoding encoding) {
       byte.begin = byte_idx;
 
       for (size_t idx = current->begin; idx != current->end; idx++) {
-        int sequence_length = utf8_sequence_length(marker);
+        int sequence_length = utf8_sequence_length(*marker);
         marker += sequence_length;
         byte_idx += sequence_length;
       }
@@ -126,7 +126,7 @@ void AnnotatedText::to(Encoding encoding) {
     for (const char c : text) {
       // current = [begin, end)
       // if is not utf-8 continuation character
-      int sequence_length = utf8_sequence_length(&c);
+      int sequence_length = utf8_sequence_length(c);
       if (sequence_length > 0) ++utf8_idx;
 
       byte_idx += sequence_length;
@@ -150,22 +150,32 @@ void AnnotatedText::to(Encoding encoding) {
   }
 }
 
-int utf8_sequence_length(const char *iterator) {
-  // Check if the most significant bit is 0
-  if ((*iterator & 0x80) == 0) {  // NOLINT
-    return 1;                     // Single-byte character
+int utf8_sequence_length(char c) {
+  // char is 8 bit (1 byte). "xxxxxxxx". Per UTF-8 Encoding rules:
+  //   * first 1 bit  is  "0xxxxxxx" => start of a 1-byte character.
+  //   * first 3 bits are "110xxxxx" => start of a 2-byte sequence.
+  //   * first 4 bits are "1110xxxx" => start of a 3-byte sequence.
+  //   * first 5 bits are "11110xxx" => start of a 4-byte sequence.
+
+  // Check leading bit. 0x80 = 1000000, & gets us first bit.
+  if ((c & 0x80) == 0) {  // NOLINT
+    return 1;
   }
 
-  // Check the number of leading 1s to determine the length of the sequence
-  if ((*iterator & 0xE0) == 0xC0) {         // NOLINT
-    return 2;                               // 2-byte sequence
-  } else if ((*iterator & 0xF0) == 0xE0) {  // NOLINT
-    return 3;                               // 3-byte sequence
-  } else if ((*iterator & 0xF8) == 0xF0) {  // NOLINT
-    return 4;                               // 4-byte sequence
+  if ((c & 0xE0) == 0xC0) {  // NOLINT
+    // Check leading 3-bits. 0xE0 = 11100000, & gets us the first 3-bits.
+    return 2;
+  } else if ((c & 0xF0) == 0xE0) {  // NOLINT
+    // Check leading 4-bits. 0xF0 = 11110000, & gets us the first 4-bits.
+    return 3;
+  } else if ((c & 0xF8) == 0xF0) {  // NOLINT
+    // Check leading 5-bits. 0xF8 = 11111000, & gets us the first 5-bits.
+    return 4;
   }
 
-  return 0;  // Not a valid start of a multi-byte sequence
+  // Not a valid start of a multi-byte sequence. Possibly a UTF-8 continuation
+  // character.
+  return 0;
 }
 
 WordIterator &WordIterator::operator++() {

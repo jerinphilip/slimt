@@ -292,6 +292,9 @@ class WordIterator {
   Range range_;
 };
 
-int utf8_sequence_length(const char *iterator);
+// Returns a sequence length for a UTF-8 multi-byte sequence starting with the
+// character. Continuation bytes return 0. 1-byte, 2-byte, 3-byte, 4-byte
+// multisequences return their respective length for the start character.
+int utf8_sequence_length(char c);
 
 }  // namespace slimt
