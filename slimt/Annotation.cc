@@ -93,9 +93,10 @@ void AnnotatedText::to(Encoding encoding) {
 
     const char *marker = text.data();
     for (WordIterator current(*this); current.has_next(); ++current) {
+      Range &word = *current;
       byte.begin = byte_idx;
 
-      for (size_t idx = current->begin; idx != current->end; idx++) {
+      for (size_t idx = word.begin; idx != word.end; idx++) {
         int sequence_length = utf8_sequence_length(*marker);
         marker += sequence_length;
         byte_idx += sequence_length;
@@ -114,7 +115,6 @@ void AnnotatedText::to(Encoding encoding) {
     size_t utf8_idx = 0;
     size_t byte_idx = 0;
     Range utf8{
-        //
         .begin = utf8_idx,  //
         .end = 0            //
     };
@@ -127,7 +127,9 @@ void AnnotatedText::to(Encoding encoding) {
       // current = [begin, end)
       // if is not utf-8 continuation character
       int sequence_length = utf8_sequence_length(c);
-      if (sequence_length > 0) ++utf8_idx;
+      if (sequence_length > 0) {
+        ++utf8_idx;
+      }
 
       byte_idx += sequence_length;
 
@@ -185,6 +187,11 @@ WordIterator &WordIterator::operator++() {
     word_idx_ = 0;
   }
   return *this;
+}
+
+Range &WordIterator::operator*() {
+  range_ = annotated_.word_as_range(sentence_idx_, word_idx_);
+  return range_;
 }
 
 Range *WordIterator::operator->() {
