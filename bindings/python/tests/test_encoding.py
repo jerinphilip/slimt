@@ -39,7 +39,6 @@ def test_basic(service, models):
 
     response_utf8.to(Encoding.Byte)
     utf8_to_byte: AnnotatedText = response_utf8.source
-    byte: AnnotatedText = response_byte.source
     sentence_count = byte.sentence_count()
     for sentence_idx in range(sentence_count):
         word_count = byte.word_count(sentence_idx)
