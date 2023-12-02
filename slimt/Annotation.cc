@@ -118,14 +118,11 @@ void AnnotatedText::to(Encoding encoding) {
         .begin = utf8_idx,  //
         .end = 0            //
     };
-    // This loops run on the entire string.
-    //
+
     // We have indices into two views of the same string. One is bytes, the
     // other is utf8 encoded. We want to convert what is bytes to utf8.
     //
-    // For this, we traverse through the characters, checking for unicode
-    // encoding and associated adjustments to the utf8_idx, keeping
-    // correspondences with the byte_idx;
+    // Iterate through each character in the input text.
     for (const char c : text) {
       // current = [begin, end)
       // if is not utf-8 continuation character
@@ -134,14 +131,15 @@ void AnnotatedText::to(Encoding encoding) {
 
       byte_idx += sequence_length;
 
+      // Check if we have reached the end of the current word.
       if (byte_idx == current->end) {
         utf8.end = utf8_idx;
 
-        // Push it to the list of (utf8) words.
-        // We will use these to create the utf8 range annotation.
+        // Add the utf8 Range to the list of words.
         words.push_back(utf8);
-        ++current;
+        ++current;  // Move to the next word.
 
+        // Update the utf8 Range for the next word.
         utf8.begin = utf8_idx;
       }
     }
