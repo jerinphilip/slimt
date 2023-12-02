@@ -19,6 +19,7 @@ using slimt::Alignments;
 using slimt::AnnotatedText;
 using ServiceConfig = slimt::Config;
 using ModelConfig = slimt::Model::Config;
+using slimt::Encoding;
 using slimt::Options;
 using slimt::Range;
 using slimt::Response;
@@ -49,7 +50,8 @@ class PyService {
   }
 
   std::vector<Response> translate(std::shared_ptr<Model> model, py::list &texts,
-                                  bool html) {
+                                  bool html,
+                                  Encoding encoding = Encoding::UTF8) {
     py::call_guard<py::gil_scoped_release> gil_guard;
     Redirect redirect;
 
@@ -77,7 +79,9 @@ class PyService {
     for (auto &handle : handles) {
       auto &future = handle.future();
       future.wait();
-      responses.push_back(std::move(future.get()));
+      Response response = future.get();
+      response.to(encoding);
+      responses.push_back(std::move(response));
     }
 
     return responses;
@@ -153,24 +157,13 @@ PYBIND11_MODULE(_slimt, m) {
       .def(py::init<>())
       .def("word_count", &AnnotatedText::word_count)
       .def("sentence_count", &AnnotatedText::sentence_count)
-      .def("word",
-           [](const AnnotatedText &annotated_text, size_t sentence_id,
-              size_t word_id) -> std::string {
-             auto view = annotated_text.word(sentence_id, word_id);
-             return std::string(view.data(), view.size());
-           })
-      .def("sentence",
-           [](const AnnotatedText &annotated_text,
-              size_t sentence_id) -> std::string {
-             auto view = annotated_text.sentence(sentence_id);
-             return std::string(view.data(), view.size());
-           })
       .def("word_as_range", &AnnotatedText::word_as_range)
       .def("sentence_as_range", &AnnotatedText::sentence_as_range)
       .def_readonly("text", &AnnotatedText::text);
 
   py::class_<Response>(m, "Response")
       .def(py::init<>())
+      .def("to", &Response::to)
       .def_readonly("source", &Response::source)
       .def_readonly("target", &Response::target)
       .def_readonly("alignments", &Response::alignments);
@@ -193,18 +186,25 @@ PYBIND11_MODULE(_slimt, m) {
       .def_readwrite("vocabulary", &Package::vocabulary)
       .def_readwrite("shortlist", &Package::shortlist);
 
-  py::class_<ModelConfig>(m, "Config").def(py::init<>())
+  py::class_<ModelConfig>(m, "Config")
+      .def(py::init<>())
       .def_readwrite("encoder_layers", &ModelConfig::encoder_layers)
       .def_readwrite("decoder_layers", &ModelConfig::decoder_layers)
       .def_readwrite("feed_forward_depth", &ModelConfig::feed_forward_depth)
       .def_readwrite("num_heads", &ModelConfig::num_heads)
       .def_readwrite("split_mode", &ModelConfig::split_mode);
 
+  py::enum_<Encoding>(m, "Encoding")
+      .value("Byte", Encoding::Byte)
+      .value("UTF8", Encoding::UTF8)
+      .export_values();
+
   py::class_<PyService>(m, "Service")
       .def(py::init<size_t, size_t>(), py::arg("workers") = 1,
            py::arg("cache_size") = 0)
       .def("translate", &PyService::translate, py::arg("model"),
-           py::arg("texts"), py::arg("html") = false)
+           py::arg("texts"), py::arg("html") = false,
+           py::arg("encoding") = Encoding::UTF8)
       .def("pivot", &PyService::pivot, py::arg("first"), py::arg("second"),
            py::arg("texts"), py::arg("html") = false);
 
