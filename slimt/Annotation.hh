@@ -36,10 +36,6 @@ namespace slimt {
 /// beginning).  A sentence can also be empty (typically the translation system
 /// produced empty output).  That's fine, these are just empty ranges as you
 /// would expect.
-enum class Encoding {
-  Byte,  //
-  UTF8   //
-};
 
 class Annotation {
  public:
