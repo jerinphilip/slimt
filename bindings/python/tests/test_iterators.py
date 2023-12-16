@@ -38,3 +38,4 @@ def test_iterators(service, models):
             assert expected_text_range.begin == reconstructed_text_range_glob.begin
             assert expected_text_range.end == reconstructed_text_range_glob.end
             assert expected_word == reconstructed_word_glob
+            

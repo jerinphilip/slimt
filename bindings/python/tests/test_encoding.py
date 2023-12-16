@@ -4,7 +4,7 @@ from slimt.utils import to_json
 from collections import namedtuple
 
 
-def test_basic(service, models):
+def test_encoding(service, models):
     Pair = namedtuple("Pair", ["byte", "utf8"])
     source = "no sé 😀 😃 😄 😁 😆 ⛄ 🤔"
     model = models[1]

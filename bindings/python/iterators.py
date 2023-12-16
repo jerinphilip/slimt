@@ -1,9 +1,3 @@
-def sentences(annotation):
-  return SentenceIterator(annotation)
-
-def words(annotation, sentence_id=None):
-  return WordIterator(annotation, sentence_id)
-
 class WordIterator:
   def __init__(self, annotation, sentence_id=None):
     self._annotation = annotation
@@ -65,3 +59,9 @@ class SentenceIterator:
     range = self._annotation.sentence_as_range(self._sentence_id)
     sentence = self._annotation.text[range.begin:range.end]
     return f'{sentence}'
+  
+def sentences(annotation):
+  return SentenceIterator(annotation)
+
+def words(annotation, sentence_id=None):
+  return WordIterator(annotation, sentence_id)
