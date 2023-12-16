@@ -76,37 +76,8 @@ git clone --recursive https://github.com/jerinphilip/slimt.git
 ```
 
 Configure and build. `slimt` is still experimenting with CMake and
-dependencies. The following should work at the moment:
-
-
-```bash
-
-# Configure intgemm
-cmake -B build -S $PWD -DCMAKE_BUILD_TYPE=Release -DWITH_INTGEMM=ON 
-# Configure ruy instead of intgemm
-cmake -B build -S $PWD -DCMAKE_BUILD_TYPE=Release -DWITH_RUY=ON
-
-# Build
-cmake --build build --target all --parallel 4
-```
-
-Successful build generate two executables `slimt-cli` and `slimt-test` for
-command-line usage and testing respectively.
-
-```bash
-build/bin/slimt-cli                           \
-    --root <path/to/folder>                   \
-    --model </relative/path/to/model>         \
-    --vocabulary </relative/path/to/vocab>    \
-    --shortlist </relative/path/to/shortlist>
-
-build/slimt-test <test-name>
-```
-
-### Distribution
-
-There is a build-path being prepared towards packaging on Linux. To use this,
-configure with the following args:
+dependencies. The following, being prepared towards linux distribution should
+work at the moment:
 
 ```bash
 # Configure to use xsimd via gemmology
@@ -114,8 +85,12 @@ ARGS=(
     # Use gemmology
     -DWITH_GEMMOLOGY=ON               
 
-    # -DUSE_AVX512 -DUSE_SSSE3 ... -DUSE_NEON also available.
-    -DUSE_AVX2=ON                          
+    # On x86_64 machines use this following. All can co-exist and dispatch on best
+    # detecting CPU at runtime.
+    -DUSE_AVX512=ON -DUSE_AVX2=ON -DUSE_SSSE3=ON -DUSE_SSE2=ON
+
+    # Uncomment below line, comment x86_64 above and use for aarch64, armv7+neon)
+    # -DUSE_NEON=ON 
 
     # Use sentencepiece installed via system.
     -DUSE_BUILTIN_SENTENCEPIECE=OFF        
@@ -129,7 +104,7 @@ ARGS=(
 cmake -B build -S $PWD -DCMAKE_BUILD_TYPE=Release "${ARGS[@]}"
 cmake --build build --target all
 
-# May require if prefix is writable only by root.
+# May require sudo if prefix is writable only by root.
 cmake --build build --target install 
 ```
 
@@ -146,6 +121,18 @@ pacman -S openblas xsimd
 yay -S sentencepiece-git
 ```
 
+Successful build generate two executables `slimt-cli` and `slimt-test` for
+command-line usage and testing respectively. 
+
+```bash
+build/bin/slimt-cli                           \
+    --root <path/to/folder>                   \
+    --model </relative/path/to/model>         \
+    --vocabulary </relative/path/to/vocab>    \
+    --shortlist </relative/path/to/shortlist>
+
+build/slimt-test <test-name>
+```
 This is still very much a work in progress, towards being able to make
 [lemonade](https://github.com/jerinphilip/lemonade) available in distributions.
 Help is much appreciated here, please get in touch if you can help here.
@@ -173,3 +160,8 @@ You may pass customizing cmake-variables via `CMAKE_ARGS` environment variable.
 ```bash
 CMAKE_ARGS='-D...' python3 setup.py bdist_wheel
 ```
+
+Find an example of the built wheel running on colab below:
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/12wFMVwOTzOyRjoeWtett2DTDhwNAbvBZ?usp=sharing)
+
