@@ -27,6 +27,8 @@ option(USE_SSE2 "Use SSE2" OFF)
 option(USE_NEON "Use NEON" OFF)
 
 option(SLIMT_PACKAGE "Package for cmake, pkgconfig" OFF)
+option(SLIMT_PYTHON_LINK_STATIC
+       "link-method to produce python package (static/shared)" ON)
 
 include(MacroEnsureOutOfSourceBuild)
 macro_ensure_out_of_source_build(
