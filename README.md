@@ -85,8 +85,9 @@ ARGS=(
     # Use gemmology
     -DWITH_GEMMOLOGY=ON               
 
-    # On x86_64 machines use this following. All can co-exist and dispatch on best
-    # detecting CPU at runtime.
+    # On x86_64 machines use the following to enable a faster matrix
+    # multiplication backend using SIMD. All of these can co-exist and dispatch
+    # on best detecting CPU at runtime.
     -DUSE_AVX512=ON -DUSE_AVX2=ON -DUSE_SSSE3=ON -DUSE_SSE2=ON
 
     # Uncomment below line, comment x86_64 above and use for aarch64, armv7+neon)
@@ -98,14 +99,15 @@ ARGS=(
     # Exports slimtConfig.cmake (cmake) and slimt.pc.in (pkg-config)
     -DSLIMT_PACKAGE=ON 
 
-    -DCMAKE_INSTALL_PREFIX=/path/to/prefix
+    # Customize installation prefix if need be.
+    -DCMAKE_INSTALL_PREFIX=/usr/local
 )
 
 cmake -B build -S $PWD -DCMAKE_BUILD_TYPE=Release "${ARGS[@]}"
 cmake --build build --target all
 
-# May require sudo if prefix is writable only by root.
-cmake --build build --target install 
+# Require sudo since /usr/local is writable usually only by root.
+sudo cmake --build build --target install 
 ```
 
 The above run expects the packages `sentencepiece`, `xsimd` and a BLAS provider
@@ -154,14 +156,12 @@ python3 -m pip install dist/<wheel-name>.whl
 slimt download -m en-de-tiny
 slimt download -m de-en-tiny
 ```
+Find an example of the built wheel running on colab below:
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/12wFMVwOTzOyRjoeWtett2DTDhwNAbvBZ?usp=sharing)
 
 You may pass customizing cmake-variables via `CMAKE_ARGS` environment variable.
 
 ```bash
 CMAKE_ARGS='-D...' python3 setup.py bdist_wheel
 ```
-
-Find an example of the built wheel running on colab below:
-
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/12wFMVwOTzOyRjoeWtett2DTDhwNAbvBZ?usp=sharing)
-
