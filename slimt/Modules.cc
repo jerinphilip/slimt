@@ -295,12 +295,10 @@ Tensor LayerNorm::forward(const Tensor &x) const {
   // Currently this is hardcoded.
   // Not sure how to do it otherwise.
   constexpr float kEps = 1e-9;
-  bool has_bias = true;
 
   layer_norm(x.data<float>(),                            //
              scale_.data<float>(), bias_.data<float>(),  //
-             kEps, rows, cols, has_bias,                 //
-             y.data<float>());
+             kEps, rows, cols, y.data<float>());
 
   return y;
 }

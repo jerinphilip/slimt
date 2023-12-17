@@ -536,8 +536,7 @@ void batch_add_vector(const float* A, const float* x, size_t batch_size,
 }
 
 void layer_norm(const float* in, const float* scale, const float* bias,
-                float eps, size_t rows, size_t cols, bool has_bias,
-                float* out) {
+                float eps, size_t rows, size_t cols, float* out) {
   // LayerNorm
   //
   //   y =    x − E[x]      γ  +  β
@@ -571,11 +570,7 @@ void layer_norm(const float* in, const float* scale, const float* bias,
     // during the course of learning - scale and bias.
 
     for (size_t i = 0; i < cols; ++i) {
-      float t = scale[i] * ((x[i] - mean) / sigma);
-      if (has_bias) {
-        t += bias[i];
-      }
-      y[i] = t;
+      y[i] = scale[i] * ((x[i] - mean) / sigma) + bias[i];
     }
   }
 }
