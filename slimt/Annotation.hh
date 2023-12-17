@@ -36,6 +36,11 @@ namespace slimt {
 /// beginning).  A sentence can also be empty (typically the translation system
 /// produced empty output).  That's fine, these are just empty ranges as you
 /// would expect.
+enum class Encoding {
+  Byte,  //
+  UTF8   //
+};
+
 class Annotation {
  public:
   /// Initially an empty string.  Populated by AnnotatedText.
@@ -74,6 +79,23 @@ class Annotation {
   Range gap(size_t gap_idx) const {
     size_t token_idx = gap_[gap_idx];
     return Range{token_begin_[token_idx], token_begin_[token_idx + 1]};
+  }
+
+  void update(const std::vector<Range> &words) {
+    if (words.empty()) {
+      return;
+    }
+
+    token_begin_.clear();
+    token_begin_.push_back(0);
+
+    for (const auto &word : words) {
+      token_begin_.push_back(word.begin);
+    }
+    token_begin_.push_back(words.back().end);
+    // The last range is repated to denote EOS [sentence_length,
+    // sentence_length].
+    token_begin_.push_back(words.back().end);
   }
 
  private:
@@ -146,6 +168,8 @@ class AnnotatedText {
   /// Append the whitespace at the end of input. std::string_view must not be in
   /// text.
   void append_ending_whitespace(std::string_view whitespace);
+  void update(const std::vector<Range> &words);
+  void to(Encoding encoding);
 
   /// Package the existence of a sentence that is already in text.  The
   /// iterators are over std::string_views for each token that must be in text
@@ -249,6 +273,28 @@ class AnnotatedText {
   std::string_view as_view(const Range &range) const {
     return std::string_view(text.data() + range.begin, range.size());
   }
+  Encoding encoding_ = Encoding::Byte;
 };
+
+class WordIterator {
+ public:
+  explicit WordIterator(const AnnotatedText &annotated)
+      : annotated_(annotated) {}
+  Range &operator*();
+  Range *operator->();
+  WordIterator &operator++();
+  bool has_next();
+
+ private:
+  const AnnotatedText &annotated_;
+  size_t sentence_idx_ = 0;
+  size_t word_idx_ = 0;
+  Range range_;
+};
+
+// Returns a sequence length for a UTF-8 multi-byte sequence starting with the
+// character. Continuation bytes return 0. 1-byte, 2-byte, 3-byte, 4-byte
+// multisequences return their respective length for the start character.
+int utf8_sequence_length(char c);
 
 }  // namespace slimt
