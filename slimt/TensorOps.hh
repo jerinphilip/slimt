@@ -50,8 +50,7 @@ void batch_add_vector(const float* A, const float* x, size_t batch_size,
                       size_t size, float* out);
 
 void layer_norm(const float* in, const float* scale, const float* bias,
-                float eps, size_t rows, size_t cols, size_t scale_stride,
-                size_t bias_stride, bool has_bias, float* out);
+                float eps, size_t rows, size_t cols, float* out);
 
 Tensor transpose_3120(const Tensor& x);
 float mse(const Tensor& x, const Tensor& y);
