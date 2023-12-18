@@ -114,8 +114,8 @@ class TranslateLocallyLike(Repository):
         codes = []
         for model in self.data["models"]:
             if filter_downloaded:
-                fprefix = self._archive_name_without_extension(model["url"])
-                model_dir = os.path.join(self.dirs["models"], fprefix)
+                model_name = model["code"]
+                model_dir = os.path.join(self.dirs["models"], model_name)
                 if os.path.exists(model_dir):
                     codes.append(model["code"])
             else:
@@ -124,8 +124,8 @@ class TranslateLocallyLike(Repository):
 
     def model_config_path(self, model_identifier: str) -> str:
         model = self.model(model_identifier)
-        fprefix = self._archive_name_without_extension(model["url"])
-        model_dir = os.path.join(self.dirs["models"], fprefix)
+        model_name = model["code"]
+        model_dir = os.path.join(self.dirs["models"], model_name)
         return os.path.join(model_dir, "config.slimt.yml")
 
     def model(self, model_identifier: str) -> t.Any:
@@ -154,12 +154,19 @@ class TranslateLocallyLike(Repository):
                     if not is_within_directory(path, member_path):
                         raise Exception("Attempted Path Traversal in Tar File")
 
+                folders = [os.path.dirname(member.name) for member in tar.getmembers()]
+                unique_folders = set(folders)
+                assert len(unique_folders) == 1
+                root = folders[0]
                 tar.extractall(path, members, numeric_owner=numeric_owner)
+                return root
 
-            safe_extract(model_archive, self.dirs["models"])
+            root = safe_extract(model_archive, self.dirs["models"])
             fprefix = self._archive_name_without_extension(model["url"])
-            model_dir = os.path.join(self.dirs["models"], fprefix)
-            symlink = os.path.join(self.dirs["models"], model["code"])
+
+            model_name = model["code"]
+            model_dir = os.path.join(self.dirs["models"], root)
+            symlink = os.path.join(self.dirs["models"], model_name)
 
             print(
                 "Downloading and extracting {} into ... {}".format(
@@ -168,8 +175,10 @@ class TranslateLocallyLike(Repository):
                 end=" ",
             )
 
-            if not os.path.exists(symlink):
-                os.symlink(model_dir, symlink)
+            if os.path.islink(symlink):
+                os.unlink(symlink)
+
+            os.symlink(model_dir, symlink)
 
             config_path = os.path.join(symlink, "config.intgemm8bitalpha.yml")
             slimt_config_path = os.path.join(symlink, "config.slimt.yml")
