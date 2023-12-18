@@ -162,8 +162,6 @@ class TranslateLocallyLike(Repository):
                 return root
 
             root = safe_extract(model_archive, self.dirs["models"])
-            fprefix = self._archive_name_without_extension(model["url"])
-
             model_name = model["code"]
             model_dir = os.path.join(self.dirs["models"], root)
             symlink = os.path.join(self.dirs["models"], model_name)
@@ -187,12 +185,6 @@ class TranslateLocallyLike(Repository):
             patch_marian_for_slimt(config_path, slimt_config_path)
 
             print("Done.")
-
-    def _archive_name_without_extension(self, url: URL):
-        o = urlparse(url)
-        fname = os.path.basename(o.path)  # something tar.gz.
-        fname_without_extension = fname.replace(".tar.gz", "")
-        return fname_without_extension
 
 
 class Aggregator:
