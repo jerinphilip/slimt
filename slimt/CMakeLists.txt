@@ -15,7 +15,9 @@ set(SLIMT_PUBLIC_HEADERS
     TextProcessor.hh
     Transformer.hh
     Types.hh
-    Vocabulary.hh)
+    Vocabulary.hh
+    Utils.hh
+  )
 
 # Configure generated headers. Version.hh can be configured here.
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Version.hh.in
