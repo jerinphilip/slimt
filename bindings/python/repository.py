@@ -154,10 +154,14 @@ class TranslateLocallyLike(Repository):
                     if not is_within_directory(path, member_path):
                         raise Exception("Attempted Path Traversal in Tar File")
 
+                # This is irritating hack. Short-term to get CI running.
+                # TODO(Any): Fix
                 folders = [os.path.dirname(member.name) for member in tar.getmembers()]
+                folders = list(filter(lambda x: x, folders))
                 unique_folders = set(folders)
                 assert len(unique_folders) == 1
                 root = folders[0]
+
                 tar.extractall(path, members, numeric_owner=numeric_owner)
                 return root
 
