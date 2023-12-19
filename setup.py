@@ -53,7 +53,7 @@ class CMakeBuild(build_ext):
             f"-DCMAKE_BUILD_TYPE={cfg}",  # not used on MSVC, but no harm
             f"-DBUILD_PYTHON=ON",
             f"-DSLIMT_USE_INTERNAL_PCRE2={internal_pcre2}",
-            f"-DSLIMT_USE_BUILTIN_SENTENCEPIECE=ON",
+            f"-DUSE_BUILTIN_SENTENCEPIECE=ON",
         ]
 
         build_args = ["-t", "_slimt"]

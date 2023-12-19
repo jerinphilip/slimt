@@ -66,4 +66,9 @@ struct Response;
 using Promise = std::promise<Response>;
 using Future = std::future<Response>;
 
+enum class Encoding {
+  Byte,  //
+  UTF8   //
+};
+
 }  // namespace slimt
