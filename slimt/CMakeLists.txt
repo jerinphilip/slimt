@@ -16,8 +16,7 @@ set(SLIMT_PUBLIC_HEADERS
     Transformer.hh
     Types.hh
     Vocabulary.hh
-    Utils.hh
-  )
+    Utils.hh)
 
 # Configure generated headers. Version.hh can be configured here.
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Version.hh.in
@@ -77,13 +76,13 @@ if(BUILD_SHARED)
     slimt-shared
     PROPERTIES VERSION ${PROJECT_VERSION_STRING}
                SOVERSION 0
-             EXPORT_NAME slimt-shared)
+               EXPORT_NAME slimt-shared)
 
 endif(BUILD_SHARED)
 
 if(BUILD_STATIC)
   add_library(slimt-static STATIC ${SLIMT_SOURCES} ${SLIMT_PUBLIC_HEADERS}
-                                ${SLIMT_PRIVATE_HEADERS})
+                                  ${SLIMT_PRIVATE_HEADERS})
   list(APPEND SLIMT_LIBRARIES slimt-static)
   add_library(slimt ALIAS slimt-static)
 endif(BUILD_STATIC)
@@ -91,8 +90,6 @@ endif(BUILD_STATIC)
 if(NOT BUILD_STATIC)
   add_library(slimt ALIAS slimt-shared)
 endif(NOT BUILD_STATIC)
-
-
 
 # Once the library is defined, it's possible to generate_export_header.
 include(GenerateExportHeader)
