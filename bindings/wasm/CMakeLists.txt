@@ -68,5 +68,4 @@ set_target_properties(wasm-slimt PROPERTIES
                         RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
                       )
 
-target_link_libraries(wasm-slimt slimt)
 
