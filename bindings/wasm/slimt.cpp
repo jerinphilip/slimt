@@ -4,6 +4,7 @@
 
 #include "slimt/Aligned.hh"
 #include "slimt/Frontend.hh"
+#include "slimt/Model.hh"
 #include "slimt/Response.hh"
 
 // This file is narrow enough and a source file), so we will import everything.
@@ -40,7 +41,7 @@ EMSCRIPTEN_BINDINGS(aligned_memory) {
       .constructor<std::size_t, std::size_t>()
       .function("size", &Aligned::size)
       .function("as_bytes", [](Aligned& aligned) -> val {
-        return val(typed_memory_view(aligned.size(), aligned.as<char>()));
+        return val(typed_memory_view(aligned.size(), aligned.begin()));
       });
 
   register_vector<Aligned*>("AlignedList");
@@ -49,7 +50,7 @@ EMSCRIPTEN_BINDINGS(aligned_memory) {
 EMSCRIPTEN_BINDINGS(translation_model) {
   class_<Model>("Model").smart_ptr_constructor(
       "Model",
-      [](const std::string& config,           //
+      [](const Config& config,                //
          Aligned* model,                      //
          Aligned* shortlist,                  //
          std::vector<Aligned*> vocabularies,  //
