@@ -459,9 +459,13 @@ jobs:
         run: |
           ccache -s # Print current cache stats
 
-      - name: Import GEMM library from a separate wasm module
-        working-directory: build-wasm
-        run: bash ../wasm/patch-artifacts-import-gemm-module.sh
+      # The following is useless as it works within Firefox, that too only in a
+      # privileged context. Might choose to enable should Mozilla be
+      # interested.
+      #
+      # - name: Import GEMM library from a separate wasm module
+      #   working-directory: build-wasm
+      #   run: bash ../wasm/patch-artifacts-import-gemm-module.sh
 
       # Setup nodejs-18, as nodejs-14 provided by emsdk fails when running
       # and newer version of node allows us to use fetch().
