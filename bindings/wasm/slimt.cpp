@@ -2,6 +2,7 @@
 
 #include <vector>
 
+#include "slimt/Aligned.hh"
 #include "slimt/Frontend.hh"
 #include "slimt/Response.hh"
 
@@ -30,7 +31,7 @@ EMSCRIPTEN_BINDINGS(response) {
 EMSCRIPTEN_BINDINGS(options) {
   value_object<Options>("Options")
       .field("alignment", &Options::alignment)
-      .field("html", &Options::HTML);
+      .field("html", &Options::html);
   register_vector<Options>("VectorOptions");
 }
 
@@ -54,16 +55,23 @@ EMSCRIPTEN_BINDINGS(translation_model) {
          std::vector<Aligned*> vocabularies,  //
          ) -> std::shared_ptr<Model> {
         // TODO(jerinphilip): Fix
+        auto from_aligned = [](Aligned* aligned) -> View {
+          return {
+              .data = aligned->data(),  //
+              .size = aligned->size()   //
+          };
+        };
+
+        // Something needs to hold this.
         Package<View> view = {
-            .model = View{.data = model->data(), size = model->size()},
-            .vocabulary =
-                View{.data = vocabularies->data(), size = vocabularies->size()},
-            .shortlist =
-                View{.data = shortlist->data(), size = shortlist->size()},
+            .model = from_aligned(model),                 //
+            .vocabulary = from_aligned(vocabularies[0]),  //
+            .shortlist = from_aligned(shortlist)          //
         };
 
         return std::make_shared<Model>(config, view);
       },
+
       allow_raw_pointers());
 }
 
