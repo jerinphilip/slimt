@@ -447,7 +447,7 @@ jobs:
         run: |
           mkdir -p build-wasm
           cd build-wasm
-          emcmake cmake -DWITH_BLAS=OFF -DWITH_RUY=ON -DWITH_GEMMOLOGY=OFF -DSLIMT_USE_INTERNAL_PCRE2=ON ..
+          emcmake cmake -DWITH_BLAS=OFF -DWITH_RUY=ON -DWITH_GEMMOLOGY=OFF -DSLIMT_USE_INTERNAL_PCRE2=ON -DBUILD_WASM=ON ..
 
 
       - name: "Compile"

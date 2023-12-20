@@ -30,6 +30,15 @@ option(SLIMT_PACKAGE "Package for cmake, pkgconfig" OFF)
 option(SLIMT_PYTHON_LINK_STATIC
        "link-method to produce python package (static/shared)" ON)
 
+option(BUILD_CLI "Build command-line applications" ON)
+option(BUILD_PYTHON "Build Python bindings library" OFF)
+optioN(BUILD_WASM "Build WebAssemby bindings library" OFF)
+
+if(BUILD_WASM)
+  set(BUILD_CLI OFF)
+endif(BUILD_WASM)
+
+
 include(MacroEnsureOutOfSourceBuild)
 macro_ensure_out_of_source_build(
   "${PROJECT_NAME} requires an out of source build. Please create a separate build directory and run 'cmake /path/to/${PROJECT_NAME} [options]' there."
@@ -213,6 +222,10 @@ if(BUILD_PYTHON)
   else(USE_PYBIND11_SOURCE)
     find_package(pybind11 REQUIRED)
   endif(USE_PYBIND11_SOURCE)
-
   add_subdirectory(bindings/python)
 endif(BUILD_PYTHON)
+
+if(BUILD_WASM)
+  add_subdirectory(bindings/wasm)
+endif(BUILD_WASM)
+
