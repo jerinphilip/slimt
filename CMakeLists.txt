@@ -32,12 +32,11 @@ option(SLIMT_PYTHON_LINK_STATIC
 
 option(BUILD_CLI "Build command-line applications" ON)
 option(BUILD_PYTHON "Build Python bindings library" OFF)
-optioN(BUILD_WASM "Build WebAssemby bindings library" OFF)
+option(BUILD_WASM "Build WebAssemby bindings library" OFF)
 
 if(BUILD_WASM)
   set(BUILD_CLI OFF)
 endif(BUILD_WASM)
-
 
 include(MacroEnsureOutOfSourceBuild)
 macro_ensure_out_of_source_build(
@@ -228,4 +227,3 @@ endif(BUILD_PYTHON)
 if(BUILD_WASM)
   add_subdirectory(bindings/wasm)
 endif(BUILD_WASM)
-
