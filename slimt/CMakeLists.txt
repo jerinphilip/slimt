@@ -80,12 +80,11 @@ set_target_properties(
              EXPORT_NAME slimt-shared)
 
 add_library(slimt ALIAS slimt-static)
-add_library(slimt::slimt ALIAS slimt-static)
 
 # Once the library is defined, it's possible to generate_export_header.
 include(GenerateExportHeader)
 generate_export_header(slimt BASE_NAME slimt EXPORT_FILE_NAME
-                       ${CMAKE_CURRENT_BINARY_DIR}/Export.hh)
+                       "${CMAKE_CURRENT_BINARY_DIR}/Export.hh")
 
 foreach(SLIMT_LIB IN LISTS SLIMT_LIBRARIES)
   set_target_properties(${SLIMT_LIB} PROPERTIES OUTPUT_NAME "slimt")
@@ -116,13 +115,13 @@ if(SLIMT_PACKAGE)
   # Export cmake
   include(CMakePackageConfigHelpers)
   configure_package_config_file(
-    ${CMAKE_SOURCE_DIR}/cmake/slimtConfig.cmake.in
-    ${CMAKE_CURRENT_BINARY_DIR}/slimtConfig.cmake
-    INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/slimt)
+    "${CMAKE_SOURCE_DIR}/cmake/slimtConfig.cmake.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/slimtConfig.cmake"
+    INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/slimt")
 
   write_basic_package_version_file(
-    ${CMAKE_CURRENT_BINARY_DIR}/slimtConfigVersion.cmake
-    VERSION ${PROJECT_VERSION_STRING}
+    "${CMAKE_CURRENT_BINARY_DIR}/slimtConfigVersion.cmake"
+    VERSION "${PROJECT_VERSION_STRING}"
     COMPATIBILITY SameMajorVersion)
 
   # This will double install, but is-ok.
@@ -131,21 +130,21 @@ if(SLIMT_PACKAGE)
     EXPORT slimtTargets
     LIBRARY COMPONENT slimt-lib DESTINATION ${CMAKE_INSTALL_LIBDIR}
     PUBLIC_HEADER COMPONENT slimt-dev
-                  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/slimt)
+                  DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/slimt")
   install(
     EXPORT slimtTargets
     NAMESPACE slimt::
     COMPONENT slimt-dev
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/slimt)
+    DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/slimt")
 
   export(EXPORT slimtTargets
-         FILE ${CMAKE_CURRENT_BINARY_DIR}/slimtTargets.cmake)
+         FILE "${CMAKE_CURRENT_BINARY_DIR}/slimtTargets.cmake")
 
   install(
-    FILES ${CMAKE_CURRENT_BINARY_DIR}/slimtConfig.cmake
-          ${CMAKE_CURRENT_BINARY_DIR}/slimtConfigVersion.cmake
+    FILES "${CMAKE_CURRENT_BINARY_DIR}/slimtConfig.cmake"
+          "${CMAKE_CURRENT_BINARY_DIR}/slimtConfigVersion.cmake"
     COMPONENT slimt-dev
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/slimt)
+    DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/slimt")
 
   # Export pkgconfig provision. Hardcoded for now.
   set(SLIMT_PKGCONFIG_REQUIRES_PUBLIC "sentencepiece")
@@ -153,7 +152,7 @@ if(SLIMT_PACKAGE)
   configure_file("${PROJECT_SOURCE_DIR}/cmake/slimt.pc.in"
                  "${CMAKE_CURRENT_BINARY_DIR}/slimt.pc" @ONLY)
   install(
-    FILES ${CMAKE_CURRENT_BINARY_DIR}/slimt.pc
+    FILES "${CMAKE_CURRENT_BINARY_DIR}/slimt.pc"
     COMPONENT slimt-dev
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig/)
+    DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig/")
 endif(SLIMT_PACKAGE)
