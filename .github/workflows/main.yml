@@ -17,6 +17,7 @@ env:
   ccache_maxsize: 200M
   ccache_cmake: -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_C_COMPILER_LAUNCHER=ccache
   ccache_version: '4.5'
+  emsdk_version: 3.1.8 # For use in emscripten build
 
 jobs:
   formatting:
