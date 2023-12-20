@@ -109,14 +109,6 @@ foreach(SLIMT_LIB IN LISTS SLIMT_LIBRARIES)
   target_compile_definitions(${SLIMT_LIB} PRIVATE ${SLIMT_COMPILE_DEFINITIONS})
 endforeach()
 
-if(UNIX)
-  install(FILES ${SLIMT_PUBLIC_HEADERS}
-          DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/slimt)
-  install(FILES ${SLIMT_GENERATED_HEADERS}
-          DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/slimt/)
-  install(TARGETS ${SLIMT_LIBRARIES} DESTINATION ${CMAKE_INSTALL_LIBDIR})
-endif(UNIX)
-
 # The following is partial code for enabling `find_package(slimt ...)` Not
 # working at the moment, due to the inablility to export sentencepiece
 # (accounting for it as an installed target).
