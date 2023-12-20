@@ -67,7 +67,14 @@ if(WITH_GEMMOLOGY)
     qmm/Gemmology.cc PROPERTIES COMPILE_OPTIONS "${SLIMT_QMM_COMPILE_OPTIONS}")
 endif(WITH_GEMMOLOGY)
 
-set(SLIMT_LIBRARIES slimt-static slimt-shared)
+set(SLIMT_LIBRARIES "")
+if(BUILD_SHARED)
+  list(APPEND SLIMT_LIBRARIES slimt-shared)
+endif()
+if(BUILD_STATIC)
+  list(APPEND SLIMT_LIBRARIES slimt-static)
+endif()
+
 add_library(slimt-static STATIC ${SLIMT_SOURCES} ${SLIMT_PUBLIC_HEADERS}
                                 ${SLIMT_PRIVATE_HEADERS})
 add_library(slimt-shared SHARED ${SLIMT_SOURCES} ${SLIMT_PUBLIC_HEADERS}
@@ -134,7 +141,7 @@ if(SLIMT_PACKAGE)
 
   # This will double install, but is-ok.
   install(
-    TARGETS slimt-shared slimt-static sentencepiece
+    TARGETS ${SLIMT_LIBRARIES} sentencepiece
     EXPORT slimtTargets
     LIBRARY COMPONENT slimt-lib DESTINATION ${CMAKE_INSTALL_LIBDIR}
     PUBLIC_HEADER COMPONENT slimt-dev
