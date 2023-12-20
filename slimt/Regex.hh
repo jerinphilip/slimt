@@ -16,9 +16,8 @@ class Match;
 class Regex {
  public:
   Regex(const std::string& pattern,  // pattern to be compiled
-        uint32_t options,            // pcre2 options for regex compilation
-        uint32_t jit_options =
-            PCRE2_JIT_COMPLETE);  // options for jit compilation
+        uint32_t options             // pcre2 options for regex compilation
+  );
   ~Regex();
 
   int find(std::string_view subj,  // the string (view) agains we are matching

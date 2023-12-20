@@ -11,7 +11,7 @@
 
 namespace slimt {
 
-Regex::Regex(const std::string& pattern, uint32_t options, uint32_t jit_options)
+Regex::Regex(const std::string& pattern, uint32_t options)
     : re_(pcre2_compile(PCRE2_SPTR(pattern.c_str()), /* the pattern */
                         PCRE2_ZERO_TERMINATED, /* pattern is zero-terminated */
                         options,               /* options */
@@ -19,12 +19,6 @@ Regex::Regex(const std::string& pattern, uint32_t options, uint32_t jit_options)
                         &error_offset_,        /* for error offset */
                         nullptr))              /* use default compile context */
 {
-  uint32_t have_jit;
-  pcre2_config(PCRE2_CONFIG_JIT, &have_jit);
-  if (have_jit) {
-    pcre2_jit_compile(re_, jit_options);
-  }
-
   pattern_ = pattern;
 }
 
