@@ -447,7 +447,7 @@ jobs:
         run: |
           mkdir -p build-wasm
           cd build-wasm
-          emcmake cmake -DCOMPILE_WASM=on ..
+          emcmake cmake -DUSE_BLAS=OFF -DWITH_RUY=ON -DWITH_GEMMOLOGY=OFF ..
 
 
       - name: "Compile"
