@@ -67,26 +67,32 @@ if(WITH_GEMMOLOGY)
     qmm/Gemmology.cc PROPERTIES COMPILE_OPTIONS "${SLIMT_QMM_COMPILE_OPTIONS}")
 endif(WITH_GEMMOLOGY)
 
-set(SLIMT_LIBRARIES "")
+set(SLIMT_LIBRARIES)
+
 if(BUILD_SHARED)
   list(APPEND SLIMT_LIBRARIES slimt-shared)
-endif()
-if(BUILD_STATIC)
-  list(APPEND SLIMT_LIBRARIES slimt-static)
-endif()
-
-add_library(slimt-static STATIC ${SLIMT_SOURCES} ${SLIMT_PUBLIC_HEADERS}
-                                ${SLIMT_PRIVATE_HEADERS})
-add_library(slimt-shared SHARED ${SLIMT_SOURCES} ${SLIMT_PUBLIC_HEADERS}
-                                ${SLIMT_PRIVATE_HEADERS})
-
-set_target_properties(
-  slimt-shared
-  PROPERTIES VERSION ${PROJECT_VERSION_STRING}
-             SOVERSION 0
+  add_library(slimt-shared SHARED ${SLIMT_SOURCES} ${SLIMT_PUBLIC_HEADERS}
+                                  ${SLIMT_PRIVATE_HEADERS})
+  set_target_properties(
+    slimt-shared
+    PROPERTIES VERSION ${PROJECT_VERSION_STRING}
+               SOVERSION 0
              EXPORT_NAME slimt-shared)
 
-add_library(slimt ALIAS slimt-static)
+endif(BUILD_SHARED)
+
+if(BUILD_STATIC)
+  add_library(slimt-static STATIC ${SLIMT_SOURCES} ${SLIMT_PUBLIC_HEADERS}
+                                ${SLIMT_PRIVATE_HEADERS})
+  list(APPEND SLIMT_LIBRARIES slimt-static)
+  add_library(slimt ALIAS slimt-static)
+endif(BUILD_STATIC)
+
+if(NOT BUILD_STATIC)
+  add_library(slimt ALIAS slimt-shared)
+endif(NOT BUILD_STATIC)
+
+
 
 # Once the library is defined, it's possible to generate_export_header.
 include(GenerateExportHeader)
