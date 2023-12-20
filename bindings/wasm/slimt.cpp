@@ -34,88 +34,46 @@ EMSCRIPTEN_BINDINGS(options) {
   register_vector<Options>("VectorOptions");
 }
 
-val getByteArrayView(Aligned& aligned) {
-  return val(typed_memory_view(aligned.size(), aligned.as<char>()));
-}
-
 EMSCRIPTEN_BINDINGS(aligned_memory) {
   class_<Aligned>("Aligned")
       .constructor<std::size_t, std::size_t>()
       .function("size", &Aligned::size)
-      .function("getByteArrayView", &getByteArrayView);
+      .function("as_bytes", [](Aligned& aligned) -> val {
+        return val(typed_memory_view(aligned.size(), aligned.as<char>()));
+      });
 
   register_vector<Aligned*>("AlignedList");
 }
 
-// When source and target vocab files are same, only one memory object is passed
-// from JS to avoid allocating memory twice for the same file. However, the
-// constructor of the Service class still expects 2 entries in this case, where
-// each entry has the shared ownership of the same Aligned object. This
-// function prepares these smart pointer based Aligned objects for unique
-// Aligned objects passed from JS.
-std::vector<std::shared_ptr<Aligned>> prepareVocabsSmartMemories(
-    std::vector<Aligned*>& vocabsMemories) {
-  auto sourceVocabMemory =
-      std::make_shared<Aligned>(std::move(*(vocabsMemories[0])));
-  std::vector<std::shared_ptr<Aligned>> vocabsSmartMemories;
-  vocabsSmartMemories.push_back(sourceVocabMemory);
-  if (vocabsMemories.size() == 2) {
-    auto targetVocabMemory =
-        std::make_shared<Aligned>(std::move(*(vocabsMemories[1])));
-    vocabsSmartMemories.push_back(std::move(targetVocabMemory));
-  } else {
-    vocabsSmartMemories.push_back(sourceVocabMemory);
-  }
-  return vocabsSmartMemories;
-}
-
-MemoryBundle prepareMemoryBundle(Aligned* modelMemory, Aligned* shortlistMemory,
-                                 std::vector<Aligned*> uniqueVocabsMemories,
-                                 Aligned* qualityEstimatorMemory) {
-  MemoryBundle memoryBundle;
-  memoryBundle.models.emplace_back(std::move(*modelMemory));
-  memoryBundle.shortlist = std::move(*shortlistMemory);
-  memoryBundle.vocabs =
-      std::move(prepareVocabsSmartMemories(uniqueVocabsMemories));
-  if (qualityEstimatorMemory != nullptr) {
-    memoryBundle.qualityEstimatorMemory = std::move(*qualityEstimatorMemory);
-  }
-
-  return memoryBundle;
-}
-
-// This allows only shared_ptrs to be operational in JavaScript, according to
-// emscripten.
-// https://emscripten.org/docs/porting/connecting_cpp_and_javascript/embind.html#smart-pointers
-std::shared_ptr<TranslationModel> TranslationModelFactory(
-    const std::string& config, Aligned* model, Aligned* shortlist,
-    std::vector<Aligned*> vocabs, Aligned* qualityEstimator) {
-  MemoryBundle memoryBundle =
-      prepareMemoryBundle(model, shortlist, vocabs, qualityEstimator);
-  return std::make_shared<TranslationModel>(config, std::move(memoryBundle));
-}
-
 EMSCRIPTEN_BINDINGS(translation_model) {
-  class_<TranslationModel>("TranslationModel")
-      .smart_ptr_constructor("TranslationModel", &TranslationModelFactory,
-                             allow_raw_pointers());
-}
+  class_<Model>("Model").smart_ptr_constructor(
+      "Model",
+      [](const std::string& config,           //
+         Aligned* model,                      //
+         Aligned* shortlist,                  //
+         std::vector<Aligned*> vocabularies,  //
+         ) -> std::shared_ptr<Model> {
+        // TODO(jerinphilip): Fix
+        Package<View> view = {
+            .model = View{.data = model->data(), size = model->size()},
+            .vocabulary =
+                View{.data = vocabularies->data(), size = vocabularies->size()},
+            .shortlist =
+                View{.data = shortlist->data(), size = shortlist->size()},
+        };
 
-EMSCRIPTEN_BINDINGS(blocking_service_config) {
-  value_object<BlockingService::Config>("BlockingServiceConfig")
-      .field("cacheSize", &BlockingService::Config::cacheSize);
-}
-
-std::shared_ptr<BlockingService> BlockingServiceFactory(
-    const BlockingService::Config& config) {
-  auto copy = config;
-  copy.logger.level = "critical";
-  return std::make_shared<BlockingService>(copy);
+        return std::make_shared<Model>(config, view);
+      },
+      allow_raw_pointers());
 }
 
 EMSCRIPTEN_BINDINGS(blocking_service) {
   class_<Blocking>("Blocking")
-      .smart_ptr_constructor("Blocking", &BlockingFactory)
+      .smart_ptr_constructor(
+          "Blocking",
+          auto [](const Config& config)->std::shared_ptr<Blocking> {
+            return std::make_shared<Blocking>(config);
+          })
       .function("translate", &Blocking::translate)
       .function("pivot", &Blocking::pivot);
   register_vector<std::string>("VectorString");
