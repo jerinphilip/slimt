@@ -31,7 +31,10 @@ list(
   -sDISABLE_EXCEPTION_CATCHING=1
   # the intgemm functions we call will be undefined since these are linked at
   # runtime by our own javascript.
-  -sLLD_REPORT_UNDEFINED
+  # 
+  # jerin: Disabling this particular flag, as it errors.
+  #    em++: error: legacy setting used in strict mode: LLD_REPORT_UNDEFINED
+  # -sLLD_REPORT_UNDEFINED
   -sERROR_ON_UNDEFINED_SYMBOLS=0
   # Cause we can!
   -sSTRICT=1
@@ -47,7 +50,7 @@ list(
   -sDECLARE_ASM_MODULE_EXPORTS=0
   # Export all of the intgemm functions in case we need to fall back to using
   # the embedded intgemm
-  -sEXPORTED_FUNCTIONS=[_int8PrepareAFallback,_int8PrepareBFallback,_int8PrepareBFromTransposedFallback,_int8PrepareBFromQuantizedTransposedFallback,_int8PrepareBiasFallback,_int8MultiplyAndAddBiasFallback,_int8SelectColumnsOfBFallback]
+  # -sEXPORTED_FUNCTIONS=[_int8PrepareAFallback,_int8PrepareBFallback,_int8PrepareBFromTransposedFallback,_int8PrepareBFromQuantizedTransposedFallback,_int8PrepareBiasFallback,_int8MultiplyAndAddBiasFallback,_int8SelectColumnsOfBFallback]
   # Necessary for mozintgemm linking. This prepares the `wasmMemory` variable
   # ahead of time as opposed to delegating that task to the wasm binary itself.
   # This way we can link MozIntGEMM module to the same memory as the main
@@ -55,7 +58,11 @@ list(
   -sIMPORTED_MEMORY=1
   # Dynamic execution is either frowned upon or blocked inside browser
   # extensions
-  -sDYNAMIC_EXECUTION=0)
+  -sDYNAMIC_EXECUTION=0
+
+  # no main, pass --no-entry to suppress, said linker.
+  --no-entry
+)
 
 add_executable(wasm-slimt slimt.cpp)
 
