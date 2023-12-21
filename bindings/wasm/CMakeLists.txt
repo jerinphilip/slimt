@@ -31,10 +31,9 @@ list(
   -sDISABLE_EXCEPTION_CATCHING=1
   # the intgemm functions we call will be undefined since these are linked at
   # runtime by our own javascript.
-  # 
-  # jerin: Disabling this particular flag, as it errors.
-  #    em++: error: legacy setting used in strict mode: LLD_REPORT_UNDEFINED
-  # -sLLD_REPORT_UNDEFINED
+  #
+  # jerin: Disabling this particular flag, as it errors. em++: error: legacy
+  # setting used in strict mode: LLD_REPORT_UNDEFINED -sLLD_REPORT_UNDEFINED
   -sERROR_ON_UNDEFINED_SYMBOLS=0
   # Cause we can!
   -sSTRICT=1
@@ -59,10 +58,8 @@ list(
   # Dynamic execution is either frowned upon or blocked inside browser
   # extensions
   -sDYNAMIC_EXECUTION=0
-
   # no main, pass --no-entry to suppress, said linker.
-  --no-entry
-)
+  --no-entry)
 
 add_executable(wasm-slimt slimt.cpp)
 
