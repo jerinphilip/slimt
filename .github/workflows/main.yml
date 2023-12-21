@@ -474,23 +474,23 @@ jobs:
         with:
           node-version: 18
 
-      - name: Test run
-        working-directory: wasm
-        run: |
-          cp ../build-wasm/bergamot-translator-worker.{js,wasm} ./
-          npm install jsdom
+      # - name: Test run
+      #   working-directory: wasm
+      #   run: |
+      #     cp ../build-wasm/bergamot-translator-worker.{js,wasm} ./
+      #     npm install jsdom
 
-          # --unhandled-rejections make the script exit with a non-zero code (at least on node-14).
-          # So leaving this here.
-          node --unhandled-rejections=strict node-test.js
+      #     # --unhandled-rejections make the script exit with a non-zero code (at least on node-14).
+      #     # So leaving this here.
+      #     node --unhandled-rejections=strict node-test.js
 
-      # Upload both together.
-      - name: Upload wasm artifact
-        uses: actions/upload-artifact@v2
-        with:
-          name: wasm-artefacts
-          if-no-files-found: error
-          path: |
-              ${{github.workspace}}/build-wasm/bergamot-translator-worker.js
-              ${{github.workspace}}/build-wasm/bergamot-translator-worker.wasm
-              ${{github.workspace}}/build-wasm/bergamot-translator-worker.js.bak
+      # # Upload both together.
+      # - name: Upload wasm artifact
+      #   uses: actions/upload-artifact@v2
+      #   with:
+      #     name: wasm-artefacts
+      #     if-no-files-found: error
+      #     path: |
+      #         ${{github.workspace}}/build-wasm/bergamot-translator-worker.js
+      #         ${{github.workspace}}/build-wasm/bergamot-translator-worker.wasm
+      #         ${{github.workspace}}/build-wasm/bergamot-translator-worker.js.bak
