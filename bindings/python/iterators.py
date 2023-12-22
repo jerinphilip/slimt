@@ -24,7 +24,7 @@ class WordIterator:
       self._sentence_id += 1
       if self._sentence_id >= self._max_sentence_id:
         raise StopIteration
-      self._word_id = -1 
+      self._word_id = 0
     return self
 
   def surface(self):
