@@ -1,0 +1,54 @@
+# Maintainer: jerinphilip<at>live<dot>in
+_pkgname=slimt
+pkgname=${_pkgname}-git
+pkgver=r50.0208079
+pkgrel=1
+epoch=
+pkgdesc="Inference frontend for tiny11 models"
+arch=('x86_64')
+url="https://github.com/jerinphilip/slimt"
+fragment=main
+license=('Apache')
+groups=()
+depends=('sentencepiece-git' 'openblas')
+makedepends=('git' 'cmake' 'gcc' 'sentencepiece-git' 'xsimd')
+checkdepends=()
+optdepends=('gperftools')
+provides=()
+conflicts=()
+replaces=()
+backup=()
+options=('!strip')
+install=
+changelog=
+source=("git+https://github.com/jerinphilip/${_pkgname}.git#branch=${fragment}")
+noextract=()
+md5sums=('SKIP')
+
+pkgver() {
+  cd "$_pkgname"
+  printf "r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
+}
+
+build() {
+  (cd ${_pkgname}/ && git submodule update --init --recursive)
+  mkdir -p ${_pkgname}/build
+  cd ${_pkgname}/build
+
+  CONFIGURE_ARGS=(
+    -DUSE_BUILTIN_SENTENCEPIECE=OFF
+    -DWITH_GEMMOLOGY=ON -DUSE_AVX512=ON -DUSE_AVX2=ON -DUSE_SSE2=ON -DUSE_SSSE3=ON
+    -DSLIMT_PACKAGE=ON
+    -DCMAKE_INSTALL_PREFIX=/usr/
+    -DBUILD_STATIC=OFF
+  )
+
+  cmake .. "${CONFIGURE_ARGS[@]}"
+  echo cmake .. "${CONFIGURE_ARGS[@]}"
+  VERBOSE=1 make -j $(nproc)
+}
+
+package() {
+  cd "$_pkgname/build"
+  make DESTDIR="$pkgdir/" install
+}
