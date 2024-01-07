@@ -46,8 +46,8 @@ void AnnotatedText::append_ending_whitespace(std::string_view whitespace) {
   text.append(whitespace.data(), whitespace.size());
   annotation.token_begin_.back() = text.size();
 }
-void AnnotatedText::update(const std::vector<Range> &words) {
-  annotation.update(words);
+void AnnotatedText::update(const std::vector<size_t> &token_begin) {
+  annotation.update(token_begin);
 }
 
 void AnnotatedText::record_existing_sentence(
@@ -85,67 +85,78 @@ void AnnotatedText::to(Encoding encoding) {
     return;
   }
 
-  if (encoding == Encoding::Byte && encoding_ == Encoding::UTF8) {
-    std::vector<Range> words;
+  if (encoding_ == Encoding::UTF8 && encoding == Encoding::Byte) {
+    // Encoding::UTF8 -> Encoding::Byte
+    std::vector<size_t> token_begin;
 
     size_t byte_idx = 0;
-    Range byte{.begin = byte_idx, .end = 0};
+    size_t utf8_idx = 0;
+    size_t token_begin_idx = 0;
 
-    const char *marker = text.data();
-    for (WordIterator current(*this); current.has_next(); ++current) {
-      Range &word = *current;
-      byte.begin = byte_idx;
-
-      for (size_t idx = word.begin; idx != word.end; idx++) {
-        int sequence_length = utf8_sequence_length(*marker);
-        marker += sequence_length;
-        byte_idx += sequence_length;
-      }
-      byte.end = byte_idx;
-      words.push_back(byte);
+    while (token_begin_idx < annotation.token_begin_.size() &&
+           utf8_idx == annotation.token_begin_[token_begin_idx]) {
+      token_begin.push_back(byte_idx);
+      token_begin_idx++;
     }
 
-    annotation.update(words);
+    const char *marker = text.data();
+    while (marker != text.data() + text.size()) {
+      int sequence_length = utf8_sequence_length(*marker);
+      utf8_idx += 1;
+      marker += sequence_length;
+      byte_idx += sequence_length;
+
+      while (token_begin_idx < annotation.token_begin_.size() &&
+             utf8_idx == annotation.token_begin_[token_begin_idx]) {
+        token_begin.push_back(byte_idx);
+        token_begin_idx++;
+      }
+    }
+
+    annotation.update(token_begin);
     encoding_ = Encoding::Byte;
-  } else if (encoding == Encoding::UTF8 && encoding_ == Encoding::Byte) {
-    WordIterator current(*this);
-
-    std::vector<Range> words;
-
-    size_t utf8_idx = 0;
-    size_t byte_idx = 0;
-    Range utf8{
-        .begin = utf8_idx,  //
-        .end = 0            //
-    };
+  } else if (encoding_ == Encoding::Byte && encoding == Encoding::UTF8) {
+    // Encoding::Byte -> Encoding::UTF8
+    std::vector<size_t> token_begin;
 
     // We have indices into two views of the same string. One is bytes, the
     // other is utf8 encoded. We want to convert what is bytes to utf8.
     //
-    // Iterate through each character in the input text.
-    for (const char c : text) {
-      // current = [begin, end)
-      // if is not utf-8 continuation character
+    // Iterate through byte-indices. The skip is a unicode multi-byte character
+    // sequence.
+    size_t byte_idx = 0;
+    size_t utf8_idx = 0;
+    size_t token_begin_idx = 0;
+
+    while (token_begin_idx < annotation.token_begin_.size() &&
+           annotation.token_begin_[token_begin_idx] == byte_idx) {
+      token_begin.push_back(utf8_idx);
+      token_begin_idx++;
+    }
+
+    while (byte_idx < text.size()) {
+      char c = text[byte_idx];
       int sequence_length = utf8_sequence_length(c);
       if (sequence_length > 0) {
+        // If not a continuation-character (i.e, start of any multi-byte
+        // sequence), the unicode index increments by 1.
         ++utf8_idx;
+        byte_idx += sequence_length;
+      } else {
+        // Conti
+        byte_idx++;
       }
 
-      byte_idx += sequence_length;
-
-      // Check if we have reached the end of the current word.
-      if (byte_idx == current->end) {
-        utf8.end = utf8_idx;
-
-        // Add the utf8 Range to the list of words.
-        words.push_back(utf8);
-        ++current;  // Move to the next word.
-
-        // Update the utf8 Range for the next word.
-        utf8.begin = utf8_idx;
+      // If byte_idx is token_begin_idx, then be sure to add the corresponding
+      // utf8_idx
+      while (token_begin_idx < annotation.token_begin_.size() &&
+             annotation.token_begin_[token_begin_idx] == byte_idx) {
+        token_begin.push_back(utf8_idx);
+        token_begin_idx++;
       }
     }
-    annotation.update(words);
+
+    annotation.update(token_begin);
     encoding_ = Encoding::UTF8;
   } else {
     SLIMT_ABORT("Unimplemented");
