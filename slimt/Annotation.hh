@@ -36,10 +36,6 @@ namespace slimt {
 /// beginning).  A sentence can also be empty (typically the translation system
 /// produced empty output).  That's fine, these are just empty ranges as you
 /// would expect.
-enum class Encoding {
-  Byte,  //
-  UTF8   //
-};
 
 class Annotation {
  public:
@@ -81,21 +77,9 @@ class Annotation {
     return Range{token_begin_[token_idx], token_begin_[token_idx + 1]};
   }
 
-  void update(const std::vector<Range> &words) {
-    if (words.empty()) {
-      return;
-    }
-
-    token_begin_.clear();
-    token_begin_.push_back(0);
-
-    for (const auto &word : words) {
-      token_begin_.push_back(word.begin);
-    }
-    token_begin_.push_back(words.back().end);
-    // The last range is repated to denote EOS [sentence_length,
-    // sentence_length].
-    token_begin_.push_back(words.back().end);
+  void update(const std::vector<size_t> &token_begin) {
+    assert(token_begin_.size() == token_begin.size());
+    token_begin_ = token_begin;
   }
 
  private:
@@ -168,7 +152,7 @@ class AnnotatedText {
   /// Append the whitespace at the end of input. std::string_view must not be in
   /// text.
   void append_ending_whitespace(std::string_view whitespace);
-  void update(const std::vector<Range> &words);
+  void update(const std::vector<size_t> &token_begin);
   void to(Encoding encoding);
 
   /// Package the existence of a sentence that is already in text.  The

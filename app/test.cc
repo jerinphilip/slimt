@@ -262,12 +262,8 @@ void LayerNormalizationOp() {
   size_t rows = 1 * 2 * 4;
   size_t cols = 256;
 
-  size_t gamma_stride = 1;
-  size_t beta_stride = 1;
-  bool has_beta = true;
   layer_norm(rhs0.data<float>(), rhs1.data<float>(), rhs2.data<float>(), kEps,
-             rows, cols, gamma_stride, beta_stride, has_beta,
-             lhs_expected.data<float>());
+             rows, cols, lhs_expected.data<float>());
 
   SLIMT_TRACE(lhs);
   SLIMT_TRACE(lhs_expected);
