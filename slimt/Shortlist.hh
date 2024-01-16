@@ -49,7 +49,7 @@ class ShortlistGenerator {
       Vocabulary& source, Vocabulary& target,  //
       size_t source_index = 0, size_t /*target_indx=*/ = 1,
       bool shared = false,  // Kept there for backward compatibility
-      bool check = true);
+      bool check = false);
 
   Shortlist generate(const Words& words) const;
 
