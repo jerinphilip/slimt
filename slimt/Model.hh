@@ -82,6 +82,7 @@ class SLIMT_EXPORT Model {
 namespace preset {
 SLIMT_EXPORT Model::Config tiny();
 SLIMT_EXPORT Model::Config base();
+SLIMT_EXPORT Model::Config nano();
 }  // namespace preset
 
 }  // namespace slimt

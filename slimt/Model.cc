@@ -204,6 +204,19 @@ Model::Config base() {
   // NOLINTEND
   return config;
 }
+
+Model::Config nano() {
+  // NOLINTBEGIN
+  Model::Config config{
+      .encoder_layers = 4,      //
+      .decoder_layers = 2,      //
+      .feed_forward_depth = 2,  //
+      .num_heads = 8,           //
+      .split_mode = "sentence"  //
+  };
+  // NOLINTEND
+  return config;
+}
 }  // namespace preset
 
 }  // namespace slimt
