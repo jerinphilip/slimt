@@ -217,4 +217,5 @@ PYBIND11_MODULE(_slimt, m) {
   auto sm_preset = m.def_submodule("preset");
   sm_preset.def("tiny", &slimt::preset::tiny);
   sm_preset.def("base", &slimt::preset::base);
+  sm_preset.def("nano", &slimt::preset::nano);
 }
