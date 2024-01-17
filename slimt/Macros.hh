@@ -30,7 +30,7 @@
 #define SLIMT_ABORT_IF(condition, error) \
   do {                                   \
     if (condition) {                     \
-      std::cerr << (error) << std::endl; \
+      std::cerr << (error) << '\n';      \
       std::abort();                      \
     }                                    \
   } while (0)
