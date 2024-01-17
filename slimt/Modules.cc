@@ -143,7 +143,7 @@ Tensor join_heads(const Tensor &x) {
 }
 
 Tensor affine(const Affine &parameters, const Tensor &x,
-              const std::string &name = "") {
+              const std::string &name /* = ""*/) {
   Tensor y = qmm::affine(                              //
       x,                                               //
       parameters.W, parameters.b,                      //

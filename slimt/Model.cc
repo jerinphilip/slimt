@@ -112,8 +112,11 @@ Histories Model::decode(const Tensor &encoder_out, const Input &input) const {
   size_t batch_size = encoder_out.dim(-3);
   size_t source_sequence_length = encoder_out.dim(-2);
 
-  Shortlist shortlist = shortlist_generator_->generate(input.words());
-  const Words &indices = shortlist.words();
+  std::optional<Words> indices = std::nullopt;
+  if (shortlist_generator_) {
+    Shortlist shortlist = shortlist_generator_->generate(input.words());
+    indices = shortlist.words();
+  }
   // The following can be used to check if shortlist is going wrong.
   // std::vector<uint32_t> indices(vocabulary_.size());
   // std::iota(indices.begin(), indices.end(), 0);
@@ -142,7 +145,12 @@ Histories Model::decode(const Tensor &encoder_out, const Input &input) const {
   auto [logits, attn] =
       decoder.step(encoder_out, input.mask(), states, previous_slice, indices);
 
-  previous_slice = greedy_sample(logits, indices, batch_size);
+  if (indices) {
+    previous_slice = greedy_sample_from_words(logits, *indices, batch_size);
+  } else {
+    previous_slice = greedy_sample(logits, vocabulary_.size(), batch_size);
+  }
+
   update_alignment(input.lengths(), complete, attn, alignments);
   record(previous_slice, sentences);
 
@@ -151,7 +159,11 @@ Histories Model::decode(const Tensor &encoder_out, const Input &input) const {
   for (size_t i = 1; i < max_seq_length && remaining > 0; i++) {
     auto [logits, attn] = decoder.step(encoder_out, input.mask(), states,
                                        previous_slice, indices);
-    previous_slice = greedy_sample(logits, indices, batch_size);
+    if (indices) {
+      previous_slice = greedy_sample_from_words(logits, *indices, batch_size);
+    } else {
+      previous_slice = greedy_sample(logits, vocabulary_.size(), batch_size);
+    }
     update_alignment(input.lengths(), complete, attn, alignments);
     remaining = record(previous_slice, sentences);
   }

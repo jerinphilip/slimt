@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <iostream>
+#include <optional>
 #include <string>
 #include <tuple>
 #include <utility>
@@ -110,11 +111,9 @@ void Decoder::register_parameters(const std::string &prefix,
   }
 }
 
-std::tuple<Tensor, Tensor> Decoder::step(const Tensor &encoder_out,
-                                         const Tensor &mask,
-                                         std::vector<Tensor> &states,
-                                         const Words &previous_step,
-                                         const Words &shortlist) const {
+std::tuple<Tensor, Tensor> Decoder::step(
+    const Tensor &encoder_out, const Tensor &mask, std::vector<Tensor> &states,
+    const Words &previous_step, const std::optional<Words> &shortlist) const {
   // Infer batch-size from encoder_out.
   size_t encoder_feature_dim = encoder_out.dim(-1);
   size_t source_sequence_length = encoder_out.dim(-2);
@@ -168,7 +167,12 @@ std::tuple<Tensor, Tensor> Decoder::step(const Tensor &encoder_out,
     }
   }
 
-  Tensor logits = affine_with_select(output_, x, shortlist, "logits");
+  if (shortlist.has_value()) {
+    Tensor logits = affine_with_select(output_, x, *shortlist, "logits");
+    return {std::move(logits), std::move(guided_alignment)};
+  }
+
+  Tensor logits = affine(output_, x, "logits");
   return {std::move(logits), std::move(guided_alignment)};
 }
 
@@ -221,8 +225,29 @@ void Transformer::register_parameters(const std::string &prefix,
   decoder_.register_parameters(prefix, parameters);
 }
 
-Words greedy_sample(const Tensor &logits, const Words &words,
+Words greedy_sample(const Tensor &logits, size_t vocabulary_size,
                     size_t batch_size) {
+  Words sampled_words;
+  size_t stride = vocabulary_size;
+  for (size_t i = 0; i < batch_size; i++) {
+    const auto *data = logits.data<float>();
+    size_t max_index = 0;
+    float max_value = data[0];
+    for (size_t cls = 1; cls < stride; cls++) {
+      float value = data[i * stride + cls];
+      if (value > max_value) {
+        max_index = cls;
+        max_value = value;
+      }
+    }
+
+    sampled_words.push_back(max_index);
+  }
+  return sampled_words;
+}
+
+Words greedy_sample_from_words(const Tensor &logits, const Words &words,
+                               size_t batch_size) {
   Words sampled_words;
   for (size_t i = 0; i < batch_size; i++) {
     const auto *data = logits.data<float>();
