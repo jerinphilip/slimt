@@ -60,12 +60,15 @@ class SLIMT_EXPORT Model {
   const TextProcessor &processor() const { return processor_; }
   const Transformer &transformer() const { return transformer_; }
   size_t id() const { return id_; }  // NOLINT
-  const ShortlistGenerator &shortlist_generator() const {
+  const std::optional<ShortlistGenerator> &shortlist_generator() const {
     return shortlist_generator_;
   }
 
  private:
   Histories decode(const Tensor &encoder_out, const Input &input) const;
+
+  static std::optional<ShortlistGenerator> make_shortlist_generator(
+      View view, const Vocabulary &source, const Vocabulary &target);
 
   size_t id_;
   Config config_;
@@ -76,7 +79,7 @@ class SLIMT_EXPORT Model {
   Vocabulary vocabulary_;
   TextProcessor processor_;
   Transformer transformer_;
-  ShortlistGenerator shortlist_generator_;
+  std::optional<ShortlistGenerator> shortlist_generator_;
 };
 
 namespace preset {

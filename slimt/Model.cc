@@ -56,7 +56,8 @@ Model::Model(const Config &config, const Package<View> &package)
       processor_(config.split_mode, vocabulary_, Aligned()),
       transformer_(config.encoder_layers, config.decoder_layers,
                    config.num_heads, config.feed_forward_depth, package.model),
-      shortlist_generator_(package.shortlist, vocabulary_, vocabulary_) {}
+      shortlist_generator_(make_shortlist_generator(
+          package.shortlist, vocabulary_, vocabulary_)) {}
 
 Model::Model(const Config &config, const Package<std::string> &package)
     : id_(model_id++),
@@ -67,7 +68,16 @@ Model::Model(const Config &config, const Package<std::string> &package)
       processor_(config.split_mode, vocabulary_, Aligned()),
       transformer_(config.encoder_layers, config.decoder_layers,
                    config.num_heads, config.feed_forward_depth, view_.model),
-      shortlist_generator_(view_.shortlist, vocabulary_, vocabulary_) {}
+      shortlist_generator_(make_shortlist_generator(
+          view_.shortlist, vocabulary_, vocabulary_)) {}
+
+std::optional<ShortlistGenerator> Model::make_shortlist_generator(
+    View view, const Vocabulary &source, const Vocabulary &target) {
+  if (view.data == nullptr || view.size == 0) {
+    return std::nullopt;
+  }
+  return ShortlistGenerator(view, source, target);
+}
 
 namespace {
 void update_alignment(const std::vector<size_t> &lengths,
@@ -102,7 +112,7 @@ Histories Model::decode(const Tensor &encoder_out, const Input &input) const {
   size_t batch_size = encoder_out.dim(-3);
   size_t source_sequence_length = encoder_out.dim(-2);
 
-  Shortlist shortlist = shortlist_generator_.generate(input.words());
+  Shortlist shortlist = shortlist_generator_->generate(input.words());
   const Words &indices = shortlist.words();
   // The following can be used to check if shortlist is going wrong.
   // std::vector<uint32_t> indices(vocabulary_.size());
