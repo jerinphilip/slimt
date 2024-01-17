@@ -98,7 +98,7 @@ void ShortlistGenerator::load(const void* data, size_t blob_size,
 
 ShortlistGenerator::ShortlistGenerator(                        //
     View view,                                                 //
-    Vocabulary& source, Vocabulary& target,                    //
+    const Vocabulary& source, const Vocabulary& target,        //
     size_t source_index /*= 0*/, size_t /*target_index = 1*/,  //
     bool shared /*= false*/, bool check /*= true*/)
     : source_(source),
