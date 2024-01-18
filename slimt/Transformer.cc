@@ -167,7 +167,7 @@ std::tuple<Tensor, Tensor> Decoder::step(
     }
   }
 
-  if (shortlist.has_value()) {
+  if (shortlist) {
     Tensor logits = affine_with_select(output_, x, *shortlist, "logits");
     return {std::move(logits), std::move(guided_alignment)};
   }
