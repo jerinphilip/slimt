@@ -11,7 +11,7 @@
 namespace slimt {
 
 Input::Input(size_t batch_size, size_t sequence_length, uint32_t pad_id,
-             size_t limit_factor)
+             float limit_factor)
     : batch_(Type::u32, Shape({batch_size, sequence_length}), "batch"),
       mask_(Type::f32, Shape({batch_size, sequence_length}), "mask"),
       pad_id_(pad_id),
