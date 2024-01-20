@@ -20,28 +20,6 @@ class Shape;
 
 std::string checked_fpath();
 
-class Verifier {
- public:
-  static Verifier &instance() {
-    static Verifier verifier;
-    return verifier;
-  }
-  bool verify(Tensor &value, const std ::string &name);
-
- private:
-  Verifier() : blob_path_(checked_fpath()) {}
-  std::unordered_set<std::string> verified_;
-  std::string blob_path_;
-};
-
-#define SLIMT_VERIFY_MATCH(value, name)            \
-  do {                                             \
-    const char *flag = std::getenv("SLIMT_TRACE"); \
-    if (flag) {                                    \
-      (Verifier::instance()).verify(value, name);  \
-    }                                              \
-  } while (0)
-
 template <class Printable>
 std::string fmt(Printable &printable) {
   std::stringstream stream;
