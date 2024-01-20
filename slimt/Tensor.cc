@@ -197,63 +197,18 @@ std::ostream &operator<<(std::ostream &out, const Tensor &tensor) {
 bool operator==(const Tensor &lhs, const Tensor &rhs) {
   // Can't always rely on size, because sometimes we do aligned loads. So
   // something that is 256 bytes could only be 16 bytes w.r.t actual elements.
+  // This disables the below option.
   // if (lhs.view_.size != rhs.view_.size) return false;
+
   if (lhs.type() != rhs.type()) return false;
   if (lhs.shape() != rhs.shape()) return false;
+
+  // Byte comparisons.
   const void *lhs_ptr = lhs.data<char>();
   const void *rhs_ptr = rhs.data<char>();
-
-  auto message = [&](size_t position, auto l, auto r, float eps) {
-    std::cerr << lhs.name() << " and " << rhs.name();
-    std::cerr << "(" << to_string(lhs.type()) << ")";
-    std::cerr << "\n differs at position " << position << ": ";
-    std::cerr << "[" << std::scientific << l << "] ";
-    std::cerr << "[" << std::scientific << r << "] ";
-    std::cerr << "\n Δ: " << eps << " | \nbit: ";
-    std::bitset<32> bl(l), br(r);  // NOLINT
-    std::cerr << "\n " << bl << "\n " << br << "\n";
-  };
-
-  // Special cause for float32.
-  // Can use this when suspect inconsistent values.
-  const char *env_eps = std::getenv("SLIMT_EPS");
-  if (env_eps != nullptr and lhs.type() == Type::f32) {  // NOLINT
-    size_t size = lhs.size();
-    const auto *l = lhs.data<float>();
-    const auto *r = rhs.data<float>();
-
-    float eps = std::stof(env_eps);
-
-    SLIMT_TRACE(mse(lhs, rhs));
-    for (size_t i = 0; i < size; i++) {
-      float diff = std::abs(*l - *r);
-      if (diff > eps) {
-        SLIMT_TRACE2(diff, eps);
-        int *il = (int *)l;  // NOLINT
-        int *ir = (int *)r;  // NOLINT
-        message(i, *il, *ir, diff);
-        return false;
-      }
-      ++l, ++r;
-    }
-    return true;
-  }
-
   size_t size_in_memory = std::min(lhs.view().size, rhs.view().size);
   int retval = memcmp(lhs_ptr, rhs_ptr, size_in_memory);
-  // -1, 0 +1 if < = > respectively C-API, so.
   bool eq = (retval == 0);
-  if (not eq) {
-    const auto *l = lhs.data<char>();
-    const auto *r = rhs.data<char>();
-    for (size_t i = 0; i < size_in_memory; i++) {
-      float nan = std::numeric_limits<float>::quiet_NaN();
-      if (*l != *r) {
-        message(i, int(*l), int(*r), nan);  // NOLINT
-      }
-      ++l, ++r;
-    }
-  }
   return eq;
 }
 
