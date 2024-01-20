@@ -99,7 +99,7 @@ inline bool process(const char *pretty_fn, NodeType *value, std::ostream &out,
   std::string save_name = var_name + ".bin";
   std::string lhs_save = save_to_disk(save_name, value);
 
-  stream << indent << "after: {\"id\": ";
+  stream << indent << "lhs: {\"id\": ";
   var_id(stream, value);
   if (!lhs_save.empty()) {
     stream << ", \"save\":";
@@ -109,11 +109,11 @@ inline bool process(const char *pretty_fn, NodeType *value, std::ostream &out,
 
   auto children = value->children();
   if (not children.empty()) {
-    stream << "\n" << indent << "operands: \n";
+    stream << "\n" << indent << "rhs: \n";
   }
   for (size_t i = 0; i < children.size(); i++) {
     auto rhs = children[i];
-    stream << "  - ";
+    stream << indent << "  - ";
     stream << "{\"id\": ";
     var_id(stream, rhs);
 
@@ -148,10 +148,7 @@ inline bool process(const char *pretty_fn, NodeType *value, std::ostream &out,
     stream << indent << "line: " << __LINE__ << "\n";                       \
     stream << indent << "fn: \"" << __PRETTY_FUNCTION__ << "\"\n";          \
     stream << indent << "op: \"{ " << #op << " }\"\n";                      \
-    stream << indent << "before: ";                                         \
-    detail::var_id(stream, this);                                           \
     op;                                                                     \
-    stream << "\n";                                                         \
     bool flag = detail::process(__PRETTY_FUNCTION__, this, stream, indent); \
     stream << "\n\n";                                                       \
     if (flag) {                                                             \
