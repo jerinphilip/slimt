@@ -36,12 +36,15 @@ def NoOp(lhs, rhs):
 
 def test(lhs, rhs, slimt_fn):
     block = []
+    args = ", ".join([arg.name for arg in rhs])
+    info = f"{lhs.name} == {slimt_fn}({args})"
+    block.append(f'std::string info = "{info}";')
     block.append(f"Tensor lhs_expected = {lhs.load()};")
     for idx, arg in enumerate(rhs):
         block.append(f"Tensor rhs_{idx} = {rhs[idx].load()};")
     args = ", ".join([f"rhs_{idx}" for idx in range(len(rhs))])
     block.append(f"Tensor lhs_computed = {slimt_fn}({args});")
-    block.append("CHECK_EQUAL(lhs_computed, lhs_expected);")
+    block.append(f'CHECK_EQUAL(lhs_computed, lhs_expected, "{info}");')
     return "{\n" + "\n".join(block) + "\n}"
 
 
@@ -50,6 +53,10 @@ def ReLU(lhs, rhs):
     for arg in rhs:
         arg.reshape([prod(arg.shape)])
     return test(lhs, rhs, "relu")
+
+
+def LayerNormalization(lhs, rhs):
+    return test(lhs, rhs, "layer_norm")
 
 
 def Affine(lhs, rhs):
@@ -101,6 +108,32 @@ def main(blocks):
     )
 
 
+# Mappings from marian to slimt
+mapping = {
+    # "AffineNodeOp": Affine,
+    "AffineNodeOp": NoOp,
+    "ColsNodeOp": NoOp,
+    "ConstantNode": NoOp,
+    "cpu:integer:AffineNodeOp<marian:Type:int8>": NoOp,
+    "cpu:integer:DotNodeOp<marian:Type:int8>": NoOp,
+    "cpu:integer:PrepareANodeOp<marian:Type:int8>": NoOp,
+    "cpu:integer:QuantMultNodeOp<marian:Type:int8>": NoOp,
+    "DotBatchedNodeOp": NoOp,
+    "GatherNodeOp": NoOp,
+    "HighwayNodeOp": NoOp,
+    "LayerNormalizationOp": LayerNormalization,
+    "LogSoftmaxNodeOp": NoOp,
+    "NegNodeOp": NoOp,
+    "ParamNode": NoOp,
+    "PlusNodeOp": NoOp,
+    "ReLUNodeOp": ReLU,
+    "RowsNodeOp": NoOp,
+    "ScalarAddNodeOp": NoOp,
+    "ScalarMultNodeOp": NoOp,
+    "SoftmaxNodeOp": NoOp,
+    "TransposeNodeOp": NoOp,
+}
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--trace", type=str, required=True)
@@ -109,32 +142,6 @@ if __name__ == "__main__":
     data = None
     with open(args.trace) as fp:
         data = yaml.safe_load(fp)
-
-    # Mappings from marian to slimt
-    mapping = {
-        # "AffineNodeOp": Affine,
-        "AffineNodeOp": NoOp,
-        "ColsNodeOp": NoOp,
-        "ConstantNode": NoOp,
-        "cpu:integer:AffineNodeOp<marian:Type:int8>": NoOp,
-        "cpu:integer:DotNodeOp<marian:Type:int8>": NoOp,
-        "cpu:integer:PrepareANodeOp<marian:Type:int8>": NoOp,
-        "cpu:integer:QuantMultNodeOp<marian:Type:int8>": NoOp,
-        "DotBatchedNodeOp": NoOp,
-        "GatherNodeOp": NoOp,
-        "HighwayNodeOp": NoOp,
-        "LayerNormalizationOp": NoOp,
-        "LogSoftmaxNodeOp": NoOp,
-        "NegNodeOp": NoOp,
-        "ParamNode": NoOp,
-        "PlusNodeOp": NoOp,
-        "ReLUNodeOp": ReLU,
-        "RowsNodeOp": NoOp,
-        "ScalarAddNodeOp": NoOp,
-        "ScalarMultNodeOp": NoOp,
-        "SoftmaxNodeOp": NoOp,
-        "TransposeNodeOp": NoOp,
-    }
 
     blocks = Blocks(mapping, data)
     with open(args.output, "w") as output:

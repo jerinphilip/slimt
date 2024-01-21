@@ -5,15 +5,14 @@
 #include "slimt/Utils.hh"
 #include "slimt/slimt.hh"
 
-#define CHECK_EQUAL(lhs, rhs) \
-  do {                        \
-    if (lhs == rhs) {         \
-      std::cout << "[PASS]"   \
-                << "\n";      \
-    } else {                  \
-      std::cout << "[FAIL]"   \
-                << "\n";      \
-    }                         \
+#define CHECK_EQUAL(lhs, rhs, fn)   \
+  do {                              \
+    if (lhs == rhs) {               \
+      std::cout << "[PASS]";        \
+    } else {                        \
+      std::cout << "[FAIL]";        \
+    }                               \
+    std::cout << " " << fn << "\n"; \
   } while (0)
 
 inline std::string blob_path(const std::string &bin) {
