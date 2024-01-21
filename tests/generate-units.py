@@ -55,6 +55,15 @@ def ReLU(lhs, rhs):
     return test(lhs, rhs, "relu")
 
 
+def Plus(lhs, rhs):
+    lhs.reshape([prod(lhs.shape)])
+    for arg in rhs:
+        if prod(arg.shape) != prod(lhs.shape):
+            return ""
+        arg.reshape([prod(arg.shape)])
+    return test(lhs, rhs, "add")
+
+
 def LayerNormalization(lhs, rhs):
     return test(lhs, rhs, "layer_norm")
 
@@ -111,7 +120,6 @@ def main(blocks):
 # Mappings from marian to slimt
 mapping = {
     # "AffineNodeOp": Affine,
-    "AffineNodeOp": NoOp,
     "ColsNodeOp": NoOp,
     "ConstantNode": NoOp,
     "cpu:integer:AffineNodeOp<marian:Type:int8>": NoOp,
@@ -125,7 +133,7 @@ mapping = {
     "LogSoftmaxNodeOp": NoOp,
     "NegNodeOp": NoOp,
     "ParamNode": NoOp,
-    "PlusNodeOp": NoOp,
+    "PlusNodeOp": Plus,
     "ReLUNodeOp": ReLU,
     "RowsNodeOp": NoOp,
     "ScalarAddNodeOp": NoOp,
