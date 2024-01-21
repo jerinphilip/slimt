@@ -640,7 +640,7 @@ Tensor mul(const Tensor& x, const Tensor& y) {
 }
 
 Tensor layer_norm(const Tensor& x, const Tensor& scale, const Tensor& bias,
-                  float EPS /*= 1e-9*/) {
+                  float EPS /*= 1e-6F*/) {
   Tensor y = x.like("ln_out");
   size_t cols = x.dim(-1);
   size_t rows = x.size() / cols;

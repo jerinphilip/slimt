@@ -60,7 +60,7 @@ Tensor add(const Tensor& x, const Tensor& y);
 Tensor sub(const Tensor& x, const Tensor& y);
 Tensor mul(const Tensor& x, const Tensor& y);
 Tensor layer_norm(const Tensor& x, const Tensor& scale, const Tensor& bias,
-                  float EPS = 1e-9);  // NOLINT
+                  float EPS = 1e-6F);  // NOLINT
 
 Tensor fast_select(Tensor& source, const std::vector<uint32_t>& indices);
 
