@@ -295,7 +295,7 @@ Tensor LayerNorm::forward(const Tensor &x) const {
 std::tuple<Tensor, Tensor> Attention::forward(const Tensor &q, const Tensor &k,
                                               const Tensor &v,
                                               const Tensor &mask) const {
-  // We have a B x T x H sequence comoing in, for q, k and v.
+  // We have a B x T x H sequence coming in, for q, k and v.
   Tensor yq = affine(Q_, q, "q");
   Tensor yk = affine(K_, k, "k");
   Tensor yv = affine(V_, v, "v");
