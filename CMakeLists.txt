@@ -208,6 +208,7 @@ endif(UNIX)
 
 add_subdirectory(slimt)
 add_subdirectory(app)
+add_subdirectory(tests)
 
 if(BUILD_PYTHON)
   if(USE_PYBIND11_SOURCE)
