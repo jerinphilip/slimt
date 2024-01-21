@@ -30,6 +30,11 @@ extern "C" {
 
 namespace slimt {
 
+inline float sigmoid(float x) {
+  return x > 0 ? (1.0F / (1.0F + std::exp(-x)))
+               : (std::exp(x) / (1.0F + std::exp(x)));
+}
+
 Tensor index_select(const Tensor& x, const Tensor& indices,
                     const std::string& name /*= "selected"*/) {
   uint64_t sequence_length = indices.dim(-1);
@@ -215,8 +220,7 @@ void sigmoid(const float* a, size_t size, float* c) {
 #endif
 
   for (size_t i = 0; i < size; i++) {
-    float x = std::exp(a[i]);
-    c[i] = x / (1 + x);
+    c[i] = sigmoid(a[i]);
   }
 }
 
@@ -657,12 +661,22 @@ Tensor operator*(const Tensor& x, const Tensor& y) { return mul(x, y); }
 
 Tensor highway(const Tensor& x, const Tensor& y, const Tensor& g) {
   // f(t) = σ(Wt . x(t) + bf )
-  Tensor f = sigmoid(g);
+  Tensor c_t = x.like("highway_out");
 
-  Tensor ones = f.like("ones");
-  ones.fill_in_place(1.0F);
+  assert(x.size() == y.size());
+  assert(y.size() == g.size());
+  const auto* tx = x.data<float>();
+  const auto* ty = y.data<float>();
+  const auto* tg = g.data<float>();
+  auto* out = c_t.data<float>();
+  size_t size = x.size();
 
-  Tensor c_t = (f * x) + (ones - f) * y;
+  for (size_t i = 0; i < size; i++) {
+    float sg = sigmoid(tg[i]);
+    float vx = tx[i];
+    float vy = ty[i];
+    out[i] = vx * sg + (1.0F - sg) * vy;
+  }
 
   return c_t;
 }
