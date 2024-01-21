@@ -59,6 +59,11 @@ Tensor sigmoid(const Tensor& x);
 Tensor add(const Tensor& x, const Tensor& y);
 Tensor sub(const Tensor& x, const Tensor& y);
 Tensor mul(const Tensor& x, const Tensor& y);
+
+Tensor operator+(const Tensor& x, const Tensor& y);
+Tensor operator-(const Tensor& x, const Tensor& y);
+Tensor operator*(const Tensor& x, const Tensor& y);
+
 Tensor layer_norm(const Tensor& x, const Tensor& scale, const Tensor& bias,
                   float EPS = 1e-6F);  // NOLINT
 

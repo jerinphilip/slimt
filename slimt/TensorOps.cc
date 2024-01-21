@@ -651,4 +651,8 @@ Tensor layer_norm(const Tensor& x, const Tensor& scale, const Tensor& bias,
   return y;
 }
 
+Tensor operator+(const Tensor& x, const Tensor& y) { return add(x, y); }
+Tensor operator-(const Tensor& x, const Tensor& y) { return sub(x, y); }
+Tensor operator*(const Tensor& x, const Tensor& y) { return mul(x, y); }
+
 }  // namespace slimt

@@ -217,27 +217,22 @@ Tensor SSRU::forward(Tensor &state, const Tensor &x) const {
 
   Tensor f_out = affine(F_, x, "rnn_f");  // Forget gate?
   Tensor f = sigmoid(f_out);
-
-  // c(t) = f(t) ⊙  c(t−1) + (1 − ft) ⊙  Wx(t)
   Tensor Wxt = linear(O_, x, "rnn_o");  // NOLINT
 
   Tensor ones = f.like("ones");
   ones.fill_in_place(1.0F);
 
-  Tensor g = sub(ones, f);
-  Tensor c_arg1 = mul(f, c);
-  Tensor c_arg2 = mul(g, Wxt);
-  Tensor c_next = add(c_arg1, c_arg2);
+  // c(t) = f(t) ⊙  c(t−1) + (1 − ft) ⊙  Wx(t)
+  Tensor c_t = f * c + (ones - f) * Wxt;
 
   // y(t) = ReLU(c(t));
-  Tensor y = relu(c_next);
+  Tensor y = relu(c_t);
 
   // h(t) = α LayerNorm(y(t) + x(t)) + β
-  Tensor o = add(x, y);
-
+  Tensor o = x + y;
   Tensor h = ln_.forward(o);
 
-  state = std::move(c_next);
+  state = std::move(c_t);
 
   return h;
 }
