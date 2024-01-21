@@ -32,22 +32,8 @@ if __name__ == "__main__":
     nano: Config = preset.nano()
     model_nano = Model(nano, package)
 
-    responses = service.translate(
-        model_nano,
-        [
-            "njanaaraa",
-            "njaanethaa",
-            "njaanillayirunnenkil",
-            "enikku",
-            "ennekkondu",
-            "innale",
-            "naale",
-            "narendra",
-            "modi",
-            "enthina",
-        ],
-        html=False,
-    )
+    data = sys.stdin.read()
+    responses = service.translate( model_nano, [ data ], html=False)
 
     for response in responses:
         print(response.source.text, "->", response.target.text)
