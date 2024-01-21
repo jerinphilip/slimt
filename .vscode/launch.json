@@ -1,6 +1,40 @@
 {
     "configurations": [
         {
+            "name": "(gdb) t12n",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/env/bin/python3",
+            "args": [
+                "${workspaceFolder}/scripts/t12n.py",
+                "${workspaceFolder}/../slimt-t12n/outputs/mal-eng/model.nano.npz.decoder.yml",
+                "<",
+                "${workspaceFolder}/data/ml-xlit.txt"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${fileDirname}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Set Disassembly Flavor to Intel",
+                    "text": "-gdb-set disassembly-flavor intel",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Enable following into child for debugging.",
+                    "text": "set follow-fork-mode child",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
             "name": "(gdb) test",
             "type": "cppdbg",
             "request": "launch",
