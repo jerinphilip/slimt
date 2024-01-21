@@ -68,5 +68,6 @@ Tensor layer_norm(const Tensor& x, const Tensor& scale, const Tensor& bias,
                   float EPS = 1e-6F);  // NOLINT
 
 Tensor fast_select(Tensor& source, const std::vector<uint32_t>& indices);
+Tensor highway(const Tensor& x, const Tensor& y, const Tensor& g);
 
 }  // namespace slimt

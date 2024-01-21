@@ -1,6 +1,7 @@
 import yaml
 import argparse
 import textwrap
+import itertools
 
 
 def prod(xs):
@@ -26,7 +27,7 @@ class Tensor:
         shape = "Shape({{{ls}}})".format(ls=", ".join(dims))
         dmap = {"float32": "float", "int8": "int8_t"}
         dtype = dmap[self.dtype]
-        blob_path = f'blob_path("{self.name}.bin")'
+        blob_path = f'blob_path("{self.save}")'
         return f'tensor_from_file<{dtype}>({blob_path}, {shape}, "{self.name}")'
 
 
@@ -48,6 +49,19 @@ def test(lhs, rhs, slimt_fn):
     return "{\n" + "\n".join(block) + "\n}"
 
 
+def guard(block):
+    catch_block = """catch (const std::exception& e) {
+        // Catching and handling exceptions
+        std::cerr << "Exception caught: " << e.what() << std::endl;
+    }
+    catch (...) {{
+        // Catching any other unexpected exceptions
+        std::cerr << "Unknown exception caught" << std::endl;
+    }}
+    """
+    return f"""try {{ {block} }} {catch_block}"""
+
+
 def ReLU(lhs, rhs):
     lhs.reshape([prod(lhs.shape)])
     for arg in rhs:
@@ -62,6 +76,18 @@ def Plus(lhs, rhs):
             return ""
         arg.reshape([prod(arg.shape)])
     return test(lhs, rhs, "add")
+
+
+def Highway(lhs, rhs):
+    lhs.reshape([prod(lhs.shape)])
+    blocks = []
+    for arg in rhs:
+        if prod(arg.shape) != prod(lhs.shape):
+            return ""
+        arg.reshape([prod(arg.shape)])
+    block = test(lhs, rhs, "highway")
+    blocks.append(block)
+    return "\n".join(blocks)
 
 
 def LayerNormalization(lhs, rhs):
@@ -104,6 +130,7 @@ def Blocks(mapping, data):
 
 
 def main(blocks):
+    blocks = list(map(guard, blocks))
     return textwrap.dedent(
         """
         #include "TestSuite.hh"
@@ -128,7 +155,7 @@ mapping = {
     "cpu:integer:QuantMultNodeOp<marian:Type:int8>": NoOp,
     "DotBatchedNodeOp": NoOp,
     "GatherNodeOp": NoOp,
-    "HighwayNodeOp": NoOp,
+    "HighwayNodeOp": Highway,
     "LayerNormalizationOp": LayerNormalization,
     "LogSoftmaxNodeOp": NoOp,
     "NegNodeOp": NoOp,

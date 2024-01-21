@@ -211,26 +211,23 @@ Tensor SSRU::forward(Tensor &state, const Tensor &x) const {
   //       Wx(t)  is a linear operation (it's a linear transform).
   // Wfx(t) + bf  is an affine transform.
 
-  // f(t) = σ(Wt . x(t) + bf )
-
   Tensor &c = state;  // Load context from saved-state.
 
-  Tensor f_out = affine(F_, x, "rnn_f");  // Forget gate?
-  Tensor f = sigmoid(f_out);
+  // Forward parameter multiplications.
+  Tensor f = affine(F_, x, "rnn_f");    // Forget gate? NOLINT
   Tensor Wxt = linear(O_, x, "rnn_o");  // NOLINT
 
-  Tensor ones = f.like("ones");
-  ones.fill_in_place(1.0F);
-
+  // https://github.com/browsermt/marian-dev/blob/77e886ae7ae6016981c6307c312650bf74b50487/src/rnn/cells.h#L1058
   // c(t) = f(t) ⊙  c(t−1) + (1 − ft) ⊙  Wx(t)
-  Tensor c_t = f * c + (ones - f) * Wxt;
+  // Tensor c_t = highway(c, f, Wxt);
+  Tensor c_t = highway(c, Wxt, f);
 
+  // https://github.com/browsermt/marian-dev/blob/77e886ae7ae6016981c6307c312650bf74b50487/src/rnn/cells.h#L1059
   // y(t) = ReLU(c(t));
   Tensor y = relu(c_t);
 
   // h(t) = α LayerNorm(y(t) + x(t)) + β
-  Tensor o = x + y;
-  Tensor h = ln_.forward(o);
+  Tensor h = ln_.forward(x + y);
 
   state = std::move(c_t);
 

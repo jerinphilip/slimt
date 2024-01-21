@@ -655,4 +655,16 @@ Tensor operator+(const Tensor& x, const Tensor& y) { return add(x, y); }
 Tensor operator-(const Tensor& x, const Tensor& y) { return sub(x, y); }
 Tensor operator*(const Tensor& x, const Tensor& y) { return mul(x, y); }
 
+Tensor highway(const Tensor& x, const Tensor& y, const Tensor& g) {
+  // f(t) = σ(Wt . x(t) + bf )
+  Tensor f = sigmoid(g);
+
+  Tensor ones = f.like("ones");
+  ones.fill_in_place(1.0F);
+
+  Tensor c_t = (f * x) + (ones - f) * y;
+
+  return c_t;
+}
+
 }  // namespace slimt
