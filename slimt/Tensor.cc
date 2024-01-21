@@ -203,6 +203,33 @@ bool operator==(const Tensor &lhs, const Tensor &rhs) {
   if (lhs.type() != rhs.type()) return false;
   if (lhs.shape() != rhs.shape()) return false;
 
+  // Special case so we can check floating point.
+  const char *env_eps = std::getenv("SLIMT_EPS");
+  if (env_eps != nullptr and lhs.type() == Type::f32) {  // NOLINT
+    float eps = std::stof(env_eps);
+
+    // Compute MSE and check.
+    float error = mse(lhs, rhs);
+    if (error > eps) {
+      return false;
+    }
+
+    // Compute individual distances.
+    size_t size = lhs.size();
+    const auto *l = lhs.data<float>();
+    const auto *r = rhs.data<float>();
+
+    for (size_t i = 0; i < size; i++) {
+      float diff = std::abs(*l - *r);
+      if (diff > eps) {
+        // SLIMT_TRACE2(diff, eps);
+        return false;
+      }
+      ++l, ++r;
+    }
+    return true;
+  }
+
   // Byte comparisons.
   const void *lhs_ptr = lhs.data<char>();
   const void *rhs_ptr = rhs.data<char>();

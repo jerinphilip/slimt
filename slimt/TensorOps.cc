@@ -639,4 +639,16 @@ Tensor mul(const Tensor& x, const Tensor& y) {
   return x_plus_y;
 }
 
+Tensor layer_norm(const Tensor& x, const Tensor& scale, const Tensor& bias,
+                  float EPS /*= 1e-9*/) {
+  Tensor y = x.like("ln_out");
+  size_t cols = x.dim(-1);
+  size_t rows = x.size() / cols;
+
+  layer_norm(x.data<float>(),                          //
+             scale.data<float>(), bias.data<float>(),  //
+             EPS, rows, cols, y.data<float>());
+  return y;
+}
+
 }  // namespace slimt

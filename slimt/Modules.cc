@@ -288,18 +288,7 @@ Tensor FFN::forward(const Tensor &x) const {
 }
 
 Tensor LayerNorm::forward(const Tensor &x) const {
-  Tensor y = x.like("ln_out");
-  size_t cols = x.dim(-1);
-  size_t rows = x.size() / cols;
-
-  // Currently this is hardcoded.
-  // Not sure how to do it otherwise.
-  constexpr float kEps = 1e-9;
-
-  layer_norm(x.data<float>(),                            //
-             scale_.data<float>(), bias_.data<float>(),  //
-             kEps, rows, cols, y.data<float>());
-
+  Tensor y = layer_norm(x, scale_, bias_);
   return y;
 }
 
