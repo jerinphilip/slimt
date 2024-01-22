@@ -1,10 +1,10 @@
-import yaml
 import os
-import slimt
 import sys
-from slimt import Model, Package, Config
-from slimt import Service, Model
-from slimt import preset
+
+import yaml
+
+import slimt
+from slimt import Config, Model, Package, Service, preset
 
 
 # Load the config file
