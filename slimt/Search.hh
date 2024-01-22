@@ -7,14 +7,24 @@
 
 namespace slimt {
 
-Histories decode(const Transformer &transformer, const Vocabulary &vocabulary,
-                 const std::optional<ShortlistGenerator> &shortlist_generator,
-                 const Tensor &encoder_out, const Input &input);
+struct Greedy {
+  static Histories decode(
+      const Transformer &transformer, const Vocabulary &vocabulary,
+      const std::optional<ShortlistGenerator> &shortlist_generator,
+      const Tensor &encoder_out, const Input &input);
 
-Histories forward(const Transformer &transformer, const Vocabulary &vocabulary,
-                  const std::optional<ShortlistGenerator> &shortlist_generator,
-                  const Input &input);
-struct Greedy {};
-struct BeamSearch {};
+  Histories forward(
+      const Transformer &transformer, const Vocabulary &vocabulary,
+      const std::optional<ShortlistGenerator> &shortlist_generator,
+      const Input &input);
+};
+
+using NBest = std::vector<Histories>;
+
+struct BeamSearch {
+  NBest forward(const Transformer &transformer, const Vocabulary &vocabulary,
+                const std::optional<ShortlistGenerator> &shortlist_generator,
+                const Input &input);
+};
 
 }  // namespace slimt

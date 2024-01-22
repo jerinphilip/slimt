@@ -54,9 +54,6 @@ class Transliterator {
   std::vector<std::string> transliterate(const std::string &source);
 
  private:
-  static std::optional<ShortlistGenerator> make_shortlist_generator(
-      View view, const Vocabulary &source, const Vocabulary &target);
-
   size_t id_ = 0;
   size_t model_id_ = 0;
   Config config_;

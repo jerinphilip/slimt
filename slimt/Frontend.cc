@@ -44,13 +44,15 @@ void exhaust(const Config &config, const Ptr<Model> &model, Batcher &batcher) {
   AverageMeter<float> wps;
   AverageMeter<float> occupancy;
   Batch batch = batcher.generate();
+  Greedy greedy;
   while (!batch.empty()) {
     // convert between batches.
     Timer timer;
     Input input = convert(batch, model->vocabulary().pad_id(),
                           config.tgt_length_limit_factor);
-    Histories histories = forward(model->transformer(), model->vocabulary(),
-                                  model->shortlist_generator(), input);
+    Histories histories =
+        greedy.forward(model->transformer(), model->vocabulary(),
+                       model->shortlist_generator(), input);
     batch.complete(histories);
     batch = batcher.generate();
 
@@ -203,13 +205,15 @@ Async::Async(const Config &config)
   // Also creates consumers, starts listening.
   for (size_t i = 0; i < config.workers; i++) {
     workers_.emplace_back([this]() {
+      Greedy greedy;
       auto [batch, model] = batcher_.generate();
       while (!batch.empty()) {
         // convert between batches.
         Input input = convert(batch, model->vocabulary().pad_id(),
                               config_.tgt_length_limit_factor);
-        Histories histories = forward(model->transformer(), model->vocabulary(),
-                                      model->shortlist_generator(), input);
+        Histories histories =
+            greedy.forward(model->transformer(), model->vocabulary(),
+                           model->shortlist_generator(), input);
         batch.complete(histories);
         auto [next_batch, next_model] = batcher_.generate();
         batch = std::move(next_batch);

@@ -63,9 +63,6 @@ class SLIMT_EXPORT Model {
   }
 
  private:
-  static std::optional<ShortlistGenerator> make_shortlist_generator(
-      View view, const Vocabulary &source, const Vocabulary &target);
-
   size_t id_;
   Config config_;
   using Mmap = Package<io::MmapFile>;

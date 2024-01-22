@@ -1,10 +1,11 @@
-
 #include "slimt/Search.hh"
 
 #include "slimt/TensorOps.hh"
+
 namespace slimt {
 
 namespace {
+
 void update_alignment(const std::vector<size_t> &lengths,
                       const std::vector<bool> &finished, const Tensor &attn,
                       Alignments &alignments) {
@@ -30,11 +31,13 @@ void update_alignment(const std::vector<size_t> &lengths,
     }
   }
 }
+
 }  // namespace
 
-Histories decode(const Transformer &transformer, const Vocabulary &vocabulary,
-                 const std::optional<ShortlistGenerator> &shortlist_generator,
-                 const Tensor &encoder_out, const Input &input) {
+Histories Greedy::decode(
+    const Transformer &transformer, const Vocabulary &vocabulary,
+    const std::optional<ShortlistGenerator> &shortlist_generator,
+    const Tensor &encoder_out, const Input &input) {
   // Prepare a shortlist for the entire input.
   size_t batch_size = encoder_out.dim(-3);
   size_t source_sequence_length = encoder_out.dim(-2);
@@ -110,10 +113,11 @@ Histories decode(const Transformer &transformer, const Vocabulary &vocabulary,
   return histories;
 }
 
-Histories forward(const Transformer &transformer, const Vocabulary &vocabulary,
-                  const std::optional<ShortlistGenerator> &shortlist_generator,
+Histories Greedy::forward(
+    const Transformer &transformer, const Vocabulary &vocabulary,
+    const std::optional<ShortlistGenerator> &shortlist_generator,
 
-                  const Input &input) {
+    const Input &input) {
   const Tensor &indices = input.indices();
   const Tensor &mask = input.mask();
 

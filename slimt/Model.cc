@@ -72,14 +72,6 @@ Model::Model(const Config &config, const Package<std::string> &package)
       shortlist_generator_(make_shortlist_generator(
           view_.shortlist, vocabulary_, vocabulary_)) {}
 
-std::optional<ShortlistGenerator> Model::make_shortlist_generator(
-    View view, const Vocabulary &source, const Vocabulary &target) {
-  if (view.data == nullptr || view.size == 0) {
-    return std::nullopt;
-  }
-  return ShortlistGenerator(view, source, target);
-}
-
 namespace preset {
 Model::Config tiny() {
   // NOLINTBEGIN
