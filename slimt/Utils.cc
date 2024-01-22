@@ -8,7 +8,6 @@
 #include <cstdlib>
 #include <functional>
 #include <iostream>
-#include <stdexcept>
 #include <string>
 #include <tuple>
 #include <utility>
