@@ -675,7 +675,7 @@ Tensor highway(const Tensor& x, const Tensor& y, const Tensor& g) {
     float sg = sigmoid(tg[i]);
     float vx = tx[i];
     float vy = ty[i];
-    out[i] = vx * sg + (1.0F - sg) * vy;
+    out[i] = sg * vx + (1.0F - sg) * vy;
   }
 
   return c_t;
