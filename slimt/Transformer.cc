@@ -296,9 +296,11 @@ Words greedy_sample(const Tensor &logits, const Vocabulary &vocabulary,
     }
 
     sampled_words.push_back(max_index);
-    constexpr size_t kValue = 5;
-    topk_inspect(i, vocabulary, data + i * stride, data + (i + 1) * stride,
-                 kValue);
+    if (false) {  // NOLINT
+      constexpr size_t kValue = 5;
+      topk_inspect(i, vocabulary, data + i * stride, data + (i + 1) * stride,
+                   kValue);
+    }
   }
   return sampled_words;
 }
@@ -326,9 +328,11 @@ Words greedy_sample_from_words(const Tensor &logits,
     }
 
     sampled_words.push_back(words[max_index]);
-    constexpr size_t kValue = 5;
-    topk_inspect_with_words(i, vocabulary, words, data + i * stride,
-                            data + (i + 1) * stride, kValue);
+    if (false) {  // NOLINT
+      constexpr size_t kValue = 5;
+      topk_inspect_with_words(i, vocabulary, words, data + i * stride,
+                              data + (i + 1) * stride, kValue);
+    }
   }
   return sampled_words;
 }
