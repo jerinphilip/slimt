@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <iterator>
+#include <optional>
 #include <utility>
 #include <vector>
 
@@ -88,5 +89,8 @@ class ShortlistGenerator {
   // load shortlist from buffer
   void load(const void* data, size_t blob_size, bool check = true);
 };
+
+std::optional<ShortlistGenerator> make_shortlist_generator(
+    View view, const Vocabulary& source, const Vocabulary& target);
 
 }  // namespace slimt

@@ -9,11 +9,13 @@ set(SLIMT_PUBLIC_HEADERS
     Model.hh
     Modules.hh
     Response.hh
+    Search.hh
     Shortlist.hh
     Splitter.hh
     Tensor.hh
     TextProcessor.hh
     Transformer.hh
+    Transliterator.hh
     Types.hh
     Vocabulary.hh
     Utils.hh)
@@ -50,12 +52,14 @@ set(SLIMT_SOURCES
     Regex.cc
     Request.cc
     Response.cc
+    Search.cc
     Shortlist.cc
     Splitter.cc
     Tensor.cc
     TensorOps.cc
     TextProcessor.cc
     Transformer.cc
+    Transliterator.cc
     Utils.cc
     Vocabulary.cc
     XHScanner.cc)
