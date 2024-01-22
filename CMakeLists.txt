@@ -32,6 +32,7 @@ option(BUILD_STATIC "Build static libraries" ON)
 option(SLIMT_PACKAGE "Package for cmake, pkgconfig" OFF)
 option(SLIMT_PYTHON_LINK_STATIC
        "link-method to produce python package (static/shared)" ON)
+option(SLIMT_GENERATED_UNIT_TESTS "Generate unit tests to run using Python" OFF)
 
 include(MacroEnsureOutOfSourceBuild)
 macro_ensure_out_of_source_build(
