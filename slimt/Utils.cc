@@ -8,7 +8,6 @@
 #include <cstdlib>
 #include <functional>
 #include <iostream>
-#include <stdexcept>
 #include <string>
 #include <tuple>
 #include <utility>
@@ -96,15 +95,6 @@ SLIMT_PRINT_NDARRAY_EXPLICIT(uint32_t);
 
 #undef SLIMT_PRINT_NDARRAY_EXPLICIT
 
-std::string checked_fpath() {
-  const char *blob_path = std::getenv("SLIMT_BLOB_PATH");
-  if (not blob_path) {
-    std::cerr << "SLIMT_BLOB_PATH not define in environment.";
-    std::exit(EXIT_FAILURE);
-  }
-  return std::string(blob_path);
-}
-
 namespace {
 Tensor dispatch_by_type(Type type, const std::string &fpath, const Shape &shape,
                         const std::string &name) {
@@ -122,29 +112,6 @@ Tensor dispatch_by_type(Type type, const std::string &fpath, const Shape &shape,
   return Tensor{};
 }
 }  // namespace
-
-bool Verifier::verify(Tensor &value, const std::string &name) {
-  auto query = verified_.find(name);
-  if (query == verified_.end()) {
-    std::string fpath = blob_path_ + "/" + name;
-    Tensor expected =
-        dispatch_by_type(value.type(), fpath, value.shape(), name);
-    bool flag = (value == expected);
-    if (flag) {
-      verified_.emplace(name);
-      std::cerr << "[    match ] " << value.name() << " and " << name << "\n";
-    } else {
-      std::cerr << "[ no match] " << value.name() << " and " << name << "\n";
-      std::cerr << value << "\n";
-      std::cerr << expected << "\n";
-      std::string msg = "No match for " + value.name() + " and " + name + ".";
-      throw std::runtime_error(msg);
-    }
-    return flag;
-  }
-
-  return true;
-}
 
 template <class Scalar, class Quant>
 std::tuple<Tensor, float> quantized_tensor_from_file(const std::string &fpath,

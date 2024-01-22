@@ -30,6 +30,11 @@ extern "C" {
 
 namespace slimt {
 
+inline float sigmoid(float x) {
+  return x > 0 ? (1.0F / (1.0F + std::exp(-x)))
+               : (std::exp(x) / (1.0F + std::exp(x)));
+}
+
 Tensor index_select(const Tensor& x, const Tensor& indices,
                     const std::string& name /*= "selected"*/) {
   uint64_t sequence_length = indices.dim(-1);
@@ -215,8 +220,7 @@ void sigmoid(const float* a, size_t size, float* c) {
 #endif
 
   for (size_t i = 0; i < size; i++) {
-    float x = std::exp(a[i]);
-    c[i] = x / (1 + x);
+    c[i] = sigmoid(a[i]);
   }
 }
 
@@ -637,6 +641,44 @@ Tensor mul(const Tensor& x, const Tensor& y) {
   Tensor x_plus_y = x.like("x_times_y");
   mul(x.data<float>(), y.data<float>(), y.size(), x_plus_y.data<float>());
   return x_plus_y;
+}
+
+Tensor layer_norm(const Tensor& x, const Tensor& scale, const Tensor& bias,
+                  float EPS /*= 1e-6F*/) {
+  Tensor y = x.like("ln_out");
+  size_t cols = x.dim(-1);
+  size_t rows = x.size() / cols;
+
+  layer_norm(x.data<float>(),                          //
+             scale.data<float>(), bias.data<float>(),  //
+             EPS, rows, cols, y.data<float>());
+  return y;
+}
+
+Tensor operator+(const Tensor& x, const Tensor& y) { return add(x, y); }
+Tensor operator-(const Tensor& x, const Tensor& y) { return sub(x, y); }
+Tensor operator*(const Tensor& x, const Tensor& y) { return mul(x, y); }
+
+Tensor highway(const Tensor& x, const Tensor& y, const Tensor& g) {
+  // f(t) = σ(Wt . x(t) + bf )
+  Tensor c_t = x.like("highway_out");
+
+  assert(x.size() == y.size());
+  assert(y.size() == g.size());
+  const auto* tx = x.data<float>();
+  const auto* ty = y.data<float>();
+  const auto* tg = g.data<float>();
+  auto* out = c_t.data<float>();
+  size_t size = x.size();
+
+  for (size_t i = 0; i < size; i++) {
+    float sg = sigmoid(tg[i]);
+    float vx = tx[i];
+    float vy = ty[i];
+    out[i] = sg * vx + (1.0F - sg) * vy;
+  }
+
+  return c_t;
 }
 
 }  // namespace slimt

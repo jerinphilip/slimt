@@ -143,7 +143,7 @@ Tensor join_heads(const Tensor &x) {
 }
 
 Tensor affine(const Affine &parameters, const Tensor &x,
-              const std::string &name = "") {
+              const std::string &name /* = ""*/) {
   Tensor y = qmm::affine(                              //
       x,                                               //
       parameters.W, parameters.b,                      //
@@ -211,33 +211,25 @@ Tensor SSRU::forward(Tensor &state, const Tensor &x) const {
   //       Wx(t)  is a linear operation (it's a linear transform).
   // Wfx(t) + bf  is an affine transform.
 
-  // f(t) = σ(Wt . x(t) + bf )
-
   Tensor &c = state;  // Load context from saved-state.
 
-  Tensor f_out = affine(F_, x, "rnn_f");  // Forget gate?
-  Tensor f = sigmoid(f_out);
-
-  // c(t) = f(t) ⊙  c(t−1) + (1 − ft) ⊙  Wx(t)
+  // Forward parameter multiplications.
+  Tensor f = affine(F_, x, "rnn_f");    // Forget gate? NOLINT
   Tensor Wxt = linear(O_, x, "rnn_o");  // NOLINT
 
-  Tensor ones = f.like("ones");
-  ones.fill_in_place(1.0F);
+  // https://github.com/browsermt/marian-dev/blob/77e886ae7ae6016981c6307c312650bf74b50487/src/rnn/cells.h#L1058
+  // c(t) = f(t) ⊙  c(t−1) + (1 − ft) ⊙  Wx(t)
+  // Tensor c_t = highway(c, f, Wxt);
+  Tensor c_t = highway(c, Wxt, f);
 
-  Tensor g = sub(ones, f);
-  Tensor c_arg1 = mul(f, c);
-  Tensor c_arg2 = mul(g, Wxt);
-  Tensor c_next = add(c_arg1, c_arg2);
-
+  // https://github.com/browsermt/marian-dev/blob/77e886ae7ae6016981c6307c312650bf74b50487/src/rnn/cells.h#L1059
   // y(t) = ReLU(c(t));
-  Tensor y = relu(c_next);
+  Tensor y = relu(c_t);
 
   // h(t) = α LayerNorm(y(t) + x(t)) + β
-  Tensor o = add(x, y);
+  Tensor h = ln_.forward(x + y);
 
-  Tensor h = ln_.forward(o);
-
-  state = std::move(c_next);
+  state = std::move(c_t);
 
   return h;
 }
@@ -288,25 +280,14 @@ Tensor FFN::forward(const Tensor &x) const {
 }
 
 Tensor LayerNorm::forward(const Tensor &x) const {
-  Tensor y = x.like("ln_out");
-  size_t cols = x.dim(-1);
-  size_t rows = x.size() / cols;
-
-  // Currently this is hardcoded.
-  // Not sure how to do it otherwise.
-  constexpr float kEps = 1e-9;
-
-  layer_norm(x.data<float>(),                            //
-             scale_.data<float>(), bias_.data<float>(),  //
-             kEps, rows, cols, y.data<float>());
-
+  Tensor y = layer_norm(x, scale_, bias_);
   return y;
 }
 
 std::tuple<Tensor, Tensor> Attention::forward(const Tensor &q, const Tensor &k,
                                               const Tensor &v,
                                               const Tensor &mask) const {
-  // We have a B x T x H sequence comoing in, for q, k and v.
+  // We have a B x T x H sequence coming in, for q, k and v.
   Tensor yq = affine(Q_, q, "q");
   Tensor yk = affine(K_, k, "k");
   Tensor yv = affine(V_, v, "v");

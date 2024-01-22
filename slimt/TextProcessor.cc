@@ -41,8 +41,8 @@ Splitter load_splitter(const std::string &prefix_path) {
   // prefix_path
   Splitter splitter;
   if (!prefix_path.empty()) {
-    LOG(info, "Loading protected prefixes for sentence splitting from {}",
-        prefix_path);
+    LOG(info, "Loading protected prefixes for sentence splitting from %s",
+        prefix_path.c_str());
     splitter.load(prefix_path);
   } else {
     LOG(warn,

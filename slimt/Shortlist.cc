@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -19,14 +20,19 @@ bool ShortlistGenerator::content_check() {
     fail_flag |= word_to_offset_[i] >= shortlist_size_;
   }
 
+  SLIMT_ABORT_IF(fail_flag, "Error: offset table not within shortlist size.");
+
   // The last element of word_to_offset_ must equal shortlist_size_
-  fail_flag |= word_to_offset_[word_to_offset_size_ - 1] !=
-               shortlist_size_;  // The vocabulary indices have to be within
-                                 // the vocabulary size.
+  fail_flag |= word_to_offset_[word_to_offset_size_ - 1] != shortlist_size_;
+
+  SLIMT_ABORT_IF(fail_flag, "Error: word_to_offset != shortlist_size");
+
+  // The vocabulary indices have to be within the vocabulary size.
   size_t v_size = target_.size();
   for (size_t j = 0; j < shortlist_size_; j++) {
     fail_flag |= shortlist_[j] >= v_size;
   }
+
   SLIMT_ABORT_IF(fail_flag, "Error: shortlist indices are out of bounds");
   return fail_flag;
 }
@@ -41,7 +47,8 @@ void ShortlistGenerator::load(const void* data, size_t blob_size,
    */
   (void)blob_size;
   SLIMT_ABORT_IF(blob_size < sizeof(Header),
-                 "Shortlist length {} too short to have a header", blob_size);
+                 "Shortlist length too short to have a header: " +
+                     std::to_string(blob_size));
 
   const char* ptr = static_cast<const char*>(data);
   const Header& header = *reinterpret_cast<const Header*>(ptr);
@@ -51,10 +58,11 @@ void ShortlistGenerator::load(const void* data, size_t blob_size,
   uint64_t expected_size = sizeof(Header) +
                            header.word_to_offset_size * sizeof(uint64_t) +
                            header.shortlist_size * sizeof(Word);
-  SLIMT_ABORT_IF(
-      expected_size != blob_size,
-      "Shortlist header claims file size should be {} but file is {}",
-      expected_size, blob_size);
+
+  SLIMT_ABORT_IF(expected_size != blob_size,
+                 "Shortlist header claims file size should be " +
+                     std::to_string(expected_size) + " but file is " +
+                     std::to_string(blob_size));
 
   if (check) {
     size_t length = (       //
@@ -71,7 +79,7 @@ void ShortlistGenerator::load(const void* data, size_t blob_size,
 
   frequent_ = header.frequent;
   best_ = header.best;
-  LOG(info, "[data] Lexical short list frequent {} and best {}", frequent_,
+  LOG(info, "[data] Lexical short list frequent %lu and best %lu", frequent_,
       best_);
 
   word_to_offset_size_ = header.word_to_offset_size;
@@ -91,14 +99,14 @@ void ShortlistGenerator::load(const void* data, size_t blob_size,
 
 ShortlistGenerator::ShortlistGenerator(                        //
     View view,                                                 //
-    Vocabulary& source, Vocabulary& target,                    //
+    const Vocabulary& source, const Vocabulary& target,        //
     size_t source_index /*= 0*/, size_t /*target_index = 1*/,  //
     bool shared /*= false*/, bool check /*= true*/)
     : source_(source),
       target_(target),
       source_index_(source_index),
       shared_(shared) {
-  LOG(info, "[data] Loading binary shortlist from buffer with check={}", check);
+  LOG(info, "[data] Loading binary shortlist from buffer with check=%d", check);
   load(view.data, view.size, check);
 
   (void)source_index_;

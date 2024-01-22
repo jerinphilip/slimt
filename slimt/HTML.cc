@@ -486,14 +486,17 @@ HTML::HTML(std::string &source, Options &&options)
         // bit of "<img/>", then completely ignore it.
         if (contains(options_.void_tags, tag_name)) break;
 
-        SLIMT_ABORT_IF(stack.empty(),
-                       "Encountered more closing tags ({}) than opening tags",
-                       scanner.tag());
+        SLIMT_ABORT_IF(
+            stack.empty(),
+            detail::format(
+                "Encountered more closing tags ({}) than opening tags",
+                scanner.tag()));
 
         SLIMT_ABORT_IF(
             to_lower_case(stack.back()->name) != to_lower_case(scanner.tag()),
-            "Encountered unexpected closing tag </{}>, stack is {}",
-            scanner.tag(), stack);
+            detail::format(
+                "Encountered unexpected closing tag </{}>, stack is {}",
+                scanner.tag(), stack));
 
         // What to do with "<u></u>" case, where tag is immediately closed
         // so it never makes it into the taint of any of the spans? This adds
@@ -548,7 +551,8 @@ HTML::HTML(std::string &source, Options &&options)
     }
   }
 
-  SLIMT_ABORT_IF(!stack.empty(), "Not all tags were closed: {}", stack);
+  SLIMT_ABORT_IF(!stack.empty(),
+                 detail::format("Not all tags were closed: {}", stack));
 
   // Add a trailing span (that's empty) to signify all closed tags.
   spans_.emplace_back(Span{source.size(), source.size(), stack});

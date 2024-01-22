@@ -45,17 +45,17 @@ class ShortlistGenerator {
 
   // construct directly from buffer
   ShortlistGenerator(
-      View view,                               //
-      Vocabulary& source, Vocabulary& target,  //
+      View view,                                           //
+      const Vocabulary& source, const Vocabulary& target,  //
       size_t source_index = 0, size_t /*target_indx=*/ = 1,
       bool shared = false,  // Kept there for backward compatibility
-      bool check = true);
+      bool check = false);
 
   Shortlist generate(const Words& words) const;
 
  private:
-  Vocabulary& source_;
-  Vocabulary& target_;
+  const Vocabulary& source_;
+  const Vocabulary& target_;
 
   size_t source_index_;
   bool shared_{false};
