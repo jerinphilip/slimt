@@ -147,9 +147,10 @@ Histories Model::decode(const Tensor &encoder_out, const Input &input) const {
       decoder.step(encoder_out, input.mask(), states, previous_slice, indices);
 
   if (indices) {
-    previous_slice = greedy_sample_from_words(logits, *indices, batch_size);
+    previous_slice =
+        greedy_sample_from_words(logits, vocabulary_, *indices, batch_size);
   } else {
-    previous_slice = greedy_sample(logits, vocabulary_.size(), batch_size);
+    previous_slice = greedy_sample(logits, vocabulary_, batch_size);
   }
 
   update_alignment(input.lengths(), complete, attn, alignments);
@@ -161,9 +162,10 @@ Histories Model::decode(const Tensor &encoder_out, const Input &input) const {
     auto [logits, attn] = decoder.step(encoder_out, input.mask(), states,
                                        previous_slice, indices);
     if (indices) {
-      previous_slice = greedy_sample_from_words(logits, *indices, batch_size);
+      previous_slice =
+          greedy_sample_from_words(logits, vocabulary_, *indices, batch_size);
     } else {
-      previous_slice = greedy_sample(logits, vocabulary_.size(), batch_size);
+      previous_slice = greedy_sample(logits, vocabulary_, batch_size);
     }
     update_alignment(input.lengths(), complete, attn, alignments);
     remaining = record(previous_slice, sentences);

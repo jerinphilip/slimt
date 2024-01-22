@@ -15,6 +15,8 @@
 #include "slimt/Tensor.hh"
 #include "slimt/TensorOps.hh"
 #include "slimt/Types.hh"
+#include "slimt/Utils.hh"
+#include "slimt/Vocabulary.hh"
 
 namespace slimt {
 
@@ -102,6 +104,9 @@ void Decoder::register_parameters(const std::string &prefix,
                                   ParameterMap &parameters) {
   // Somehow we have historically ended up with `none_QuantMultA` being used for
   // Wemb_QuantMultA.
+  // https://github.com/browsermt/marian-dev/blob/2be8344fcf2776fb43a7376284067164674cbfaf/scripts/alphas/extract_stats.py#L55
+  // - none_QuantMultA is generated when used with shortlist
+  // - Wemb_QuantMultA is generated when used without shortlist.
   parameters.emplace("Wemb_intgemm8", &output_.W);
   parameters.emplace("none_QuantMultA", &output_.quant);
   parameters.emplace("decoder_ff_logit_out_b", &output_.b);
@@ -225,10 +230,55 @@ void Transformer::register_parameters(const std::string &prefix,
   decoder_.register_parameters(prefix, parameters);
 }
 
-Words greedy_sample(const Tensor &logits, size_t vocabulary_size,
+namespace {
+
+template <class T>
+void topk_inspect(size_t batch_id, const Vocabulary &vocabulary, T *begin,
+                  T *end, size_t k) {
+  const T *data = begin;
+  size_t size = end - begin;
+
+  std::vector<size_t> ordering = argsort(begin, end);
+  fprintf(stderr, "batch %zu | ", batch_id);
+  Words words(size + 1, vocabulary.eos_id());
+  for (size_t i = 0; i < k; i++) {
+    size_t j = size - i - 1;
+    words[i] = ordering[j];
+    std::string decoded;
+    vocabulary.decode({words[i], vocabulary.eos_id()}, decoded);
+    fprintf(stderr, "%s (%zu, %.9g) ", decoded.c_str(), ordering[j],
+            data[ordering[j]]);
+  }
+  fprintf(stderr, "\n");
+}
+
+template <class T>
+void topk_inspect_with_words(size_t batch_id, const Vocabulary &vocabulary,
+                             const Words &shortlist, T *begin, T *end,
+                             size_t k) {
+  const T *data = begin;
+  size_t size = end - begin;
+
+  std::vector<size_t> ordering = argsort(begin, end);
+  fprintf(stderr, "batch %zu | ", batch_id);
+  Words words(size + 1, vocabulary.eos_id());
+  for (size_t i = 0; i < k; i++) {
+    size_t j = size - i - 1;
+    words[i] = shortlist[ordering[j]];
+    std::string decoded;
+    vocabulary.decode({words[i], vocabulary.eos_id()}, decoded);
+    fprintf(stderr, "%s (%zu, %.9g) ", decoded.c_str(), ordering[j],
+            data[ordering[j]]);
+  }
+  fprintf(stderr, "\n");
+}
+
+}  // namespace
+
+Words greedy_sample(const Tensor &logits, const Vocabulary &vocabulary,
                     size_t batch_size) {
   Words sampled_words;
-  size_t stride = vocabulary_size;
+  size_t stride = vocabulary.size();
   for (size_t i = 0; i < batch_size; i++) {
     const auto *data = logits.data<float>();
 
@@ -246,12 +296,17 @@ Words greedy_sample(const Tensor &logits, size_t vocabulary_size,
     }
 
     sampled_words.push_back(max_index);
+    constexpr size_t kValue = 5;
+    topk_inspect(i, vocabulary, data + i * stride, data + (i + 1) * stride,
+                 kValue);
   }
   return sampled_words;
 }
 
-Words greedy_sample_from_words(const Tensor &logits, const Words &words,
+Words greedy_sample_from_words(const Tensor &logits,
+                               const Vocabulary &vocabulary, const Words &words,
                                size_t batch_size) {
+  (void)vocabulary;
   size_t stride = words.size();
   Words sampled_words;
   for (size_t i = 0; i < batch_size; i++) {
@@ -271,6 +326,9 @@ Words greedy_sample_from_words(const Tensor &logits, const Words &words,
     }
 
     sampled_words.push_back(words[max_index]);
+    constexpr size_t kValue = 5;
+    topk_inspect_with_words(i, vocabulary, words, data + i * stride,
+                            data + (i + 1) * stride, kValue);
   }
   return sampled_words;
 }

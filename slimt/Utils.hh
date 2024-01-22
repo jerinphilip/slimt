@@ -6,6 +6,7 @@
 #include <functional>
 #include <iostream>
 #include <memory>
+#include <numeric>
 #include <sstream>
 #include <string>
 #include <tuple>
@@ -109,5 +110,23 @@ class AverageMeter {
   Scalar running_avg_ = 0;
   size_t count_ = 0;
 };
+
+template <typename T>
+std::vector<size_t> argsort(const T *begin, const T *end) {
+  // initialize original index locations
+  const T *data = begin;
+  size_t size = end - begin;
+  std::vector<size_t> idx(size);
+  std::iota(idx.begin(), idx.end(), 0);
+
+  // sort indexes based on comparing values in vs
+  // using std::stable_sort instead of std::sort
+  // to avoid unnecessary index re-orderings
+  // when vs contains elements of equal values
+  stable_sort(idx.begin(), idx.end(),
+              [data](size_t i, size_t j) { return data[i] < data[j]; });
+
+  return idx;
+}
 
 }  // namespace slimt

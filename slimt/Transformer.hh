@@ -42,9 +42,12 @@ class Decoder {
   Affine output_;
 };
 
-Words greedy_sample(const Tensor &logits, size_t vocabulary_size,
+class Vocabulary;
+
+Words greedy_sample(const Tensor &logits, const Vocabulary &vocabulary,
                     size_t batch_size);
-Words greedy_sample_from_words(const Tensor &logits, const Words &words,
+Words greedy_sample_from_words(const Tensor &logits,
+                               const Vocabulary &vocabulary, const Words &words,
                                size_t batch_size);
 
 void transform_embedding(Tensor &word_embedding, size_t start = 0);
