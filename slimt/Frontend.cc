@@ -18,6 +18,7 @@
 #include "slimt/Model.hh"
 #include "slimt/Request.hh"
 #include "slimt/Response.hh"
+#include "slimt/Search.hh"
 #include "slimt/TextProcessor.hh"
 #include "slimt/Types.hh"
 #include "slimt/Utils.hh"
@@ -48,7 +49,8 @@ void exhaust(const Config &config, const Ptr<Model> &model, Batcher &batcher) {
     Timer timer;
     Input input = convert(batch, model->vocabulary().pad_id(),
                           config.tgt_length_limit_factor);
-    Histories histories = model->forward(input);
+    Histories histories = forward(model->transformer(), model->vocabulary(),
+                                  model->shortlist_generator(), input);
     batch.complete(histories);
     batch = batcher.generate();
 
@@ -206,7 +208,8 @@ Async::Async(const Config &config)
         // convert between batches.
         Input input = convert(batch, model->vocabulary().pad_id(),
                               config_.tgt_length_limit_factor);
-        Histories histories = model->forward(input);
+        Histories histories = forward(model->transformer(), model->vocabulary(),
+                                      model->shortlist_generator(), input);
         batch.complete(histories);
         auto [next_batch, next_model] = batcher_.generate();
         batch = std::move(next_batch);
