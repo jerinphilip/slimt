@@ -15,11 +15,12 @@ extern "C" {
 
 // NOLINTBEGIN
 // Model
-#define SLIMT_JNI_EXPORT(tail) JNICALL Java_com_github_jerinphilip_slimt_##tail
+#define SLIMT_JNI_EXPORT(cls, method) \
+  JNICALL Java_com_github_jerinphilip_slimt_##cls##_##cls##_1##method
 
-JNIEXPORT jlong SLIMT_JNI_EXPORT(Model_createModel)(JNIEnv *env, jobject obj,
-                                                    jobject jconfig,
-                                                    jobject jpackage) {
+JNIEXPORT jlong SLIMT_JNI_EXPORT(Model, createModel)(JNIEnv *env, jobject obj,
+                                                     jobject jconfig,
+                                                     jobject jpackage) {
   // Extract Config object fields
   jclass cls = env->GetObjectClass(jconfig);
   jfieldID encoder_layers_field = env->GetFieldID(cls, "encoder_layers", "J");
@@ -60,27 +61,27 @@ JNIEXPORT jlong SLIMT_JNI_EXPORT(Model_createModel)(JNIEnv *env, jobject obj,
   return reinterpret_cast<jlong>(model);
 }
 
-JNIEXPORT void SLIMT_JNI_EXPORT(Model_destroyModel)(JNIEnv *env, jobject obj,
-                                                    jlong model_addr) {
+JNIEXPORT void SLIMT_JNI_EXPORT(Model, destroyModel)(JNIEnv *env, jobject obj,
+                                                     jlong model_addr) {
   delete reinterpret_cast<Model *>(model_addr);
 }
 
 // Service
-JNIEXPORT jlong SLIMT_JNI_EXPORT(Service_createService)(JNIEnv *env,
-                                                        jobject obj,
-                                                        jlong cache_size) {
+JNIEXPORT jlong SLIMT_JNI_EXPORT(Service, createService)(JNIEnv *env,
+                                                         jobject obj,
+                                                         jlong cache_size) {
   Config config;
   config.cache_size = cache_size;
   return reinterpret_cast<jlong>(new Service(config));
 }
 
-JNIEXPORT void SLIMT_JNI_EXPORT(Service_destroyService)(JNIEnv *env,
-                                                        jobject obj,
-                                                        jlong service_addr) {
+JNIEXPORT void SLIMT_JNI_EXPORT(Service, destroyService)(JNIEnv *env,
+                                                         jobject obj,
+                                                         jlong service_addr) {
   delete reinterpret_cast<Service *>(service_addr);
 }
 
-JNIEXPORT jobjectArray SLIMT_JNI_EXPORT(Service_translate)(
+JNIEXPORT jobjectArray SLIMT_JNI_EXPORT(Service, translate)(
     JNIEnv *env, jobject obj, jlong service_addr, jobject jmodel,
     jobjectArray texts, jboolean html) {
   Service *service = reinterpret_cast<Service *>(service_addr);

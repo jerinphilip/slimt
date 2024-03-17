@@ -5,10 +5,10 @@ public class Model {
         System.loadLibrary("slimt_jni");
     }
 
-    private long modelPtr;
+    public long modelPtr;
 
-    public Model(ModelConfig config, Package<String> package) {
-        modelPtr = Model_createModel(config, package);
+    public Model(ModelConfig config, Package archive) {
+        modelPtr = Model_createModel(config, archive);
     }
 
     public void destroy() {
@@ -16,6 +16,6 @@ public class Model {
     }
 
     // Native methods
-    private native long Model_createModel(ModelConfig config, Package<String> package);
+    private native long Model_createModel(ModelConfig config, Package archive);
     private native void Model_destroyModel(long modelPtr);
 }
