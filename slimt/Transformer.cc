@@ -341,7 +341,7 @@ Words greedy_sample_from_words(const Tensor &logits,
 Tensor Transformer::encode(const Tensor &embedding, const Tensor &mask) const {
   return encoder_.forward(embedding, mask);
 }
-std::vector<Tensor> Transformer::start_states(size_t batch_size) const {
+std::vector<Tensor> Transformer::decoder_start_states(size_t batch_size) const {
   return decoder_.start_states(batch_size);
 }
 std::tuple<Tensor, Tensor> Transformer::step(

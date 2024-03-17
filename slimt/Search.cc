@@ -34,25 +34,43 @@ void update_alignment(const std::vector<size_t> &lengths,
 
 }  // namespace
 
-Histories Greedy::decode(
-    const Transformer &transformer, const Vocabulary &vocabulary,
-    const std::optional<ShortlistGenerator> &shortlist_generator,
-    const Tensor &encoder_out, const Input &input) {
-  // Prepare a shortlist for the entire input.
-  size_t batch_size = encoder_out.dim(-3);
-  size_t source_sequence_length = encoder_out.dim(-2);
+Histories Greedy::generate(const Input &input) {
+  Tensor mask = input.mask().clone();
+
+  // uint64_t batch_size = indices.dim(-2);
+  // uint64_t sequence_length = indices.dim(-1);
+  // uint64_t embed_dim = embedding_.dim(-1);
+
+  Tensor word_embedding =
+      index_select(transformer_.embedding(), input.indices(), "word_embedding");
+  transform_embedding(word_embedding);
+
+  // https://github.com/browsermt/marian-dev/blob/14c9d9b0e732f42674e41ee138571d5a7bf7ad94/src/models/transformer.h#L570
+  // https://github.com/browsermt/marian-dev/blob/14c9d9b0e732f42674e41ee138571d5a7bf7ad94/src/models/transformer.h#L133
+  Tensor encoder_out = transformer_.encoder().forward(word_embedding, mask);
 
   std::optional<Words> indices = std::nullopt;
-  if (shortlist_generator) {
-    Shortlist shortlist = shortlist_generator->generate(input.words());
+  if (shortlist_generator_) {
+    Shortlist shortlist = shortlist_generator_->generate(input.words());
     indices = shortlist.words();
   }
   // The following can be used to check if shortlist is going wrong.
   // std::vector<uint32_t> indices(vocabulary_.size());
   // std::iota(indices.begin(), indices.end(), 0);
 
+  // Prepare a shortlist for the entire input.
+  size_t batch_size = encoder_out.dim(-3);
+  size_t source_sequence_length = encoder_out.dim(-2);
+  size_t max_seq_length = input.limit_factor() * source_sequence_length;
+  Words previous_slice = {};
+  std::vector<Tensor> states = transformer_.decoder_start_states(batch_size);
+
+  GenerationStep step(std::move(encoder_out), std::move(mask),
+                      std::move(previous_slice), std::move(indices),
+                      std::move(states), max_seq_length);
+
   std::vector<bool> complete(batch_size, false);
-  uint32_t eos = vocabulary.eos_id();
+  uint32_t eos = vocabulary_.eos_id();
   auto record = [eos, &complete](Words &step, Sentences &sentences) {
     size_t finished = 0;
     for (size_t i = 0; i < step.size(); i++) {
@@ -69,32 +87,30 @@ Histories Greedy::decode(
   Sentences sentences(batch_size);
   Alignments alignments(sentences.size());
 
-  const Decoder &decoder = transformer.decoder();
-  Words previous_slice = {};
-  std::vector<Tensor> states = decoder.start_states(batch_size);
   auto [logits, attn] =
-      decoder.step(encoder_out, input.mask(), states, previous_slice, indices);
+      transformer_.step(step.encoder_out(), step.mask(), step.states(),
+                        step.previous(), step.shortlist());
 
-  if (indices) {
-    previous_slice =
-        greedy_sample_from_words(logits, vocabulary, *indices, batch_size);
+  if (step.shortlist()) {
+    previous_slice = greedy_sample_from_words(logits, vocabulary_,
+                                              *step.shortlist(), batch_size);
   } else {
-    previous_slice = greedy_sample(logits, vocabulary, batch_size);
+    previous_slice = greedy_sample(logits, vocabulary_, batch_size);
   }
 
   update_alignment(input.lengths(), complete, attn, alignments);
   record(previous_slice, sentences);
 
   size_t remaining = sentences.size();
-  size_t max_seq_length = input.limit_factor() * source_sequence_length;
   for (size_t i = 1; i < max_seq_length && remaining > 0; i++) {
-    auto [logits, attn] = decoder.step(encoder_out, input.mask(), states,
-                                       previous_slice, indices);
+    auto [logits, attn] =
+        transformer_.step(step.encoder_out(), step.mask(), step.states(),
+                          step.previous(), step.shortlist());
     if (indices) {
       previous_slice =
-          greedy_sample_from_words(logits, vocabulary, *indices, batch_size);
+          greedy_sample_from_words(logits, vocabulary_, *indices, batch_size);
     } else {
-      previous_slice = greedy_sample(logits, vocabulary, batch_size);
+      previous_slice = greedy_sample(logits, vocabulary_, batch_size);
     }
     update_alignment(input.lengths(), complete, attn, alignments);
     remaining = record(previous_slice, sentences);
@@ -110,30 +126,6 @@ Histories Greedy::decode(
     histories.push_back(std::move(history));
   }
 
-  return histories;
-}
-
-Histories Greedy::forward(
-    const Transformer &transformer, const Vocabulary &vocabulary,
-    const std::optional<ShortlistGenerator> &shortlist_generator,
-
-    const Input &input) {
-  const Tensor &indices = input.indices();
-  const Tensor &mask = input.mask();
-
-  // uint64_t batch_size = indices.dim(-2);
-  // uint64_t sequence_length = indices.dim(-1);
-  // uint64_t embed_dim = embedding_.dim(-1);
-
-  Tensor word_embedding =
-      index_select(transformer.embedding(), indices, "word_embedding");
-  transform_embedding(word_embedding);
-
-  // https://github.com/browsermt/marian-dev/blob/14c9d9b0e732f42674e41ee138571d5a7bf7ad94/src/models/transformer.h#L570
-  // https://github.com/browsermt/marian-dev/blob/14c9d9b0e732f42674e41ee138571d5a7bf7ad94/src/models/transformer.h#L133
-  Tensor encoder_out = transformer.encoder().forward(word_embedding, mask);
-  Histories histories =
-      decode(transformer, vocabulary, shortlist_generator, encoder_out, input);
   return histories;
 }
 }  // namespace slimt

@@ -51,7 +51,8 @@ class Transliterator {
   };
 
   Transliterator(const Config &config, const t12n::Package<View> &package);
-  std::vector<std::string> transliterate(const std::string &source);
+  std::vector<std::string> transliterate(const std::string &source,
+                                         size_t count);
 
  private:
   size_t id_ = 0;

@@ -1,12 +1,15 @@
 
 #include "slimt/Transliterator.hh"
 
+#include "slimt/Input.hh"
 #include "slimt/Request.hh"
+#include "slimt/Search.hh"
 
 namespace slimt {
 
 namespace {
 size_t model_id = 0;
+
 }
 
 namespace t12n {
@@ -46,10 +49,32 @@ Transliterator::Transliterator(const Config &config,
                config_.tgt_length_limit_factor) {}
 
 std::vector<std::string> Transliterator::transliterate(
-    const std::string &source) {
+    const std::string &source, size_t count) {
   auto [words, views] = vocabulary_.encode(source);
-  // Beam-search for multiple candidates, add multiple candidates.
-  return {};
+
+  // Generate input
+  size_t batch_size = 1;
+  Input input(batch_size, words.size(), vocabulary_.pad_id(),
+              config_.tgt_length_limit_factor);
+  input.add(words);
+  input.finalize();
+
+  BeamSearch search;
+  auto nbest = search.forward(transformer_, vocabulary_, shortlist_generator_,
+                              input, count);
+
+  std::vector<std::string> candidates;
+  candidates.reserve(count);
+
+  for (size_t i = 0; i < nbest.size(); i += count) {
+    for (size_t j = 0; j < count; j++) {
+      std::string decoded;
+      const History &history = nbest[i * batch_size + j];
+      vocabulary_.decode(history->target, decoded);
+      candidates.push_back(std::move(decoded));
+    }
+  }
+  return candidates;
 }
 
 }  // namespace slimt

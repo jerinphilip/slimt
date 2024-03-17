@@ -63,7 +63,7 @@ class Transformer {
 
   // Relay calls.
   Tensor encode(const Tensor &embedding, const Tensor &mask) const;
-  std::vector<Tensor> start_states(size_t batch_size) const;
+  std::vector<Tensor> decoder_start_states(size_t batch_size) const;
   std::tuple<Tensor, Tensor> step(const Tensor &encoder_out, const Tensor &mask,
                                   std::vector<Tensor> &states,
                                   const Words &previous_step,
