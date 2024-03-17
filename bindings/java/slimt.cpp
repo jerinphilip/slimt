@@ -8,41 +8,42 @@
 
 using namespace slimt;  // NOLINT
 
-using Service = Async;
+// using Service = Async;
+using Service = Blocking;
 
 extern "C" {
 
 // NOLINTBEGIN
 // Model
+#define SLIMT_JNI_EXPORT(tail) JNICALL Java_com_github_jerinphilip_slimt_##tail
 
-JNIEXPORT jlong JNICALL Java_com_example_Model_createModel(JNIEnv *env,
-                                                           jobject obj,
-                                                           jobject jconfig,
-                                                           jobject jpackage) {
+JNIEXPORT jlong SLIMT_JNI_EXPORT(Model_createModel)(JNIEnv *env, jobject obj,
+                                                    jobject jconfig,
+                                                    jobject jpackage) {
   // Extract Config object fields
   jclass cls = env->GetObjectClass(jconfig);
-  jfieldID encoderLayersField = env->GetFieldID(cls, "encoder_layers", "J");
-  jfieldID decoderLayersField = env->GetFieldID(cls, "decoder_layers", "J");
-  jfieldID ffnDepthField = env->GetFieldID(cls, "feed_forward_depth", "J");
-  jfieldID numHeadsField = env->GetFieldID(cls, "num_heads", "J");
-  jfieldID splitModeField =
+  jfieldID encoder_layers_field = env->GetFieldID(cls, "encoder_layers", "J");
+  jfieldID decoder_layers_field = env->GetFieldID(cls, "decoder_layers", "J");
+  jfieldID ffn_depth_field = env->GetFieldID(cls, "feed_forward_depth", "J");
+  jfieldID num_heads_field = env->GetFieldID(cls, "num_heads", "J");
+  jfieldID split_mode_field =
       env->GetFieldID(cls, "split_mode", "Ljava/lang/String;");
 
-  jlong encoderLayers = env->GetLongField(jconfig, encoderLayersField);
-  jlong decoderLayers = env->GetLongField(jconfig, decoderLayersField);
-  jlong ffnDepth = env->GetLongField(jconfig, ffnDepthField);
-  jlong numHeads = env->GetLongField(jconfig, numHeadsField);
-  jstring splitModeString =
-      (jstring)env->GetObjectField(jconfig, splitModeField);
-  const char *splitMode = env->GetStringUTFChars(splitModeString, NULL);
+  jlong j_encoder_layers = env->GetLongField(jconfig, encoder_layers_field);
+  jlong j_decoder_layers = env->GetLongField(jconfig, decoder_layers_field);
+  jlong j_ffn_depth = env->GetLongField(jconfig, ffn_depth_field);
+  jlong j_num_heads = env->GetLongField(jconfig, num_heads_field);
+  jstring j_split_mode =
+      (jstring)env->GetObjectField(jconfig, split_mode_field);
+  const char *split_mode_cstr = env->GetStringUTFChars(j_split_mode, NULL);
 
   // Create Config object
   slimt::Model::Config config;
-  config.encoder_layers = static_cast<size_t>(encoderLayers);
-  config.decoder_layers = static_cast<size_t>(decoderLayers);
-  config.feed_forward_depth = static_cast<size_t>(ffnDepth);
-  config.num_heads = static_cast<size_t>(numHeads);
-  config.split_mode = std::string(splitMode);
+  config.encoder_layers = static_cast<size_t>(j_encoder_layers);
+  config.decoder_layers = static_cast<size_t>(j_decoder_layers);
+  config.feed_forward_depth = static_cast<size_t>(j_ffn_depth);
+  config.num_heads = static_cast<size_t>(j_num_heads);
+  config.split_mode = std::string(split_mode_cstr);
 
   // Extract Package object fields
   // Assuming Package object contains necessary fields for Model creation
@@ -54,25 +55,32 @@ JNIEXPORT jlong JNICALL Java_com_example_Model_createModel(JNIEnv *env,
   slimt::Model *model = new slimt::Model(config, package);
 
   // Clean up
-  env->ReleaseStringUTFChars(splitModeString, splitMode);
+  env->ReleaseStringUTFChars(j_split_mode, split_mode_cstr);
 
   return reinterpret_cast<jlong>(model);
 }
 
-JNIEXPORT void JNICALL Java_com_example_SlimtModel_destroyModel(
-    JNIEnv *env, jobject obj, jlong model_addr) {
+JNIEXPORT void SLIMT_JNI_EXPORT(Model_destroyModel)(JNIEnv *env, jobject obj,
+                                                    jlong model_addr) {
   delete reinterpret_cast<Model *>(model_addr);
 }
 
-JNIEXPORT jlong JNICALL Java_com_example_SlimtService_createService(
-    JNIEnv *env, jobject obj, jlong workers, jlong cache_size) {
+// Service
+JNIEXPORT jlong SLIMT_JNI_EXPORT(Service_createService)(JNIEnv *env,
+                                                        jobject obj,
+                                                        jlong cache_size) {
   Config config;
-  config.workers = workers;
   config.cache_size = cache_size;
   return reinterpret_cast<jlong>(new Service(config));
 }
 
-JNIEXPORT jobjectArray JNICALL Java_com_example_SlimtService_translate(
+JNIEXPORT void SLIMT_JNI_EXPORT(Service_destroyService)(JNIEnv *env,
+                                                        jobject obj,
+                                                        jlong service_addr) {
+  delete reinterpret_cast<Service *>(service_addr);
+}
+
+JNIEXPORT jobjectArray SLIMT_JNI_EXPORT(Service_translate)(
     JNIEnv *env, jobject obj, jlong service_addr, jobject jmodel,
     jobjectArray texts, jboolean html) {
   Service *service = reinterpret_cast<Service *>(service_addr);
@@ -94,17 +102,18 @@ JNIEXPORT jobjectArray JNICALL Java_com_example_SlimtService_translate(
       }
       env->DeleteLocalRef(jtext);
     }
+  }
 
-    // Translate text using the service
-    Model *model_raw_ptr = reinterpret_cast<Model *>(jmodel);
-    auto pseudo_deleter = [](Model *model_raw_ptr) {};
-    Ptr<Model> model(model_raw_ptr, pseudo_deleter);
-    Options options{
-        .html = static_cast<bool>(html)  //
-    };
+  // Translate text using the service
+  Model *model_raw_ptr = reinterpret_cast<Model *>(jmodel);
+  auto pseudo_deleter = [](Model *model_raw_ptr) {};
+  Ptr<Model> model(model_raw_ptr, pseudo_deleter);
+  Options options{
+      .html = static_cast<bool>(html)  //
+  };
 
-    Handle handle = service->translate(model, std::move(text), options);
-    Response response = handle.future().get();
+  Responses responses = service->translate(model, std::move(sources), options);
+  for (Response &response : responses) {
     targets.push_back(response.target.text);
   }
 
@@ -119,10 +128,8 @@ JNIEXPORT jobjectArray JNICALL Java_com_example_SlimtService_translate(
   return jtargets;
 }
 
-JNIEXPORT void JNICALL Java_com_example_SlimtService_destroyService(
-    JNIEnv *env, jobject obj, jlong service_addr) {
-  delete reinterpret_cast<Service *>(service_addr);
-}
 // NOLINTEND
+
+#undef SLIMT_JNI_EXPORT
 
 }  // extern "C"
