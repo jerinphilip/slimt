@@ -4,7 +4,7 @@ import java.util.List;
 
 public class Service {
   static {
-    System.loadLibrary("your_jni_library_name");
+    System.loadLibrary("slimt_jni");
   }
 
   private long servicePtr;
