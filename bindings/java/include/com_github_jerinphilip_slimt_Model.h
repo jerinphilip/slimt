@@ -9,18 +9,18 @@ extern "C" {
 #endif
 /*
  * Class:     com_github_jerinphilip_slimt_Model
- * Method:    Model_createModel
+ * Method:    ncreate
  * Signature: (Lcom/github/jerinphilip/slimt/ModelConfig;Lcom/github/jerinphilip/slimt/Package;)J
  */
-JNIEXPORT jlong JNICALL Java_com_github_jerinphilip_slimt_Model_Model_1createModel
+JNIEXPORT jlong JNICALL Java_com_github_jerinphilip_slimt_Model_ncreate
   (JNIEnv *, jobject, jobject, jobject);
 
 /*
  * Class:     com_github_jerinphilip_slimt_Model
- * Method:    Model_destroyModel
+ * Method:    ndestroy
  * Signature: (J)V
  */
-JNIEXPORT void JNICALL Java_com_github_jerinphilip_slimt_Model_Model_1destroyModel
+JNIEXPORT void JNICALL Java_com_github_jerinphilip_slimt_Model_ndestroy
   (JNIEnv *, jobject, jlong);
 
 #ifdef __cplusplus

@@ -9,26 +9,26 @@ extern "C" {
 #endif
 /*
  * Class:     com_github_jerinphilip_slimt_Service
- * Method:    Service_createService
+ * Method:    ncreate
  * Signature: (J)J
  */
-JNIEXPORT jlong JNICALL Java_com_github_jerinphilip_slimt_Service_Service_1createService
+JNIEXPORT jlong JNICALL Java_com_github_jerinphilip_slimt_Service_ncreate
   (JNIEnv *, jobject, jlong);
 
 /*
  * Class:     com_github_jerinphilip_slimt_Service
- * Method:    Service_destroyService
+ * Method:    ndestroy
  * Signature: (J)V
  */
-JNIEXPORT void JNICALL Java_com_github_jerinphilip_slimt_Service_Service_1destroyService
+JNIEXPORT void JNICALL Java_com_github_jerinphilip_slimt_Service_ndestroy
   (JNIEnv *, jobject, jlong);
 
 /*
  * Class:     com_github_jerinphilip_slimt_Service
- * Method:    Service_translate
+ * Method:    ntranslate
  * Signature: (JJ[Ljava/lang/String;Z)[Ljava/lang/String;
  */
-JNIEXPORT jobjectArray JNICALL Java_com_github_jerinphilip_slimt_Service_Service_1translate
+JNIEXPORT jobjectArray JNICALL Java_com_github_jerinphilip_slimt_Service_ntranslate
   (JNIEnv *, jobject, jlong, jlong, jobjectArray, jboolean);
 
 #ifdef __cplusplus

@@ -10,22 +10,21 @@ public class Service {
   private long servicePtr;
 
   public Service(long cacheSize) {
-    servicePtr = Service_createService(cacheSize);
+    servicePtr = ncreate(cacheSize);
   }
 
   public void destroy() {
-    Service_destroyService(servicePtr);
+    ndestroy(servicePtr);
   }
 
   public String[] translate(Model model, List<String> texts, boolean html) {
-    return Service_translate(servicePtr, model.modelPtr, texts.toArray(new String[0]), html);
+    return ntranslate(servicePtr, model.modelPtr, texts.toArray(new String[0]), html);
   }
 
   // Native methods
-  private native long Service_createService(long cacheSize);
+  private native long ncreate(long cacheSize);
 
-  private native void Service_destroyService(long servicePtr);
+  private native void ndestroy(long servicePtr);
 
-  private native String[] Service_translate(
-      long servicePtr, long modelPtr, String[] texts, boolean html);
+  private native String[] ntranslate(long servicePtr, long modelPtr, String[] texts, boolean html);
 }
