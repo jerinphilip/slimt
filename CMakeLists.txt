@@ -221,3 +221,7 @@ if(BUILD_PYTHON)
 
   add_subdirectory(bindings/python)
 endif(BUILD_PYTHON)
+
+if(BUILD_JNI)
+  add_subdirectory(bindings/java)
+endif(BUILD_JNI)
