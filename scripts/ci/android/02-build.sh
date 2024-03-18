@@ -3,7 +3,7 @@
 set -eo pipefail
 
 function cmake-configure {
-  NDK=android-ndk-r23b
+  NDK=${NDK:-android-ndk-r23b}
   ABI="arm64-v8a"
   MINSDK_VERSION=28
   ANDROID_PLATFORM=android-28
