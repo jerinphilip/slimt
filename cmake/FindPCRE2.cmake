@@ -1,4 +1,4 @@
-# Depending on the value of SLIMT_USE_INTERNAL_PRCRE2 this cmake file either
+# Depending on the value of SLIMT_USE_INTERNAL_PCRE2 this cmake file either
 # tries to find the Perl Compatible Regular Expresison library (pcre2) on the
 # system (when OFF), or downloads and compiles them locally (when ON).
 
