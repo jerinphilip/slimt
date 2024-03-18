@@ -9,7 +9,7 @@
 if(SLIMT_USE_INTERNAL_PCRE2)
   include(ExternalProject)
 
-  set(PCRE2_VERSION "10.39")
+  set(PCRE2_VERSION "10.43")
   set(PCRE2_FILENAME "pcre2-${PCRE2_VERSION}")
   set(PCRE2_TARBALL "${PCRE2_FILENAME}.tar.gz")
   set(PCRE2_SOURCE_DIR "${CMAKE_BINARY_DIR}/${PCRE2_FILENAME}")
@@ -23,7 +23,7 @@ if(SLIMT_USE_INTERNAL_PCRE2)
     set(PCRE2_URL "")
   else()
     set(PCRE2_URL
-        "https://github.com/PhilipHazel/pcre2/releases/download/${PCRE2_FILENAME}/${PCRE2_TARBALL}"
+        "https://github.com/PCRE2Project/pcre2/releases/download/${PCRE2_FILENAME}/${PCRE2_TARBALL}"
     )
     message("Downloading pcre2 source code from ${PCRE2_URL}")
   endif()
