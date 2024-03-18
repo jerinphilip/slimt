@@ -16,7 +16,7 @@ extern "C" {
 // NOLINTBEGIN
 // Model
 #define SLIMT_JNI_EXPORT(cls, method) \
-  JNICALL Java_com_github_jerinphilip_slimt_##cls##method
+  JNICALL Java_com_github_jerinphilip_slimt_##cls##_##method
 
 JNIEXPORT jlong SLIMT_JNI_EXPORT(Model, ncreate)(JNIEnv *env, jobject obj,
                                                  jobject jconfig,
