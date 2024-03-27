@@ -75,9 +75,18 @@ Ptr<Request> make_request(size_t id, const Ptr<Model> &model,
   return request;
 }
 
+std::optional<TranslationCache> make_cache(size_t cache_size) {
+  constexpr size_t kCacheBucketSize = 16;
+  if (cache_size > 0) {
+    return std::make_optional<TranslationCache>(cache_size, kCacheBucketSize);
+  }
+  return std::nullopt;
+}
+
 }  // namespace
 
-Blocking::Blocking(const Config &config) : config_(config) {}  // NOLINT
+Blocking::Blocking(const Config &config)
+    : config_(config), cache_(make_cache(config.cache_size)) {}  // NOLINT
 
 std::vector<Response> Blocking::translate(const Ptr<Model> &model,
                                           std::vector<std::string> sources,
@@ -196,7 +205,8 @@ std::vector<Response> Blocking::pivot(const Ptr<Model> &first,
 }
 
 Async::Async(const Config &config)
-    : batcher_(config.max_words, config.wrap_length,
+    : cache_(make_cache(config.cache_size)),
+      batcher_(config.max_words, config.wrap_length,
                config.tgt_length_limit_factor) {
   // Also creates consumers, starts listening.
   for (size_t i = 0; i < config.workers; i++) {
