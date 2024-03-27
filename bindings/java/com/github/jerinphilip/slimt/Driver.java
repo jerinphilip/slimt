@@ -11,7 +11,7 @@ class Driver {
     int feedForwardDepth = 2;
     int numHeads = 8;
     ModelConfig config =
-        new ModelConfig(encoderLayers, decoderLayers, feedForwardDepth, numHeads, "sentence");
+        new ModelConfig(encoderLayers, decoderLayers, feedForwardDepth, numHeads, "paragraph");
     // Package archive = new Package();
     String root = args[0];
 
