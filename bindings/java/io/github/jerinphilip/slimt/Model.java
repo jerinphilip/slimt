@@ -1,4 +1,4 @@
-package com.github.jerinphilip.slimt;
+package io.github.jerinphilip.slimt;
 
 public class Model {
   static {
