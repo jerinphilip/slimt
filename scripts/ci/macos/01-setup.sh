@@ -3,6 +3,7 @@
 brew install cmake
 brew install xsimd openblas
 brew install sentencepiece
+brew install protobuf # not really required, CI seems to fail
 
 sysctl -a | grep machdep.cpu.features
 
