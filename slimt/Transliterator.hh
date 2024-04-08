@@ -56,7 +56,6 @@ class Transliterator {
 
  private:
   size_t id_ = 0;
-  size_t model_id_ = 0;
   Config config_;
 
   using Mmap = t12n::Package<io::MmapFile>;

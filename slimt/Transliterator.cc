@@ -59,9 +59,8 @@ std::vector<std::string> Transliterator::transliterate(
   input.add(words);
   input.finalize();
 
-  BeamSearch search;
-  auto nbest = search.forward(transformer_, vocabulary_, shortlist_generator_,
-                              input, count);
+  BeamSearch search(transformer_, vocabulary_, shortlist_generator_);
+  auto nbest = search.generate(input, count);
 
   std::vector<std::string> candidates;
   candidates.reserve(count);
@@ -69,9 +68,11 @@ std::vector<std::string> Transliterator::transliterate(
   for (size_t i = 0; i < nbest.size(); i += count) {
     for (size_t j = 0; j < count; j++) {
       std::string decoded;
+#if 0
       const History &history = nbest[i * batch_size + j];
       vocabulary_.decode(history->target, decoded);
       candidates.push_back(std::move(decoded));
+#endif
     }
   }
   return candidates;

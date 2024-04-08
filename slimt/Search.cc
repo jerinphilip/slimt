@@ -34,6 +34,19 @@ void update_alignment(const std::vector<size_t> &lengths,
 
 }  // namespace
 
+Greedy::Greedy(const Transformer &transformer, const Vocabulary &vocabulary,
+               const std::optional<ShortlistGenerator> &shortlist_generator)
+    : transformer_(transformer),
+      vocabulary_(vocabulary),
+      shortlist_generator_(shortlist_generator) {}
+
+BeamSearch::BeamSearch(
+    const Transformer &transformer, const Vocabulary &vocabulary,
+    const std::optional<ShortlistGenerator> &shortlist_generator)
+    : transformer_(transformer),
+      vocabulary_(vocabulary),
+      shortlist_generator_(shortlist_generator) {}
+
 Histories Greedy::generate(const Input &input) {
   Tensor mask = input.mask().clone();
 
@@ -65,10 +78,6 @@ Histories Greedy::generate(const Input &input) {
   Words previous_slice = {};
   std::vector<Tensor> states = transformer_.decoder_start_states(batch_size);
 
-  GenerationStep step(std::move(encoder_out), std::move(mask),
-                      std::move(previous_slice), std::move(indices),
-                      std::move(states), max_seq_length);
-
   std::vector<bool> complete(batch_size, false);
   uint32_t eos = vocabulary_.eos_id();
   auto record = [eos, &complete](Words &step, Sentences &sentences) {
@@ -86,6 +95,9 @@ Histories Greedy::generate(const Input &input) {
   // Initialize a first step.
   Sentences sentences(batch_size);
   Alignments alignments(sentences.size());
+  GenerationStep step(std::move(encoder_out), std::move(mask),
+                      std::move(previous_slice), std::move(indices),
+                      std::move(states), max_seq_length);
 
   auto [logits, attn] =
       transformer_.step(step.encoder_out(), step.mask(), step.states(),
@@ -128,4 +140,17 @@ Histories Greedy::generate(const Input &input) {
 
   return histories;
 }
+
+GenerationStep::GenerationStep(Tensor &&encoder_out, Tensor &&mask,
+                               Words &&previous,
+                               std::optional<Words> &&shortlist,
+                               std::vector<Tensor> &&states,
+                               size_t max_seq_length)
+    : encoder_out_(std::move(encoder_out)),
+      mask_(std::move(mask)),
+      states_(std::move(states)),
+      previous_(std::move(previous)),
+      shortlist_(shortlist),
+      max_seq_length_(max_seq_length) {}
+
 }  // namespace slimt
