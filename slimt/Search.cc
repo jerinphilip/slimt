@@ -112,6 +112,7 @@ Histories Greedy::generate(const Input &input) {
 
   update_alignment(input.lengths(), complete, attn, alignments);
   record(previous_slice, sentences);
+  step.advance(std::move(previous_slice));
 
   size_t remaining = sentences.size();
   for (size_t i = 1; i < max_seq_length && remaining > 0; i++) {
@@ -126,6 +127,7 @@ Histories Greedy::generate(const Input &input) {
     }
     update_alignment(input.lengths(), complete, attn, alignments);
     remaining = record(previous_slice, sentences);
+    step.advance(std::move(previous_slice));
   }
 
   Histories histories;
@@ -150,7 +152,11 @@ GenerationStep::GenerationStep(Tensor &&encoder_out, Tensor &&mask,
       mask_(std::move(mask)),
       states_(std::move(states)),
       previous_(std::move(previous)),
-      shortlist_(shortlist),
+      shortlist_(std::move(shortlist)),
       max_seq_length_(max_seq_length) {}
+
+void GenerationStep::advance(Words &&previous) {
+  previous_ = std::move(previous);
+}
 
 }  // namespace slimt
