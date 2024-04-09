@@ -205,12 +205,12 @@ Async::Async(const Config &config)
   for (size_t i = 0; i < config.workers; i++) {
     workers_.emplace_back([this]() {
       auto [batch, model] = batcher_.generate();
-      Greedy greedy(model->transformer(), model->vocabulary(),
-                    model->shortlist_generator());
       while (!batch.empty()) {
         // convert between batches.
         Input input = convert(batch, model->vocabulary().pad_id(),
                               config_.tgt_length_limit_factor);
+        Greedy greedy(model->transformer(), model->vocabulary(),
+                      model->shortlist_generator());
         Histories histories = greedy.generate(input);
         batch.complete(histories);
         auto [next_batch, next_model] = batcher_.generate();
