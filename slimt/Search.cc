@@ -2,9 +2,53 @@
 
 #include <cstdint>
 
+#include "slimt/Shortlist.hh"
 #include "slimt/TensorOps.hh"
 
 namespace slimt {
+
+namespace {
+
+std::tuple<Tensor, Tensor> encode(const Transformer &transformer,
+                                  const Input &input) {
+  Tensor mask = input.mask().clone();
+  Tensor word_embedding =
+      index_select(transformer.embedding(), input.indices(), "word_embedding");
+  transform_embedding(word_embedding);
+
+  // https://github.com/browsermt/marian-dev/blob/14c9d9b0e732f42674e41ee138571d5a7bf7ad94/src/models/transformer.h#L570
+  // https://github.com/browsermt/marian-dev/blob/14c9d9b0e732f42674e41ee138571d5a7bf7ad94/src/models/transformer.h#L133
+  Tensor encoder_out = transformer.encoder().forward(word_embedding, mask);
+  return std::make_tuple(std::move(encoder_out), std::move(mask));
+}
+
+// Project parts
+Tensor project(const Tensor &in, size_t count) {
+  // Form output tensor shape
+  Shape out_shape = in.shape();
+  size_t leading_dim = out_shape.dim(0);
+  size_t elements = out_shape.elements();
+  size_t width = elements / leading_dim;
+  out_shape.set_dim(0, leading_dim * count);
+  Tensor out(in.type(), out_shape, in.name() + "_projected");
+
+  auto *out_data = out.data<float>();
+  const auto *in_data = in.data<float>();
+
+  // TODO(@jerinphilip): Need to verify.
+  for (size_t sample_id = 0; sample_id < leading_dim; sample_id++) {
+    for (size_t replica_id = 0; replica_id < count; replica_id++) {
+      const float *src = in_data + sample_id * width;
+      float *dest = out_data + (sample_id * count + replica_id) * width;
+      const size_t bytes = width * sizeof(float);
+      std::memcpy(dest, src, bytes);
+    }
+  }
+
+  return out;
+}
+
+}  // namespace
 
 Greedy::Greedy(const Transformer &transformer, const Vocabulary &vocabulary,
                const std::optional<ShortlistGenerator> &shortlist_generator)
@@ -20,25 +64,14 @@ BeamSearch::BeamSearch(
       shortlist_generator_(shortlist_generator) {}
 
 Histories Greedy::generate(const Input &input) {
-  Tensor mask = input.mask().clone();
-
-  // uint64_t batch_size = indices.dim(-2);
-  // uint64_t sequence_length = indices.dim(-1);
-  // uint64_t embed_dim = embedding_.dim(-1);
-
-  Tensor word_embedding =
-      index_select(transformer_.embedding(), input.indices(), "word_embedding");
-  transform_embedding(word_embedding);
-
-  // https://github.com/browsermt/marian-dev/blob/14c9d9b0e732f42674e41ee138571d5a7bf7ad94/src/models/transformer.h#L570
-  // https://github.com/browsermt/marian-dev/blob/14c9d9b0e732f42674e41ee138571d5a7bf7ad94/src/models/transformer.h#L133
-  Tensor encoder_out = transformer_.encoder().forward(word_embedding, mask);
+  auto [encoder_out, mask] = encode(transformer_, input);
 
   std::optional<Words> indices = std::nullopt;
   if (shortlist_generator_) {
     Shortlist shortlist = shortlist_generator_->generate(input.words());
     indices = shortlist.words();
   }
+
   // The following can be used to check if shortlist is going wrong.
   // std::vector<uint32_t> indices(vocabulary_.size());
   // std::iota(indices.begin(), indices.end(), 0);
@@ -56,20 +89,7 @@ Histories Greedy::generate(const Input &input) {
                       std::move(states), max_seq_length, vocabulary_.eos_id(),
                       batch_size);
 
-  auto [logits, attn] =
-      transformer_.step(step.encoder_out(), step.mask(), step.states(),
-                        step.previous(), step.shortlist());
-
-  if (step.shortlist()) {
-    previous_slice = greedy_sample_from_words(logits, vocabulary_,
-                                              *step.shortlist(), batch_size);
-  } else {
-    previous_slice = greedy_sample(logits, vocabulary_, batch_size);
-  }
-
-  step.update(std::move(previous_slice), attn);
-
-  for (size_t i = 1; i < max_seq_length && !step.complete(); i++) {
+  for (size_t i = 0; i < max_seq_length && !step.complete(); i++) {
     auto [logits, attn] =
         transformer_.step(step.encoder_out(), step.mask(), step.states(),
                           step.previous(), step.shortlist());
@@ -166,19 +186,7 @@ Histories Result::consume() {
 }
 
 NBest BeamSearch::generate(const Input &input, size_t beam_size) {
-  Tensor mask = input.mask().clone();
-
-  // uint64_t batch_size = indices.dim(-2);
-  // uint64_t sequence_length = indices.dim(-1);
-  // uint64_t embed_dim = embedding_.dim(-1);
-
-  Tensor word_embedding =
-      index_select(transformer_.embedding(), input.indices(), "word_embedding");
-  transform_embedding(word_embedding);
-
-  // https://github.com/browsermt/marian-dev/blob/14c9d9b0e732f42674e41ee138571d5a7bf7ad94/src/models/transformer.h#L570
-  // https://github.com/browsermt/marian-dev/blob/14c9d9b0e732f42674e41ee138571d5a7bf7ad94/src/models/transformer.h#L133
-  Tensor encoder_out = transformer_.encoder().forward(word_embedding, mask);
+  auto [encoder_out, mask] = encode(transformer_, input);
 
   std::optional<Words> indices = std::nullopt;
   if (shortlist_generator_) {
@@ -196,41 +204,16 @@ NBest BeamSearch::generate(const Input &input, size_t beam_size) {
   Words previous_slice = {};
   std::vector<Tensor> states = transformer_.decoder_start_states(batch_size);
 
-  // Project parts
-  auto project = [](const Tensor &in, size_t count) {
-    // Form output tensor shape
-    Shape out_shape = in.shape();
-    size_t leading_dim = out_shape.dim(0);
-    size_t elements = out_shape.elements();
-    size_t width = elements / leading_dim;
-    out_shape.set_dim(0, leading_dim * count);
-    Tensor out(in.type(), out_shape, in.name() + "_projected");
-
-    auto *out_data = out.data<float>();
-    const auto *in_data = in.data<float>();
-
-    // TODO(@jerinphilip): Need to verify.
-    for (size_t idx = 0; idx < leading_dim; idx++) {
-      for (size_t i = 0; i < count; i++) {
-        const float *src = in_data + idx * width;
-        float *dest = out_data + (idx * count + i) * width;
-        std::memcpy(dest, src, width);
-      }
-    }
-
-    return out;
-  };
-
+  // Project variables for beam-search
   std::vector<size_t> input_lengths_projected;
   input_lengths_projected.reserve(input.lengths().size() * beam_size);
-  for (auto &input_length : input.lengths()) {
+  for (const auto &input_length : input.lengths()) {
     for (size_t beam_id = 0; beam_id < beam_size; beam_id++) {
       input_lengths_projected.push_back(input_length);
     }
   }
-
   Tensor encoder_out_projected = project(encoder_out, beam_size);
-  Tensor mask_projected = project(mask, beam_size);
+  Tensor mask_projected = project(input.mask(), beam_size);
   std::vector<Tensor> states_projected;
   for (auto &state : states) {
     Tensor state_projected = project(state, beam_size);
@@ -238,10 +221,25 @@ NBest BeamSearch::generate(const Input &input, size_t beam_size) {
   }
 
   // Initialize a first step.
-  GenerationStep step(input.lengths(), std::move(encoder_out), std::move(mask),
-                      std::move(previous_slice), std::move(indices),
-                      std::move(states), max_seq_length, vocabulary_.eos_id(),
-                      batch_size);
+  GenerationStep step(input_lengths_projected, std::move(encoder_out_projected),
+                      std::move(mask_projected), std::move(previous_slice),
+                      std::move(indices), std::move(states_projected),
+                      max_seq_length, vocabulary_.eos_id(), batch_size);
+
+  for (size_t i = 0; i < max_seq_length && !step.complete(); i++) {
+    auto [logits, attn] =
+        transformer_.step(step.encoder_out(), step.mask(), step.states(),
+                          step.previous(), step.shortlist());
+    if (step.shortlist()) {
+      previous_slice = greedy_sample_from_words(logits, vocabulary_,
+                                                *step.shortlist(), batch_size);
+    } else {
+      previous_slice = greedy_sample(logits, vocabulary_, batch_size);
+    }
+    step.update(std::move(previous_slice), attn);
+  }
+
+  Histories histories = step.finish();
 
   NBest nbest;
   return nbest;
