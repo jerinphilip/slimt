@@ -1,38 +1,10 @@
 #include "slimt/Search.hh"
 
+#include <cstdint>
+
 #include "slimt/TensorOps.hh"
 
 namespace slimt {
-
-namespace {
-
-void update_alignment(const std::vector<size_t> &lengths,
-                      const std::vector<bool> &finished, const Tensor &attn,
-                      Alignments &alignments) {
-  const auto *data = attn.data<float>();
-  // B x H x 1 (T) x S
-  size_t batch_size = attn.dim(-4);
-  size_t num_heads = attn.dim(-3);
-  size_t slice = attn.dim(-2);
-  size_t source_length = attn.dim(-1);
-
-  // https://github.com/marian-nmt/marian-dev/blob/53b0b0d7c83e71265fee0dd832ab3bcb389c6ec3/src/models/transformer.h#L214-L232
-  for (size_t id = 0; id < batch_size; id++) {
-    // Copy the elements into the particular alignment index.
-    size_t head_id = 0;
-    if (!finished[id]) {
-      size_t batch_stride = (num_heads * slice * source_length);
-      size_t head_stride = (slice * source_length);
-      const float *alignment = data + id * batch_stride + head_id * head_stride;
-      size_t length = lengths[id];
-      Distribution distribution(length);
-      std::copy(alignment, alignment + length, distribution.data());
-      alignments[id].push_back(std::move(distribution));
-    }
-  }
-}
-
-}  // namespace
 
 Greedy::Greedy(const Transformer &transformer, const Vocabulary &vocabulary,
                const std::optional<ShortlistGenerator> &shortlist_generator)
@@ -78,26 +50,12 @@ Histories Greedy::generate(const Input &input) {
   Words previous_slice = {};
   std::vector<Tensor> states = transformer_.decoder_start_states(batch_size);
 
-  std::vector<bool> complete(batch_size, false);
-  uint32_t eos = vocabulary_.eos_id();
-  auto record = [eos, &complete](Words &step, Sentences &sentences) {
-    size_t finished = 0;
-    for (size_t i = 0; i < step.size(); i++) {
-      if (not complete[i]) {
-        complete[i] = (step[i] == eos);
-        sentences[i].push_back(step[i]);
-      }
-      finished += static_cast<int>(complete[i]);
-    }
-    return sentences.size() - finished;
-  };
-
   // Initialize a first step.
-  Sentences sentences(batch_size);
-  Alignments alignments(sentences.size());
-  GenerationStep step(std::move(encoder_out), std::move(mask),
+
+  GenerationStep step(input.lengths(), std::move(encoder_out), std::move(mask),
                       std::move(previous_slice), std::move(indices),
-                      std::move(states), max_seq_length);
+                      std::move(states), max_seq_length, vocabulary_.eos_id(),
+                      batch_size);
 
   auto [logits, attn] =
       transformer_.step(step.encoder_out(), step.mask(), step.states(),
@@ -110,11 +68,9 @@ Histories Greedy::generate(const Input &input) {
     previous_slice = greedy_sample(logits, vocabulary_, batch_size);
   }
 
-  update_alignment(input.lengths(), complete, attn, alignments);
-  size_t remaining = record(previous_slice, sentences);
-  step.advance(std::move(previous_slice));
+  step.update(std::move(previous_slice), attn);
 
-  for (size_t i = 1; i < max_seq_length && remaining > 0; i++) {
+  for (size_t i = 1; i < max_seq_length && !step.complete() > 0; i++) {
     auto [logits, attn] =
         transformer_.step(step.encoder_out(), step.mask(), step.states(),
                           step.previous(), step.shortlist());
@@ -124,38 +80,90 @@ Histories Greedy::generate(const Input &input) {
     } else {
       previous_slice = greedy_sample(logits, vocabulary_, batch_size);
     }
-    update_alignment(input.lengths(), complete, attn, alignments);
-    remaining = record(previous_slice, sentences);
-    step.advance(std::move(previous_slice));
+    step.update(std::move(previous_slice), attn);
   }
 
-  Histories histories;
-  for (size_t i = 0; i < sentences.size(); i++) {
-    Hypothesis hypothesis{
-        .target = std::move(sentences[i]),     //
-        .alignment = std::move(alignments[i])  //
-    };
-    auto history = std::make_shared<Hypothesis>(std::move(hypothesis));
-    histories.push_back(std::move(history));
-  }
-
+  Histories histories = step.finish();
   return histories;
 }
 
-GenerationStep::GenerationStep(Tensor &&encoder_out, Tensor &&mask,
+GenerationStep::GenerationStep(const std::vector<size_t> &input_lengths,
+                               Tensor &&encoder_out, Tensor &&mask,
                                Words &&previous,
                                std::optional<Words> &&shortlist,
                                std::vector<Tensor> &&states,
-                               size_t max_seq_length)
-    : encoder_out_(std::move(encoder_out)),
+                               size_t max_seq_length, uint32_t eos_id,
+                               size_t batch_size)
+    : input_lengths_(input_lengths),
+      encoder_out_(std::move(encoder_out)),
       mask_(std::move(mask)),
       states_(std::move(states)),
       previous_(std::move(previous)),
       shortlist_(std::move(shortlist)),
-      max_seq_length_(max_seq_length) {}
+      max_seq_length_(max_seq_length),
+      result_(eos_id, batch_size) {}
 
-void GenerationStep::advance(Words &&previous) {
-  previous_ = std::move(previous);
+Result::Result(uint32_t eos_id, size_t batch_size)
+    : eos_id_(eos_id),
+      complete_(batch_size),
+      sentences_(batch_size),
+      alignments_(batch_size) {}
+
+size_t Result::record(const Words &step) {
+  size_t finished = 0;
+  for (size_t i = 0; i < step.size(); i++) {
+    if (not complete_[i]) {
+      complete_[i] = (step[i] == eos_id_);
+      sentences_[i].push_back(step[i]);
+    }
+    finished += static_cast<int>(complete_[i]);
+  }
+  return sentences_.size() - finished;
+}
+
+void Result::update_alignment(const Tensor &attn,
+                              const std::vector<size_t> &input_lengths) {
+  const auto *data = attn.data<float>();
+  // B x H x 1 (T) x S
+  size_t batch_size = attn.dim(-4);
+  size_t num_heads = attn.dim(-3);
+  size_t slice = attn.dim(-2);
+  size_t source_length = attn.dim(-1);
+
+  // https://github.com/marian-nmt/marian-dev/blob/53b0b0d7c83e71265fee0dd832ab3bcb389c6ec3/src/models/transformer.h#L214-L232
+  for (size_t id = 0; id < batch_size; id++) {
+    // Copy the elements into the particular alignment index.
+    size_t head_id = 0;
+    if (!complete_[id]) {
+      size_t batch_stride = (num_heads * slice * source_length);
+      size_t head_stride = (slice * source_length);
+      const float *alignment = data + id * batch_stride + head_id * head_stride;
+      size_t length = input_lengths[id];
+      Distribution distribution(length);
+      std::copy(alignment, alignment + length, distribution.data());
+      alignments_[id].push_back(std::move(distribution));
+    }
+  }
+}
+
+void GenerationStep::update(Words &&step, const Tensor &attn) {
+  previous_ = std::move(step);
+
+  result_.update_alignment(attn, input_lengths_);
+  remaining_ = result_.record(previous_);
+}
+
+Histories Result::consume() {
+  Histories histories;
+  for (size_t i = 0; i < sentences_.size(); i++) {
+    Hypothesis hypothesis{
+        .target = std::move(sentences_[i]),     //
+        .alignment = std::move(alignments_[i])  //
+    };
+    auto history = std::make_shared<Hypothesis>(std::move(hypothesis));
+    histories.push_back(std::move(history));
+  }
+  return histories;
 }
 
 }  // namespace slimt
