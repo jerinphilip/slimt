@@ -1,20 +1,12 @@
 #include "slimt/Model.hh"
 
-#include <algorithm>
 #include <cstddef>
-#include <cstdint>
-#include <memory>
 #include <optional>
 #include <string>
-#include <utility>
-#include <vector>
 
 #include "slimt/Aligned.hh"
-#include "slimt/Input.hh"
 #include "slimt/Io.hh"
 #include "slimt/Shortlist.hh"
-#include "slimt/Tensor.hh"
-#include "slimt/TensorOps.hh"
 #include "slimt/Transformer.hh"
 #include "slimt/Types.hh"
 #include "slimt/Vocabulary.hh"

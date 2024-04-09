@@ -1,9 +1,15 @@
 
 #include "slimt/Transliterator.hh"
 
+#include <cstddef>
+#include <string>
+#include <vector>
+
 #include "slimt/Input.hh"
-#include "slimt/Request.hh"
+#include "slimt/Io.hh"
 #include "slimt/Search.hh"
+#include "slimt/Shortlist.hh"
+#include "slimt/Types.hh"
 
 namespace slimt {
 

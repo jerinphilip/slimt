@@ -1,9 +1,21 @@
 #include "slimt/Search.hh"
 
+#include <algorithm>
+#include <cstddef>
 #include <cstdint>
+#include <cstring>
+#include <memory>
+#include <optional>
+#include <tuple>
+#include <utility>
+#include <vector>
 
+#include "slimt/Input.hh"
 #include "slimt/Shortlist.hh"
+#include "slimt/Tensor.hh"
 #include "slimt/TensorOps.hh"
+#include "slimt/Transformer.hh"
+#include "slimt/Types.hh"
 
 namespace slimt {
 
