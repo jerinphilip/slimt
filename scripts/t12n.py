@@ -33,7 +33,8 @@ if __name__ == "__main__":
     model_nano = Model(nano, package)
 
     data = sys.stdin.read()
-    responses = service.translate(model_nano, [data], html=False)
+    lines = data.splitlines()
+    responses = service.translate(model_nano, lines, html=False)
 
     for response in responses:
         print(response.source.text, "->", response.target.text)
