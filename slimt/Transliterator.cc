@@ -3,6 +3,7 @@
 
 #include <cstddef>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "slimt/Input.hh"

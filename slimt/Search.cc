@@ -252,9 +252,7 @@ NBest BeamSearch::generate(const Input &input, size_t beam_size) {
   }
 
   Histories histories = step.finish();
-
-  NBest nbest;
-  return nbest;
+  return histories;
 }
 
 }  // namespace slimt
