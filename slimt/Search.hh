@@ -72,7 +72,7 @@ class Greedy {
   const std::optional<ShortlistGenerator> &shortlist_generator_;
 };
 
-using NBest = std::vector<Histories>;
+using NBest = Histories;
 
 class BeamSearch {
  public:

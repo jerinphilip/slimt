@@ -71,15 +71,11 @@ std::vector<std::string> Transliterator::transliterate(
   std::vector<std::string> candidates;
   candidates.reserve(count);
 
-  for (size_t i = 0; i < nbest.size(); i += count) {
-    for (size_t j = 0; j < count; j++) {
-      std::string decoded;
-#if 0
-      const History &history = nbest[i * batch_size + j];
-      vocabulary_.decode(history->target, decoded);
-      candidates.push_back(std::move(decoded));
-#endif
-    }
+  for (size_t j = 0; j < count; j++) {
+    std::string decoded;
+    const History &history = nbest[j];
+    vocabulary_.decode(history->target, decoded);
+    candidates.push_back(std::move(decoded));
   }
   return candidates;
 }
