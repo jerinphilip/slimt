@@ -111,15 +111,14 @@ Histories Greedy::generate(const Input &input) {
   }
 
   update_alignment(input.lengths(), complete, attn, alignments);
-  record(previous_slice, sentences);
+  size_t remaining = record(previous_slice, sentences);
   step.advance(std::move(previous_slice));
 
-  size_t remaining = sentences.size();
   for (size_t i = 1; i < max_seq_length && remaining > 0; i++) {
     auto [logits, attn] =
         transformer_.step(step.encoder_out(), step.mask(), step.states(),
                           step.previous(), step.shortlist());
-    if (indices) {
+    if (step.shortlist()) {
       previous_slice =
           greedy_sample_from_words(logits, vocabulary_, *indices, batch_size);
     } else {
