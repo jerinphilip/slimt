@@ -1,7 +1,7 @@
 # Maintainer: jerinphilip<at>live<dot>in
 _pkgname=slimt
 pkgname=${_pkgname}-git
-pkgver=r50.0208079
+pkgver=r46.c20abc9
 pkgrel=1
 epoch=
 pkgdesc="Inference frontend for tiny11 models"

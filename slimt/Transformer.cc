@@ -338,4 +338,16 @@ Words greedy_sample_from_words(const Tensor &logits,
   return sampled_words;
 }
 
+Tensor Transformer::encode(const Tensor &embedding, const Tensor &mask) const {
+  return encoder_.forward(embedding, mask);
+}
+std::vector<Tensor> Transformer::decoder_start_states(size_t batch_size) const {
+  return decoder_.start_states(batch_size);
+}
+std::tuple<Tensor, Tensor> Transformer::step(
+    const Tensor &encoder_out, const Tensor &mask, std::vector<Tensor> &states,
+    const Words &previous_step, const std::optional<Words> &shortlist) const {
+  return decoder_.step(encoder_out, mask, states, previous_step, shortlist);
+}
+
 }  // namespace slimt

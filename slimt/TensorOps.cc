@@ -31,8 +31,10 @@ extern "C" {
 namespace slimt {
 
 inline float sigmoid(float x) {
-  return x > 0 ? (1.0F / (1.0F + std::exp(-x)))
-               : (std::exp(x) / (1.0F + std::exp(x)));
+  // https://github.com/marian-nmt/marian-dev/blob/2d067afb9ce5e3a0b6c32585706affc6e7295920/src/functional/operators.h#L116
+  // https://clang.llvm.org/extra/clang-tidy/checks/performance/type-promotion-in-math-fn.html
+  // NOLINTNEXTLINE(performance-type-promotion-in-math-fn)
+  return x > 0 ? (1.0F / (1.0F + exp(-x))) : (exp(x) / (1.0F + exp(x)));
 }
 
 Tensor index_select(const Tensor& x, const Tensor& indices,
