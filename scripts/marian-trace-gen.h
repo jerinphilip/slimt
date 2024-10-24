@@ -80,48 +80,52 @@ std::string save_to_disk(const std::string &name, Node node) {
 
 template <class NodeType>
 inline void var_id(std::ostream &out, NodeType value) {
-  out << "var_" << value->getId() << " ";
+  out << "\"var_" << value->getId() << " ";
   out << value->value_type() << " ";
   out << "[" << value->shape() << "]";
   if (value->name() != "none") {
     out << " " << value->name();
   }
+  out << "\"";
 }
 
 template <class NodeType>
-inline bool process(const char *pretty_fn, NodeType *value, std::ostream &out) {
+inline bool process(const char *pretty_fn, NodeType *value, std::ostream &out,
+                    const std::string &indent) {
   std::stringstream stream;
   std::string op_name = extract_op_name(pretty_fn);
   std::string lhs_tag = var_metadata(value);
-  std::string prefix =
-      "var_" + std::to_string(value->getId()) + "-" + op_name + "-" + lhs_tag;
-  std::string lhs_name = prefix + "-lhs.bin";
-  std::string lhs_save = save_to_disk(lhs_name, value);
+  std::string var_name = "var_" + std::to_string(value->getId());
+  std::string save_name = var_name + ".bin";
+  std::string lhs_save = save_to_disk(save_name, value);
 
-  stream << "after: ";
+  stream << indent << "lhs: {\"id\": ";
   var_id(stream, value);
   if (!lhs_save.empty()) {
-    stream << " " << lhs_name;
+    stream << ", \"save\":";
+    stream << " " << save_name;
   }
+  stream << " }";
 
   auto children = value->children();
   if (not children.empty()) {
-    stream << "\noperands: \n";
+    stream << "\n" << indent << "rhs: \n";
   }
   for (size_t i = 0; i < children.size(); i++) {
     auto rhs = children[i];
-    stream << "  - ";
+    stream << indent << "  - ";
+    stream << "{\"id\": ";
     var_id(stream, rhs);
 
     std::string rhs_tag = var_metadata(rhs);
     // NOLINTBEGIN
-    std::string rhs_name =
-        prefix + "-rhs" + std::to_string(i) + "-" + rhs_tag + ".bin";
+    std::string rhs_name = var_name + "-rhs" + std::to_string(i) + ".bin";
     // NOLINTEND
     std::string rhs_save = save_to_disk(rhs_name, rhs);
     if (!rhs_save.empty()) {
-      stream << " " << rhs_name;
+      stream << ",\"save\": " << rhs_name;
     }
+    stream << " }";
     stream << "\n";
   }
 
@@ -136,22 +140,20 @@ inline bool process(const char *pretty_fn, NodeType *value, std::ostream &out) {
   }()  // test if THREAD_GUARD is neccessary, remove if no problems occur.
        //
 #if 1
-#define NodeOp(op)                                                  \
-  [=]() {                                                           \
-    std::stringstream stream;                                       \
-    stream << "file: \"" << __FILE__ << "\"\n";                     \
-    stream << "line: " << __LINE__ << "\n";                         \
-    stream << "fn: \"" << __PRETTY_FUNCTION__ << "\"\n";            \
-    stream << "op: { " << #op << " }\n";                            \
-    stream << "before: ";                                           \
-    detail::var_id(stream, this);                                   \
-    op;                                                             \
-    stream << "\n";                                                 \
-    bool flag = detail::process(__PRETTY_FUNCTION__, this, stream); \
-    stream << "\n\n";                                               \
-    if (flag) {                                                     \
-      std::cerr << stream.str();                                    \
-    };                                                              \
+#define NodeOp(op)                                                          \
+  [=]() {                                                                   \
+    std::stringstream stream;                                               \
+    std::string indent = "  ";                                              \
+    stream << "- file: \"" << __FILE__ << "\"\n";                           \
+    stream << indent << "line: " << __LINE__ << "\n";                       \
+    stream << indent << "fn: \"" << __PRETTY_FUNCTION__ << "\"\n";          \
+    stream << indent << "op: \"{ " << #op << " }\"\n";                      \
+    op;                                                                     \
+    bool flag = detail::process(__PRETTY_FUNCTION__, this, stream, indent); \
+    stream << "\n\n";                                                       \
+    if (flag) {                                                             \
+      std::cerr << stream.str();                                            \
+    };                                                                      \
   }
 #else
 #define NodeOp(op) [=]() { op; }

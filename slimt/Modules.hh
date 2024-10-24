@@ -106,4 +106,7 @@ Tensor affine_with_select(const Affine &parameters, const Tensor &x,
                           const std::vector<uint32_t> &indices,
                           const std::string &name = "");
 
+Tensor affine(const Affine &parameters, const Tensor &x,
+              const std::string &name = "");
+
 }  // namespace slimt

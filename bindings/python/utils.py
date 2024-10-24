@@ -75,11 +75,13 @@ def to_json(response: Response, *args, **kwargs) -> str:
 
 def package_from_config_path(path):
     with open(path) as yaml_file:
-        c = yaml.safe_load(yaml_file)
+        config = yaml.safe_load(yaml_file)
     root = os.path.dirname(path)
     package = Package(
-        model=os.path.join(root, c["models"][0]),
-        vocabulary=os.path.join(root, c["vocabs"][0]),
-        shortlist=os.path.join(root, c["shortlist"][0]),
+        model=os.path.join(root, config["models"][0]),
+        vocabulary=os.path.join(root, config["vocabs"][0]),
+        shortlist=(
+            os.path.join(root, config["shortlist"][0]) if "shortlist" in config else ""
+        ),
     )
     return package

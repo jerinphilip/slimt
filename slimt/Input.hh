@@ -10,7 +10,7 @@ namespace slimt {
 class Input {
  public:
   Input(size_t batch_size, size_t sequence_length, uint32_t pad_id,
-        size_t limit_factor);
+        float limit_factor);
 
   void add(const std::vector<uint32_t> &words);
   void finalize();
@@ -31,7 +31,7 @@ class Input {
   size_t index_ = 0;
   uint32_t pad_id_ = 0;
   size_t used_ = 0;
-  size_t limit_factor_;
+  float limit_factor_;
   bool finalized_ = false;
 };
 }  // namespace slimt

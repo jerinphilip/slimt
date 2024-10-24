@@ -1,4 +1,5 @@
 #pragma once
+#include <cstdio>
 #include <iostream>
 
 #define SLIMT_BREAK std::raise(SIGTRAP)
@@ -26,12 +27,12 @@
   SLIMT_TRACE2(x, y);         \
   SLIMT_TRACE(z);
 
-#define SLIMT_ABORT_IF(condition, ...) \
-  do {                                 \
-    if (condition) {                   \
-      std::cerr << #condition;         \
-      std::abort();                    \
-    }                                  \
+#define SLIMT_ABORT_IF(condition, error) \
+  do {                                   \
+    if (condition) {                     \
+      std::cerr << (error) << '\n';      \
+      std::abort();                      \
+    }                                    \
   } while (0)
 
 #define SLIMT_ABORT(message) \
@@ -40,4 +41,13 @@
     std::abort();            \
   } while (0)
 
+#ifdef SLIMT_ENABLE_LOG
+#define LOG(level, ...)              \
+  do {                               \
+    fprintf(stderr, "[%s]", #level); \
+    fprintf(stderr, __VA_ARGS__);    \
+    fprintf(stderr, "\n");           \
+  } while (0)
+#else  // SLIMT_ENABLE_LOGS
 #define LOG(...) (void)0
+#endif  // SLIMT_ENABLE_LOGS

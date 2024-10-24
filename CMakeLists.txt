@@ -18,6 +18,7 @@ option(WITH_RUY "Use ruy" OFF)
 option(WITH_GEMMOLOGY "Use gemmology" ON)
 option(WITH_BLAS "Use BLAS. Otherwise moves to ruy" ON)
 
+option(SLIMT_USE_INTERNAL_PCRE2 "Use external PCRE2, not system" OFF)
 option(USE_BUILTIN_SENTENCEPIECE "Use SentencePiece supplied as 3rd-party" ON)
 
 option(USE_AVX512 "Use AVX512" OFF)
@@ -26,9 +27,13 @@ option(USE_SSSE3 "Use SSSE3" OFF)
 option(USE_SSE2 "Use SSE2" OFF)
 option(USE_NEON "Use NEON" OFF)
 
+option(BUILD_SHARED "Build shared libraries" ON)
+option(BUILD_STATIC "Build static libraries" ON)
+
 option(SLIMT_PACKAGE "Package for cmake, pkgconfig" OFF)
 option(SLIMT_PYTHON_LINK_STATIC
        "link-method to produce python package (static/shared)" ON)
+option(SLIMT_GENERATED_UNIT_TESTS "Generate unit tests to run using Python" OFF)
 
 option(BUILD_CLI "Build command-line applications" ON)
 option(BUILD_PYTHON "Build Python bindings library" OFF)
@@ -213,6 +218,7 @@ endif(UNIX)
 
 add_subdirectory(slimt)
 add_subdirectory(app)
+add_subdirectory(tests)
 
 if(BUILD_PYTHON)
   if(USE_PYBIND11_SOURCE)
@@ -227,3 +233,7 @@ endif(BUILD_PYTHON)
 if(BUILD_WASM)
   add_subdirectory(bindings/wasm)
 endif(BUILD_WASM)
+
+if(BUILD_JNI)
+  add_subdirectory(bindings/java)
+endif(BUILD_JNI)

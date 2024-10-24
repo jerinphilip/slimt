@@ -3,7 +3,9 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <cstdio>
 #include <iostream>
+#include <optional>
 #include <string>
 #include <tuple>
 #include <utility>
@@ -14,6 +16,8 @@
 #include "slimt/Tensor.hh"
 #include "slimt/TensorOps.hh"
 #include "slimt/Types.hh"
+#include "slimt/Utils.hh"
+#include "slimt/Vocabulary.hh"
 
 namespace slimt {
 
@@ -101,6 +105,9 @@ void Decoder::register_parameters(const std::string &prefix,
                                   ParameterMap &parameters) {
   // Somehow we have historically ended up with `none_QuantMultA` being used for
   // Wemb_QuantMultA.
+  // https://github.com/browsermt/marian-dev/blob/2be8344fcf2776fb43a7376284067164674cbfaf/scripts/alphas/extract_stats.py#L55
+  // - none_QuantMultA is generated when used with shortlist
+  // - Wemb_QuantMultA is generated when used without shortlist.
   parameters.emplace("Wemb_intgemm8", &output_.W);
   parameters.emplace("none_QuantMultA", &output_.quant);
   parameters.emplace("decoder_ff_logit_out_b", &output_.b);
@@ -110,11 +117,9 @@ void Decoder::register_parameters(const std::string &prefix,
   }
 }
 
-std::tuple<Tensor, Tensor> Decoder::step(const Tensor &encoder_out,
-                                         const Tensor &mask,
-                                         std::vector<Tensor> &states,
-                                         const Words &previous_step,
-                                         const Words &shortlist) const {
+std::tuple<Tensor, Tensor> Decoder::step(
+    const Tensor &encoder_out, const Tensor &mask, std::vector<Tensor> &states,
+    const Words &previous_step, const std::optional<Words> &shortlist) const {
   // Infer batch-size from encoder_out.
   size_t encoder_feature_dim = encoder_out.dim(-1);
   size_t source_sequence_length = encoder_out.dim(-2);
@@ -168,7 +173,12 @@ std::tuple<Tensor, Tensor> Decoder::step(const Tensor &encoder_out,
     }
   }
 
-  Tensor logits = affine_with_select(output_, x, shortlist, "logits");
+  if (shortlist) {
+    Tensor logits = affine_with_select(output_, x, *shortlist, "logits");
+    return {std::move(logits), std::move(guided_alignment)};
+  }
+
+  Tensor logits = affine(output_, x, "logits");
   return {std::move(logits), std::move(guided_alignment)};
 }
 
@@ -221,15 +231,96 @@ void Transformer::register_parameters(const std::string &prefix,
   decoder_.register_parameters(prefix, parameters);
 }
 
-Words greedy_sample(const Tensor &logits, const Words &words,
+namespace {
+
+template <class T>
+void topk_inspect(size_t batch_id, const Vocabulary &vocabulary, T *begin,
+                  T *end, size_t k) {
+  const T *data = begin;
+  size_t size = end - begin;
+
+  std::vector<size_t> ordering = argsort(begin, end);
+  fprintf(stderr, "batch %zu | ", batch_id);
+  Words words(size + 1, vocabulary.eos_id());
+  for (size_t i = 0; i < k; i++) {
+    size_t j = size - i - 1;
+    words[i] = ordering[j];
+    std::string decoded;
+    vocabulary.decode({words[i], vocabulary.eos_id()}, decoded);
+    fprintf(stderr, "%s (%zu, %.9g) ", decoded.c_str(), ordering[j],
+            data[ordering[j]]);
+  }
+  fprintf(stderr, "\n");
+}
+
+template <class T>
+void topk_inspect_with_words(size_t batch_id, const Vocabulary &vocabulary,
+                             const Words &shortlist, T *begin, T *end,
+                             size_t k) {
+  const T *data = begin;
+  size_t size = end - begin;
+
+  std::vector<size_t> ordering = argsort(begin, end);
+  fprintf(stderr, "batch %zu | ", batch_id);
+  Words words(size + 1, vocabulary.eos_id());
+  for (size_t i = 0; i < k; i++) {
+    size_t j = size - i - 1;
+    words[i] = shortlist[ordering[j]];
+    std::string decoded;
+    vocabulary.decode({words[i], vocabulary.eos_id()}, decoded);
+    fprintf(stderr, "%s (%zu, %.9g) ", decoded.c_str(), ordering[j],
+            data[ordering[j]]);
+  }
+  fprintf(stderr, "\n");
+}
+
+}  // namespace
+
+Words greedy_sample(const Tensor &logits, const Vocabulary &vocabulary,
                     size_t batch_size) {
+  Words sampled_words;
+  size_t stride = vocabulary.size();
+  for (size_t i = 0; i < batch_size; i++) {
+    const auto *data = logits.data<float>();
+
+    // Initialize: 0
+    size_t cls = 0;
+    size_t max_index = cls;
+    float max_value = data[i * stride + cls];
+
+    for (cls = 1; cls < stride; cls++) {
+      float value = data[i * stride + cls];
+      if (value > max_value) {
+        max_index = cls;
+        max_value = value;
+      }
+    }
+
+    sampled_words.push_back(max_index);
+    if (false) {  // NOLINT
+      constexpr size_t kValue = 5;
+      topk_inspect(i, vocabulary, data + i * stride, data + (i + 1) * stride,
+                   kValue);
+    }
+  }
+  return sampled_words;
+}
+
+Words greedy_sample_from_words(const Tensor &logits,
+                               const Vocabulary &vocabulary, const Words &words,
+                               size_t batch_size) {
+  (void)vocabulary;
+  size_t stride = words.size();
   Words sampled_words;
   for (size_t i = 0; i < batch_size; i++) {
     const auto *data = logits.data<float>();
-    size_t max_index = 0;
-    float max_value = data[0];
-    size_t stride = words.size();
-    for (size_t cls = 1; cls < stride; cls++) {
+
+    // Initialize: 0
+    size_t cls = 0;
+    size_t max_index = cls;
+    float max_value = data[i * stride + cls];
+
+    for (cls = 1; cls < stride; cls++) {
       float value = data[i * stride + cls];
       if (value > max_value) {
         max_index = cls;
@@ -238,6 +329,11 @@ Words greedy_sample(const Tensor &logits, const Words &words,
     }
 
     sampled_words.push_back(words[max_index]);
+    if (false) {  // NOLINT
+      constexpr size_t kValue = 5;
+      topk_inspect_with_words(i, vocabulary, words, data + i * stride,
+                              data + (i + 1) * stride, kValue);
+    }
   }
   return sampled_words;
 }

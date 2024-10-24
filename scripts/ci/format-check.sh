@@ -42,7 +42,14 @@ function slimt-check-sh {
 }
 
 function slimt-check-cmake {
-  cmake-format $(find -name "CMakeLists.txt" -not -path "./3rd-party/*" -not -path "build") --check
+  set +e
+  CMAKE_FILES=$(find -name "CMakeLists.txt" -not -path "./3rd-party/*" -not -path "build")
+  cmake-format ${CMAKE_FILES[@]} --check
+  CHECK_STATUS=$?
+  set -e
+  cmake-format ${CMAKE_FILES[@]} --in-place
+  git diff
+  return $CHECK_STATUS
 }
 
 function slimt-check-iwyu {

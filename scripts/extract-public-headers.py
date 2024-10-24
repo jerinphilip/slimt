@@ -5,6 +5,7 @@ Usage:
             | python3 scripts/extract-public-headers.py
 
 """
+
 import os
 import sys
 

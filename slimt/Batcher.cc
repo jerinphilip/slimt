@@ -47,7 +47,7 @@ bool operator<(const SegmentRef& a, const SegmentRef& b) {
 
 void Batch::log() {
   (void)token_count_;
-  LOG(info, "Batch(tokens={}, max-length={}, segment_refs_={})", token_count_,
+  LOG(info, "Batch(tokens=%zu max-length=%zu, segment_refs_=%zu)", token_count_,
       max_length_, segment_refs_.size());
 }
 

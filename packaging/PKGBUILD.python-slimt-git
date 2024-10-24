@@ -1,0 +1,50 @@
+# Maintainer: jerinphilip<at>live<dot>in
+_pkgname=slimt
+pkgname=${_pkgname}-git
+pkgver=r50.0208079
+pkgrel=1
+epoch=
+pkgdesc="Inference frontend for tiny11 models"
+arch=('x86_64')
+url="https://github.com/jerinphilip/slimt"
+fragment=main
+license=('Apache')
+groups=()
+depends=('sentencepiece-git' 'openblas')
+makedepends=('git' 'cmake' 'gcc' 'sentencepiece-git' 'xsimd')
+checkdepends=()
+optdepends=('gperftools')
+provides=()
+conflicts=()
+replaces=()
+backup=()
+options=('!strip')
+install=
+changelog=
+source=("git+https://github.com/jerinphilip/${_pkgname}.git#branch=${fragment}")
+noextract=()
+md5sums=('SKIP')
+
+pkgver() {
+  cd "$_pkgname"
+  printf "r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
+}
+
+build() {
+  (cd ${_pkgname}/ && git submodule update --init --recursive)
+  mkdir -p ${_pkgname}/build
+
+  CONFIGURE_ARGS=(
+    -DUSE_BUILTIN_SENTENCEPIECE=ON
+    -DWITH_GEMMOLOGY=ON -DUSE_AVX512=ON -DUSE_AVX2=ON -DUSE_SSE2=ON -DUSE_SSSE3=ON
+    -DBUILD_STATIC=OFF
+  )
+
+  CMAKE_ARGS="${CONFIGURE_ARGS[@]}" python setup.py bdist_wheel
+}
+
+package() {
+  export PYTHONHASHSEED=0
+  python setup.py install --root="$pkgdir" --optimize=1 --skip-build
+
+}
