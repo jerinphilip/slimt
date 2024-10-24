@@ -35,6 +35,14 @@ option(SLIMT_PYTHON_LINK_STATIC
        "link-method to produce python package (static/shared)" ON)
 option(SLIMT_GENERATED_UNIT_TESTS "Generate unit tests to run using Python" OFF)
 
+option(BUILD_CLI "Build command-line applications" ON)
+option(BUILD_PYTHON "Build Python bindings library" OFF)
+option(BUILD_WASM "Build WebAssemby bindings library" OFF)
+
+if(BUILD_WASM)
+  set(BUILD_CLI OFF)
+endif(BUILD_WASM)
+
 include(MacroEnsureOutOfSourceBuild)
 macro_ensure_out_of_source_build(
   "${PROJECT_NAME} requires an out of source build. Please create a separate build directory and run 'cmake /path/to/${PROJECT_NAME} [options]' there."
@@ -119,6 +127,12 @@ if(WITH_BLAS)
     )
     add_library(AppleLibs::accelerate ALIAS apple_accelerate)
     list(APPEND SLIMT_PRIVATE_LIBS AppleLibs::accelerate)
+    # 'cblas_sgemm' is deprecated: first deprecated in macOS 13.3 - An updated
+    # CBLAS interface supporting ILP64 is available.  Please compile with
+    # -DACCELERATE_NEW_LAPACK to access the new headers and
+    # -DACCELERATE_LAPACK_ILP64 for ILP64 support.
+    list(APPEND SLIMT_COMPILE_DEFINITIONS ACCELERATE_NEW_LAPACK
+         ACCELERATE_LAPACK_ILP64)
   endif(APPLE)
 endif(WITH_BLAS)
 
@@ -219,9 +233,12 @@ if(BUILD_PYTHON)
   else(USE_PYBIND11_SOURCE)
     find_package(pybind11 REQUIRED)
   endif(USE_PYBIND11_SOURCE)
-
   add_subdirectory(bindings/python)
 endif(BUILD_PYTHON)
+
+if(BUILD_WASM)
+  add_subdirectory(bindings/wasm)
+endif(BUILD_WASM)
 
 if(BUILD_JNI)
   add_subdirectory(bindings/java)

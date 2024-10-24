@@ -17,6 +17,7 @@ env:
   ccache_maxsize: 200M
   ccache_cmake: -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_C_COMPILER_LAUNCHER=ccache
   ccache_version: '4.5'
+  emsdk_version: 3.1.8 # For use in emscripten build
 
 jobs:
   formatting:
@@ -45,7 +46,7 @@ jobs:
           run:
             bash scripts/ci/format-check.sh
 
-        - uses: actions/upload-artifact@v2
+        - uses: actions/upload-artifact@v4
           if: always()
           with:
             name: format
@@ -88,7 +89,7 @@ jobs:
           run:
             bash scripts/ci/${{ matrix.name }}/04-package.sh
 
-        - uses: actions/upload-artifact@v2
+        - uses: actions/upload-artifact@v4
           if: ${{ failure() }}
           with:
             name: slimt
@@ -122,7 +123,7 @@ jobs:
             submodules: recursive
         - name: "Fetch pybind11"
           run: |
-            git clone https://github.com/pybind/pybind11 3rd-party/pybind11
+            git clone --branch v2.10.3 https://github.com/pybind/pybind11 3rd-party/pybind11
 
         - name: Generate ccache_vars for ccache based on machine
           shell: bash
@@ -194,7 +195,7 @@ jobs:
 
 
         - name: Build wheels
-          uses: pypa/cibuildwheel@v2.11.1
+          uses: pypa/cibuildwheel@v2.21.3
           # to supply options, put them in 'env', like:
           env:
             CIBW_BUILD_VERBOSITY: 3
@@ -285,7 +286,7 @@ jobs:
               # gdb -return-child-result -batch -ex 'set follow-fork-mode child' -ex 'run' -ex 'bt' -ex 'quit' --args python -m pytest --pyargs slimt -s
 
 
-        - uses: actions/upload-artifact@v2
+        - uses: actions/upload-artifact@v4
           with:
             name: wheels
             path: ./wheelhouse/*.whl
@@ -367,3 +368,128 @@ jobs:
       run: |
         python3 -m pip install twine
         twine upload *.whl
+
+  build-wasm:
+    name: "emscripten"
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
+
+      - name: Set ccache environment for emcc
+        run: |
+          # We are hardcoding this to mtime instead of env pickup. Rest use content.
+          echo "CCACHE_COMPILER_CHECK=mtime" >> $GITHUB_ENV
+
+          echo "CCACHE_BASEDIR=${{ env.ccache_basedir }}" >> $GITHUB_ENV
+          echo "CCACHE_COMPRESS=${{ env.ccache_compress }}" >> $GITHUB_ENV
+          echo "CCACHE_COMPRESSLEVEL=${{ env.ccache_compresslevel }}" >> $GITHUB_ENV
+          echo "CCACHE_DIR=${{ env.ccache_dir }}" >> $GITHUB_ENV
+          echo "CCACHE_MAXSIZE=${{ env.ccache_maxsize }}" >> $GITHUB_ENV
+          # https://emscripten.org/docs/compiling/Building-Projects.html#using-a-compiler-wrapper
+          echo "EM_COMPILER_WRAPPER=ccache" >> $GITHUB_ENV
+
+      # This need to be run before setup, so ccache build caching doesn't complain.
+      - name: Obtain emsdk sources
+        run: |
+            git clone --depth 1 https://github.com/emscripten-core/emsdk.git
+
+      - name: Cache-op for build-cache through ccache
+        uses: actions/cache@v2
+        with:
+          path: |
+              ${{ env.ccache_dir }}
+              ${{ github.workspace }}/emsdk/ccache/git-emscripten_64bit/
+          key: ccache-${{ github.job }}-${{ env.emsdk_version }}-${{ steps.ccache_vars.outputs.hash }}-${{ github.ref }}-${{ steps.ccache_vars.outputs.timestamp }}
+          restore-keys: |-
+            ccache-${{ github.job }}-${{ env.emsdk_version }}-${{ steps.ccache_vars.outputs.hash }}-${{ github.ref }}
+            ccache-${{ github.job }}-${{ env.emsdk_version }}-${{ steps.ccache_vars.outputs.hash }}
+            ccache-${{ github.job }}-${{ env.emsdk_version }}
+
+      - name: Setup Emscripten toolchain
+        run: |
+            (cd emsdk && ./emsdk install ${{ env.emsdk_version }} ccache-git-emscripten-64bit)
+            (cd emsdk && ./emsdk activate ${{ env.emsdk_version }} ccache-git-emscripten-64bit)
+            # mtime of this file is checked by ccache, we set it to avoid cache misses.
+            touch -m -d '1 Jan 2021 12:00' emsdk/.emscripten
+
+            # These needs to be done in the activated shell.
+            eval $(./emsdk/emsdk construct_env \
+                | sed 's/export PATH=\(.*\);/echo \1 >> $GITHUB_PATH;/' \
+                | sed 's/export \(.*\);/echo \1 >> $GITHUB_ENV;/' );
+
+            # This looks more permanent than version pinned, so keeping temporarily to avoid failures.
+            echo "${{ github.workspace }}/emsdk/ccache/git-emscripten_64bit/bin" >> $GITHUB_PATH
+
+      - name: Generate ccache_vars for ccache based on machine
+        shell: bash
+        id: ccache_vars
+        run: |-
+          echo "::set-output name=hash::$(echo ${{ env.ccache_compilercheck }})"
+          echo "::set-output name=timestamp::$(date '+%Y-%m-%dT%H.%M.%S')"
+
+      - name: Verify Emscripten setup
+        run: |
+            emcc --version
+            emcmake cmake --version
+            emmake make --version
+
+      - name: ccache prolog
+        run: |-
+          ccache -s # Print current cache stats
+          ccache -z # Zero cache entry
+
+      - name: "Configure builds"
+        run: |
+          mkdir -p build-wasm
+          cd build-wasm
+          emcmake cmake -DWITH_BLAS=OFF -DWITH_RUY=ON -DWITH_GEMMOLOGY=OFF -DSLIMT_USE_INTERNAL_PCRE2=ON -DBUILD_WASM=ON ..
+
+
+      - name: "Compile"
+        working-directory: build-wasm
+        run: |
+          emmake make -j2
+
+      - name: ccache epilog
+        run: |
+          ccache -s # Print current cache stats
+
+      # The following is useless as it works within Firefox, that too only in a
+      # privileged context. Might choose to enable should Mozilla be
+      # interested.
+      #
+      # - name: Import GEMM library from a separate wasm module
+      #   working-directory: build-wasm
+      #   run: bash ../wasm/patch-artifacts-import-gemm-module.sh
+
+      # Setup nodejs-18, as nodejs-14 provided by emsdk fails when running
+      # and newer version of node allows us to use fetch().
+      - name: Setup nodejs
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      # - name: Test run
+      #   working-directory: wasm
+      #   run: |
+      #     cp ../build-wasm/bergamot-translator-worker.{js,wasm} ./
+      #     npm install jsdom
+
+      #     # --unhandled-rejections make the script exit with a non-zero code (at least on node-14).
+      #     # So leaving this here.
+      #     node --unhandled-rejections=strict node-test.js
+
+      # # Upload both together.
+      # - name: Upload wasm artifact
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: wasm-artefacts
+      #     if-no-files-found: error
+      #     path: |
+      #         ${{github.workspace}}/build-wasm/bergamot-translator-worker.js
+      #         ${{github.workspace}}/build-wasm/bergamot-translator-worker.wasm
+      #         ${{github.workspace}}/build-wasm/bergamot-translator-worker.js.bak
