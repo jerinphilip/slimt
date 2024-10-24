@@ -123,7 +123,7 @@ jobs:
             submodules: recursive
         - name: "Fetch pybind11"
           run: |
-            git clone https://github.com/pybind/pybind11 3rd-party/pybind11
+            git clone --branch v2.10.3 https://github.com/pybind/pybind11 3rd-party/pybind11
 
         - name: Generate ccache_vars for ccache based on machine
           shell: bash
