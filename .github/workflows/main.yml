@@ -46,7 +46,7 @@ jobs:
           run:
             bash scripts/ci/format-check.sh
 
-        - uses: actions/upload-artifact@v2
+        - uses: actions/upload-artifact@v4
           if: always()
           with:
             name: format
@@ -89,7 +89,7 @@ jobs:
           run:
             bash scripts/ci/${{ matrix.name }}/04-package.sh
 
-        - uses: actions/upload-artifact@v2
+        - uses: actions/upload-artifact@v4
           if: ${{ failure() }}
           with:
             name: slimt
@@ -286,7 +286,7 @@ jobs:
               # gdb -return-child-result -batch -ex 'set follow-fork-mode child' -ex 'run' -ex 'bt' -ex 'quit' --args python -m pytest --pyargs slimt -s
 
 
-        - uses: actions/upload-artifact@v2
+        - uses: actions/upload-artifact@v4
           with:
             name: wheels
             path: ./wheelhouse/*.whl
@@ -485,7 +485,7 @@ jobs:
 
       # # Upload both together.
       # - name: Upload wasm artifact
-      #   uses: actions/upload-artifact@v2
+      #   uses: actions/upload-artifact@v4
       #   with:
       #     name: wasm-artefacts
       #     if-no-files-found: error
