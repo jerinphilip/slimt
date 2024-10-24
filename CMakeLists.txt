@@ -127,6 +127,11 @@ if(WITH_BLAS)
     )
     add_library(AppleLibs::accelerate ALIAS apple_accelerate)
     list(APPEND SLIMT_PRIVATE_LIBS AppleLibs::accelerate)
+    # 'cblas_sgemm' is deprecated: first deprecated in macOS 13.3 - An updated
+    # CBLAS interface supporting ILP64 is available.  Please compile with
+    # -DACCELERATE_NEW_LAPACK to access the new headers and
+    # -DACCELERATE_LAPACK_ILP64 for ILP64 support.
+    list(APPEND SLIMT_COMPILE_DEFINITIONS ACCELERATE_NEW_LAPACK ACCELERATE_LAPACK_ILP64)
   endif(APPLE)
 endif(WITH_BLAS)
 
